@@ -134,6 +134,34 @@ public class ValueAssertionsTests
     [Fact] public void TimeSpan_BeLessThanOrEqualTo_message() { var t = TimeSpan.FromMinutes(2); Assert.Equal("Expected t to be less than or equal to 00:01:00, but found 00:02:00.", Msg(() => t.Should().BeLessThanOrEqualTo(TimeSpan.FromMinutes(1)))); }
     [Fact] public void Comparisons_chain() { TimeSpan.FromSeconds(5).Should().BeGreaterThan(TimeSpan.Zero).And.BeLessThan(TimeSpan.FromMinutes(1)); }
 
+    [Fact]
+    public void Half_NaN_fails_every_ordering_on_either_side()
+    {
+        var n = Half.NaN;
+        var one = Half.One;
+        Assert.Throws<VouchException>(() => n.Should().BeLessThan(one));
+        Assert.Throws<VouchException>(() => n.Should().BeLessThanOrEqualTo(one));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThan(one));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThanOrEqualTo(one));
+        Assert.Throws<VouchException>(() => one.Should().BeLessThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeLessThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => n.Should().BeLessThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThanOrEqualTo(n));
+    }
+
+    [Fact]
+    public void Half_numbers_still_compare()
+    {
+        var one = Half.One;
+        Half.Zero.Should().BeLessThan(one);
+        Half.Zero.Should().BeLessThanOrEqualTo(Half.Zero);
+        one.Should().BeGreaterThan(Half.Zero);
+        one.Should().BeGreaterThanOrEqualTo(one);
+        Assert.Throws<VouchException>(() => one.Should().BeLessThan(Half.Zero));
+    }
+
     [Fact] public void Guid_NotBeEmpty_passes_on_a_real_guid() { var g = Guid.NewGuid(); g.Should().NotBeEmpty(); }
     [Fact] public void Guid_NotBeEmpty_fails_on_empty() { var g = Guid.Empty; Assert.Throws<VouchException>(() => g.Should().NotBeEmpty()); }
     [Fact] public void Guid_NotBeEmpty_message() { var g = Guid.Empty; Assert.Equal("Expected g not to be empty, but it was.", Msg(() => g.Should().NotBeEmpty())); }

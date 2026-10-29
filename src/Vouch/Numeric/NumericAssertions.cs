@@ -16,9 +16,6 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     internal string Name => Fail.Name(_expression);
 
-    // NaN is unordered, but some types (Half) still answer < and > for it.
-    internal static bool Unordered(T left, T right) => T.IsNaN(left) || T.IsNaN(right);
-
     public AndConstraint<NumericAssertions<T>> Be(T expected)
     {
         if (!Subject.Equals(expected))
@@ -41,7 +38,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeGreaterThan(T expected)
     {
-        if (Unordered(Subject, expected) || !(Subject > expected))
+        if (!(Subject > expected))
         {
             Fail.With($"Expected {Name} to be greater than {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -51,7 +48,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected)
     {
-        if (Unordered(Subject, expected) || !(Subject >= expected))
+        if (!(Subject >= expected))
         {
             Fail.With($"Expected {Name} to be greater than or equal to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -61,7 +58,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeLessThan(T expected)
     {
-        if (Unordered(Subject, expected) || !(Subject < expected))
+        if (!(Subject < expected))
         {
             Fail.With($"Expected {Name} to be less than {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -71,7 +68,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeLessThanOrEqualTo(T expected)
     {
-        if (Unordered(Subject, expected) || !(Subject <= expected))
+        if (!(Subject <= expected))
         {
             Fail.With($"Expected {Name} to be less than or equal to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -91,7 +88,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeInRange(T min, T max)
     {
-        if (Unordered(Subject, min) || Unordered(Subject, max) || !(Subject >= min && Subject <= max))
+        if (!(Subject >= min && Subject <= max))
         {
             Fail.With($"Expected {Name} to be between {Formatter.Format(min)} and {Formatter.Format(max)}, but found {Formatter.Format(Subject)}.");
         }

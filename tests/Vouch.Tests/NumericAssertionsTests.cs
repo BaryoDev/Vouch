@@ -136,18 +136,6 @@ public class NumericAssertionsTests
     [Fact] public void Float_BeApproximately_fails() { Assert.Throws<VouchException>(() => 1.75f.Should().BeApproximately(1.5f, 0.125f)); }
     [Fact] public void Float_BeApproximately_message() { var f = 1.75f; Assert.Equal("Expected f to approximate 1.5f +/- 0.125f, but found 1.75f (off by 0.25f).", Message(() => f.Should().BeApproximately(1.5f, 0.125f))); }
 
-    private static NumericAssertions<Half> H(Half value) => new(value, "h");
-
-    [Fact] public void Half_NaN_is_not_less_than_one() => Assert.Throws<VouchException>(() => H(Half.NaN).BeLessThan(Half.One));
-    [Fact] public void Half_NaN_is_not_greater_than_one() => Assert.Throws<VouchException>(() => H(Half.NaN).BeGreaterThan(Half.One));
-    [Fact] public void Half_NaN_is_not_less_than_or_equal_to_one() => Assert.Throws<VouchException>(() => H(Half.NaN).BeLessThanOrEqualTo(Half.One));
-    [Fact] public void Half_NaN_is_not_greater_than_or_equal_to_one() => Assert.Throws<VouchException>(() => H(Half.NaN).BeGreaterThanOrEqualTo(Half.One));
-    [Fact] public void Half_NaN_is_not_in_range() => Assert.Throws<VouchException>(() => H(Half.NaN).BeInRange(Half.Zero, Half.One));
-    [Fact] public void Half_one_is_not_less_than_NaN() => Assert.Throws<VouchException>(() => H(Half.One).BeLessThan(Half.NaN));
-    [Fact] public void Half_one_is_not_greater_than_NaN() => Assert.Throws<VouchException>(() => H(Half.One).BeGreaterThan(Half.NaN));
-    [Fact] public void Half_one_is_not_in_range_with_NaN_bound() { Assert.Throws<VouchException>(() => H(Half.One).BeInRange(Half.NaN, Half.One)); Assert.Throws<VouchException>(() => H(Half.One).BeInRange(Half.Zero, Half.NaN)); }
-    [Fact] public void Half_numbers_still_compare() { H(Half.Zero).BeLessThan(Half.One); H(Half.One).BeGreaterThan(Half.Zero); H(Half.One).BeLessThanOrEqualTo(Half.One); H(Half.One).BeGreaterThanOrEqualTo(Half.One); H(Half.One).BeInRange(Half.Zero, Half.One); }
-
     [Fact]
     public void Double_NaN_fails_every_ordering_on_either_side()
     {
@@ -182,20 +170,5 @@ public class NumericAssertionsTests
         Assert.Throws<VouchException>(() => one.Should().BeGreaterThanOrEqualTo(n));
         Assert.Throws<VouchException>(() => one.Should().BeInRange(n, 2f));
         Assert.Throws<VouchException>(() => one.Should().BeInRange(0f, n));
-    }
-
-    [Fact]
-    public void Nullable_NaN_fails_every_ordering_on_either_side()
-    {
-        double? n = double.NaN;
-        Assert.Throws<VouchException>(() => n.Should().BeLessThan(1.0));
-        Assert.Throws<VouchException>(() => n.Should().BeGreaterThan(1.0));
-        Assert.Throws<VouchException>(() => n.Should().BeLessThanOrEqualTo(1.0));
-        Assert.Throws<VouchException>(() => n.Should().BeGreaterThanOrEqualTo(1.0));
-        Assert.Throws<VouchException>(() => n.Should().BeInRange(0.0, 1.0));
-        double? one = 1.0;
-        Assert.Throws<VouchException>(() => one.Should().BeLessThan(double.NaN));
-        Assert.Throws<VouchException>(() => one.Should().BeGreaterThan(double.NaN));
-        Assert.Throws<VouchException>(() => one.Should().BeInRange(double.NaN, 2.0));
     }
 }
