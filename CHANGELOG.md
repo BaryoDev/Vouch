@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `Func<ValueTask>` and `Func<ValueTask<T>>` now have their own `Should` overloads, so `Throw`, `NotThrow`, `ThrowAsync` and `NotThrowAsync` see the exception (#22).
+
 ## 0.1.0
 
 First release.

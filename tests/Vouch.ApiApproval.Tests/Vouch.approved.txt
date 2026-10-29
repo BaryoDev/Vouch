@@ -390,6 +390,7 @@ namespace Vouch
         public static Vouch.DateTimeOffsetAssertions Should(this System.DateTimeOffset subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableDateTimeOffsetAssertions Should(this System.DateTimeOffset? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.AsyncFunctionAssertions Should(this System.Func<System.Threading.Tasks.Task>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.ValueTaskFunctionAssertions Should(this System.Func<System.Threading.Tasks.ValueTask>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.BooleanAssertions Should(this bool subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableBooleanAssertions Should(this bool? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<byte> Should(this byte subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -410,6 +411,7 @@ namespace Vouch
         public static Vouch.StringAssertions Should(this string? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.GenericCollectionAssertions<T> Should<T>(this System.Collections.Generic.IEnumerable<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.AsyncFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.Task<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.ValueTaskFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.ValueTask<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.FunctionAssertions<T> Should<T>(this System.Func<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueAssertions<T> Should<T>(this T subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
             where T :  struct { }
@@ -473,6 +475,38 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected, string because) { }
+    }
+    public readonly struct ValueTaskFunctionAssertions
+    {
+        public System.Func<System.Threading.Tasks.ValueTask>? Subject { get; }
+        public Vouch.AndConstraint<Vouch.ValueTaskFunctionAssertions> NotThrow() { }
+        public Vouch.AndConstraint<Vouch.ValueTaskFunctionAssertions> NotThrow(string because) { }
+        public System.Threading.Tasks.Task NotThrowAsync() { }
+        public System.Threading.Tasks.Task NotThrowAsync(string because) { }
+        public Vouch.ExceptionAssertions<TException> Throw<TException>()
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
+            where TException : System.Exception { }
+    }
+    public readonly struct ValueTaskFunctionAssertions<T>
+    {
+        public System.Func<System.Threading.Tasks.ValueTask<T>>? Subject { get; }
+        public Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T> NotThrow() { }
+        public Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T> NotThrow(string because) { }
+        public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T>> NotThrowAsync() { }
+        public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T>> NotThrowAsync(string because) { }
+        public Vouch.ExceptionAssertions<TException> Throw<TException>()
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
+            where TException : System.Exception { }
     }
     public sealed class VouchException : System.Exception
     {

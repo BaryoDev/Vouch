@@ -782,4 +782,97 @@ public class ExceptionAssertionsTests
         Assert.Equal(AsyncVoidMessage, Assert.Throws<InvalidOperationException>(() => act.Should().Throw<Exception>("why")).Message);
         Assert.Equal(AsyncVoidMessage, Assert.Throws<InvalidOperationException>(() => act.Should().NotThrow("why")).Message);
     }
+
+    [Fact]
+    public void ValueTask_func_not_throw_sees_the_exception()
+    {
+        Func<ValueTask> f = async () => { await Task.Yield(); throw new InvalidOperationException(); };
+        Assert.Throws<VouchException>(() => f.Should().NotThrow());
+    }
+
+    [Fact]
+    public void ValueTask_of_int_func_not_throw_sees_the_exception()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); throw new InvalidOperationException(); };
+        Assert.Throws<VouchException>(() => f.Should().NotThrow());
+    }
+
+    [Fact]
+    public void ValueTask_func_not_throw_passes_when_it_completes()
+    {
+        Func<ValueTask> f = async () => await Task.Yield();
+        f.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ValueTask_of_int_func_not_throw_returns_the_value()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); return 7; };
+        Assert.Equal(7, f.Should().NotThrow().Which);
+    }
+
+    [Fact]
+    public void ValueTask_func_throw_returns_the_exception()
+    {
+        Func<ValueTask> f = async () => { await Task.Yield(); throw new InvalidOperationException("boom"); };
+        Assert.Equal("boom", f.Should().Throw<InvalidOperationException>().Which.Message);
+    }
+
+    [Fact]
+    public void ValueTask_of_int_func_throw_returns_the_exception()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); throw new InvalidOperationException("boom"); };
+        Assert.Equal("boom", f.Should().Throw<InvalidOperationException>().Which.Message);
+    }
+
+    [Fact]
+    public void ValueTask_func_throw_fails_when_it_completes()
+    {
+        Func<ValueTask> f = async () => await Task.Yield();
+        Assert.Throws<VouchException>(() => f.Should().Throw<InvalidOperationException>());
+    }
+
+    [Fact]
+    public async Task ValueTask_func_not_throw_async_sees_the_exception()
+    {
+        Func<ValueTask> f = async () => { await Task.Yield(); throw new InvalidOperationException(); };
+        await Assert.ThrowsAsync<VouchException>(() => f.Should().NotThrowAsync());
+    }
+
+    [Fact]
+    public async Task ValueTask_of_int_func_not_throw_async_sees_the_exception()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); throw new InvalidOperationException(); };
+        await Assert.ThrowsAsync<VouchException>(() => f.Should().NotThrowAsync());
+    }
+
+    [Fact]
+    public async Task ValueTask_of_int_func_not_throw_async_returns_the_value()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); return 7; };
+        Assert.Equal(7, (await f.Should().NotThrowAsync()).Which);
+    }
+
+    [Fact]
+    public async Task ValueTask_func_throw_async_returns_the_exception()
+    {
+        Func<ValueTask> f = async () => { await Task.Yield(); throw new InvalidOperationException("boom"); };
+        Assert.Equal("boom", (await f.Should().ThrowAsync<InvalidOperationException>()).Which.Message);
+    }
+
+    [Fact]
+    public async Task ValueTask_of_int_func_throw_async_returns_the_exception()
+    {
+        Func<ValueTask<int>> f = async () => { await Task.Yield(); throw new InvalidOperationException("boom"); };
+        Assert.Equal("boom", (await f.Should().ThrowAsync<InvalidOperationException>()).Which.Message);
+    }
+
+    [Fact]
+    public void ValueTask_func_runs_the_delegate_once()
+    {
+        var calls = 0;
+        Func<ValueTask> f = () => { calls++; return ValueTask.CompletedTask; };
+        f.Should().NotThrow();
+        Assert.Equal(1, calls);
+    }
 }

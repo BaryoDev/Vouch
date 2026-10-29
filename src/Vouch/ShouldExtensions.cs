@@ -131,6 +131,14 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    public static ValueTaskFunctionAssertions Should(this Func<ValueTask>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static ValueTaskFunctionAssertions<T> Should<T>(this Func<ValueTask<T>>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
     public static FunctionAssertions<T> Should<T>(this Func<T>? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
