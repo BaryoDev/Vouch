@@ -390,7 +390,9 @@ internal sealed class Comparison
                 }
             }
 
-            var memoize = !subject.GetType().IsValueType && !expectation.GetType().IsValueType;
+            // The root pair is compared once, so it is not worth a dictionary.
+            var memoize = pathCount > 0
+                && !subject.GetType().IsValueType && !expectation.GetType().IsValueType;
             var key = default(PairKey);
             if (memoize)
             {
