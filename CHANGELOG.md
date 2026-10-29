@@ -3,6 +3,7 @@
 ## Unreleased
 
 - `Func<ValueTask>` and `Func<ValueTask<T>>` now have their own `Should` overloads, so `Throw`, `NotThrow`, `ThrowAsync` and `NotThrowAsync` see the exception (#22).
+- Failure messages cap every formatted value at 200 characters, and sequences that do not know their size are no longer walked to the end (#24).
 
 ## 0.1.0
 

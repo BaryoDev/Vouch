@@ -12,7 +12,6 @@ internal static class Formatter
     public const int MaxItems = 10;
     public const int MaxStringLength = 200;
 
-    private const int MaxCountedRemainder = 100_000;
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
     public static string FormatList<T>(T[] values) =>
@@ -244,35 +243,57 @@ internal static class Formatter
             return;
         }
 
-        if (source is ICollection collection)
+        if (KnownCount(source) is { } total)
         {
-            if (collection.Count > shown)
+            if (total > shown)
             {
-                sb.Append(", ... (").Append(collection.Count - shown).Append(" more)");
+                sb.Append(", ... (").Append(total - shown).Append(" more)");
             }
 
             return;
         }
 
-        var more = 0;
-        while (more < MaxCountedRemainder && enumerator.MoveNext())
+        if (enumerator.MoveNext())
         {
-            more++;
+            sb.Append(", ... (more)");
+        }
+    }
+
+    // Only collections that already know their size are counted. Anything else is not walked to find out.
+    private static int? KnownCount(object source)
+    {
+        if (source is ICollection collection)
+        {
+            return collection.Count;
         }
 
-        if (more == 0)
+        foreach (var contract in source.GetType().GetInterfaces())
         {
-            return;
+            if (contract.IsGenericType
+                && contract.GetGenericTypeDefinition() is var definition
+                && (definition == typeof(IReadOnlyCollection<>) || definition == typeof(ICollection<>))
+                && contract.GetProperty("Count")?.GetValue(source) is int count)
+            {
+                return count;
+            }
         }
 
-        sb.Append(", ... (").Append(more).Append(more == MaxCountedRemainder ? "+ more)" : " more)");
+        return null;
     }
 
     private static void WriteToString(StringBuilder sb, object value)
     {
         try
         {
-            sb.Append(value.ToString() ?? "null");
+            var text = value.ToString() ?? "null";
+            if (text.Length > MaxStringLength)
+            {
+                sb.Append(text, 0, MaxStringLength).Append("... (").Append(text.Length - MaxStringLength).Append(" more chars)");
+            }
+            else
+            {
+                sb.Append(text);
+            }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

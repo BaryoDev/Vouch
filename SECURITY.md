@@ -18,8 +18,8 @@ dependencies.
 ## What that means in practice
 
 **Failure messages print the values under test.** If a test asserts on a secret, the secret appears
-in the failure output. Vouch does not redact. Long values are cut, but cutting is for readability,
-not for hiding data.
+in the failure output. Vouch does not redact. Every value is cut at 200 characters and long sequences
+are cut after ten items, but cutting is for readability, not for hiding data.
 
 **`BeEquivalentTo` reads members by reflection** and caches them per type. It detects cycles and
 has a depth limit. A hostile object graph that makes it hang, overflow the stack or allocate without
