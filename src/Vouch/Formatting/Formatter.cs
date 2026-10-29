@@ -104,8 +104,9 @@ internal static class Formatter
         sb.Append('"');
         if (s.Length > MaxStringLength)
         {
-            sb.Append(Escape(s.Substring(0, MaxStringLength)));
-            sb.Append("... (").Append(s.Length - MaxStringLength).Append(" more chars)");
+            var cut = CutLength(s);
+            sb.Append(Escape(s.Substring(0, cut)));
+            sb.Append("... (").Append(s.Length - cut).Append(" more chars)");
         }
         else
         {
@@ -114,6 +115,9 @@ internal static class Formatter
 
         sb.Append('"');
     }
+
+    private static int CutLength(string s) =>
+        char.IsHighSurrogate(s[MaxStringLength - 1]) ? MaxStringLength - 1 : MaxStringLength;
 
     private static string Escape(string s)
     {
@@ -288,7 +292,8 @@ internal static class Formatter
             var text = value.ToString() ?? "null";
             if (text.Length > MaxStringLength)
             {
-                sb.Append(text, 0, MaxStringLength).Append("... (").Append(text.Length - MaxStringLength).Append(" more chars)");
+                var cut = CutLength(text);
+                sb.Append(text, 0, cut).Append("... (").Append(text.Length - cut).Append(" more chars)");
             }
             else
             {

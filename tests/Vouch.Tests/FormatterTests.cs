@@ -121,6 +121,29 @@ public class FormatterTests
         Assert.Equal("Task<Int32> { Status = WaitingForActivation }", await format);
     }
 
+    [Fact]
+    public void Cut_does_not_split_a_surrogate_pair()
+    {
+        var text = new string('a', 199) + "\U0001F600" + "more text";
+        var output = Formatter.Format(text);
+        var quoted = output.Substring(1, output.IndexOf("...", StringComparison.Ordinal) - 1);
+        Assert.False(char.IsHighSurrogate(quoted[^1]));
+        Assert.Equal(199, quoted.Length);
+    }
+
+    [Fact]
+    public void ToString_cut_does_not_split_a_surrogate_pair()
+    {
+        var output = Formatter.Format(new Texty(new string('a', 199) + "\U0001F600" + "more text"));
+        var kept = output.Substring(0, output.IndexOf("...", StringComparison.Ordinal));
+        Assert.False(char.IsHighSurrogate(kept[^1]));
+    }
+
+    private sealed class Texty(string text)
+    {
+        public override string ToString() => text;
+    }
+
     [Fact] public void Lazy_is_not_evaluated() => Assert.Equal("Lazy<Int32> { IsValueCreated = false }", Formatter.Format(new Lazy<int>(() => throw new InvalidOperationException())));
 
     [Fact]
