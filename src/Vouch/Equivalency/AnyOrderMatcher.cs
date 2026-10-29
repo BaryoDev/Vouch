@@ -11,6 +11,7 @@ internal sealed class AnyOrderMatcher
     private readonly bool[] _used;
     private HashIndex? _scalars;
     private HashIndex? _sequences;
+    private HashIndex? _equatables;
     private bool _cheap;
     private Dictionary<Type, HashIndex?>? _byType;
     private int _firstUnused;
@@ -168,6 +169,30 @@ internal sealed class AnyOrderMatcher
         return true;
     }
 
+    private static bool TryHashEquatable(object? item, out int hash)
+    {
+        hash = 0;
+        if (item is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (MemberCache.ShapeOf(item.GetType()).Kind != TypeKind.Equatable)
+            {
+                return false;
+            }
+
+            hash = item.GetHashCode();
+            return true;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
     private static int ScalarHash(object value)
     {
         if (value is Enum e)
@@ -183,6 +208,7 @@ internal sealed class AnyOrderMatcher
     {
         HashIndex? hashIndex = null;
         var hash = 0;
+        var equatable = false;
         if (item is not null && _subject.Length >= IndexThreshold)
         {
             TypeShape? shape = null;
@@ -211,6 +237,11 @@ internal sealed class AnyOrderMatcher
                 hash = TopLevelHash(item, _exactNumbers);
                 hashIndex = _scalars ??= HashIndex.Build(_run, _subject, null, sequences: false, _exactNumbers);
             }
+            else if (shape.Kind == TypeKind.Equatable && TryHashEquatable(item, out hash))
+            {
+                equatable = true;
+                hashIndex = _equatables ??= HashIndex.Build(_run, _subject, null, sequences: false, false, equatables: true);
+            }
             else if (shape.Kind == TypeKind.Members && shape.Members.Length > 0 && TryHash(item, shape.Members, out hash))
             {
                 _byType ??= new Dictionary<Type, HashIndex?>();
@@ -237,7 +268,13 @@ internal sealed class AnyOrderMatcher
             }
         }
 
-        return _cheap ? -1 : Walk(ref hashIndex.WildcardHead, hashIndex.Next, item, index);
+        if (_cheap)
+        {
+            return -1;
+        }
+
+        var wild = Walk(ref hashIndex.WildcardHead, hashIndex.Next, item, index);
+        return wild >= 0 || !equatable ? wild : Scan(item, index);
     }
 
     private int Walk(ref int head, int[] next, object? item, int index)
@@ -299,7 +336,7 @@ internal sealed class AnyOrderMatcher
         public int[] Next = [];
         public int WildcardHead = -1;
 
-        public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences, bool exactNumbers)
+        public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences, bool exactNumbers, bool equatables = false)
         {
             var index = new HashIndex { Next = new int[subject.Length], Heads = new int[subject.Length] };
             var buckets = 0;
@@ -307,6 +344,7 @@ internal sealed class AnyOrderMatcher
             {
                 int hash;
                 var hashed = sequences ? TrySequenceHash(run, subject[j], out hash)
+                    : equatables ? TryHashEquatable(subject[j], out hash)
                     : keys is null ? TryHashScalar(subject[j], exactNumbers, out hash) : TryHash(subject[j], keys, out hash);
                 if (!hashed)
                 {

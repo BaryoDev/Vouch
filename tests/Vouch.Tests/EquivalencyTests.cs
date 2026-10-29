@@ -693,6 +693,112 @@ public class EquivalencyTests
         Assert.EndsWith("\n  ... and 1 more difference", msg);
     }
 
+    private static readonly TimeSpan Bound = TimeSpan.FromSeconds(2);
+
+    // Runs the call on the thread pool and fails the test if it takes longer than the bound.
+    private static T Bounded<T>(Func<T> call)
+    {
+        var task = Task.Run(call);
+        if (!task.Wait(Bound))
+        {
+            Assert.Fail($"Did not finish within {Bound.TotalSeconds} s.");
+        }
+
+        return task.Result;
+    }
+
+    public class SharedNode
+    {
+        public int Value { get; set; }
+        public SharedNode? A { get; set; }
+        public SharedNode? B { get; set; }
+        public SharedNode? C { get; set; }
+        public SharedNode? D { get; set; }
+        public SharedNode? E { get; set; }
+    }
+
+    private static SharedNode SharedGraph(int levels, int leaf)
+    {
+        var node = new SharedNode { Value = leaf };
+        for (var i = 1; i < levels; i++)
+        {
+            node = new SharedNode { A = node, B = node, C = node, D = node, E = node };
+        }
+
+        return node;
+    }
+
+    public sealed class EqKey : IEquatable<EqKey>
+    {
+        public EqKey(int id) => Id = id;
+        public int Id { get; }
+        public bool Equals(EqKey? other) => other is not null && other.Id == Id;
+        public override bool Equals(object? obj) => Equals(obj as EqKey);
+        public override int GetHashCode() => Id;
+    }
+
+    public sealed class DriftingKey : IEquatable<DriftingKey>
+    {
+        private static int _next;
+        public DriftingKey(int id) => Id = id;
+        public int Id { get; }
+        public bool Equals(DriftingKey? other) => other is not null && other.Id == Id;
+        public override bool Equals(object? obj) => Equals(obj as DriftingKey);
+        public override int GetHashCode() => Interlocked.Increment(ref _next);
+    }
+
+    [Fact]
+    public void Shared_graph_of_11_levels_is_equivalent_within_2_seconds()
+    {
+        var left = SharedGraph(11, 1);
+        var right = SharedGraph(11, 1);
+        Bounded(() => { left.Should().BeEquivalentTo(right); return 0; });
+    }
+
+    [Fact]
+    public void Shared_graph_mismatch_names_the_first_differing_path()
+    {
+        var left = SharedGraph(11, 1);
+        var right = SharedGraph(11, 2);
+        var msg = Bounded(() => Message(() => left.Should().BeEquivalentTo(right)));
+        Assert.Contains("\n  A.A.A.A.A.A.A.A.A.A.Value was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void Shared_graph_pair_proven_equal_does_not_hide_a_difference_elsewhere()
+    {
+        var shared = new SharedNode { Value = 1 };
+        var other = new SharedNode { Value = 2 };
+        var left = new SharedNode { A = shared, B = shared };
+        var right = new SharedNode { A = new SharedNode { Value = 1 }, B = other };
+        var msg = Message(() => left.Should().BeEquivalentTo(right));
+        Assert.Contains("B.Value was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void Any_order_200000_reversed_uris_match_within_2_seconds()
+    {
+        var a = Enumerable.Range(0, 200_000).Select(i => new Uri($"http://example.com/{i}")).ToArray();
+        var b = a.Reverse().ToArray();
+        Bounded(() => { a.Should().BeEquivalentTo(b); return 0; });
+    }
+
+    [Fact]
+    public void Any_order_200000_reversed_equatable_objects_match_within_2_seconds()
+    {
+        var a = Enumerable.Range(0, 200_000).Select(i => new EqKey(i)).ToArray();
+        var b = a.Reverse().Select(k => new EqKey(k.Id)).ToArray();
+        Bounded(() => { a.Should().BeEquivalentTo(b); return 0; });
+    }
+
+    [Fact]
+    public void Any_order_matches_equatable_objects_whose_hash_code_disagrees_with_equals()
+    {
+        var a = Enumerable.Range(0, 100).Select(i => new DriftingKey(i)).ToArray();
+        var b = a.Reverse().Select(k => new DriftingKey(k.Id)).ToArray();
+        a.Should().BeEquivalentTo(b);
+    }
+
     public sealed class ReadOnlyOnlyDictionary : IReadOnlyDictionary<string, int>
     {
         private readonly Dictionary<string, int> _inner;

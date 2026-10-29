@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- `BeEquivalentTo` stays fast on graphs that share references and on large unordered collections of types with their own equality.
+
 ## 0.1.0
 
 First release.

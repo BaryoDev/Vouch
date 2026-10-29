@@ -155,6 +155,31 @@ internal sealed class Comparison
         public object? Key;
     }
 
+    private readonly struct PairKey : IEquatable<PairKey>
+    {
+        private readonly object _subject;
+        private readonly object _expectation;
+        private readonly EquivalencyOptions _options;
+
+        public PairKey(object subject, object expectation, EquivalencyOptions options)
+        {
+            _subject = subject;
+            _expectation = expectation;
+            _options = options;
+        }
+
+        public bool Equals(PairKey other) =>
+            ReferenceEquals(_subject, other._subject) && ReferenceEquals(_expectation, other._expectation) && ReferenceEquals(_options, other._options);
+
+        public override bool Equals(object? obj) => obj is PairKey other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(RuntimeHelpers.GetHashCode(_subject), RuntimeHelpers.GetHashCode(_expectation), RuntimeHelpers.GetHashCode(_options));
+    }
+
+    // A pair already walked to the end: no differences (Failures 0) or a known difference count.
+    private readonly record struct Settled(int Depth, int Failures);
+
     private static readonly List<Difference> NoDifferences = new();
 
     private readonly bool _collect;
@@ -164,6 +189,7 @@ internal sealed class Comparison
     private Dictionary<object, DictionaryView>? _views;
     private readonly List<Step> _path = new();
     private readonly List<object> _pairs = new();
+    private Dictionary<PairKey, Settled>? _settled;
 
     private bool _quiet;
     private bool _stopOnFirst;
@@ -232,6 +258,8 @@ internal sealed class Comparison
     public int Total { get; private set; }
 
     public bool Stop => _stopOnFirst && Total > 0;
+
+    private bool Counting => !_stopOnFirst && (_quiet || (_differences is not null && _differences.Count >= _maxListed));
 
     public void CompareValues(object? subject, object? expectation)
     {
@@ -362,6 +390,27 @@ internal sealed class Comparison
                 }
             }
 
+            var memoize = !subject.GetType().IsValueType && !expectation.GetType().IsValueType;
+            var key = default(PairKey);
+            if (memoize)
+            {
+                key = new PairKey(subject, expectation, Options);
+                if (_settled is not null && _settled.TryGetValue(key, out var known))
+                {
+                    if (known.Failures == 0 && pathCount <= known.Depth)
+                    {
+                        return;
+                    }
+
+                    if (known.Failures > 0 && pathCount == known.Depth && Counting)
+                    {
+                        Total = (int)Math.Min((long)Total + known.Failures, int.MaxValue);
+                        return;
+                    }
+                }
+            }
+
+            var before = Total;
             _pairs.Add(subject);
             _pairs.Add(expectation);
             switch (shape.Kind)
@@ -375,6 +424,11 @@ internal sealed class Comparison
                 default:
                     CompareMembers(subject, expectation, shape);
                     break;
+            }
+
+            if (memoize && (Total == before || !_stopOnFirst))
+            {
+                Settle(key, pathCount, Total - before);
             }
         }
         catch (TooManyItemsException)
@@ -394,6 +448,22 @@ internal sealed class Comparison
                 _pairs.RemoveRange(pairCount, _pairs.Count - pairCount);
             }
         }
+    }
+
+    private void Settle(PairKey key, int depth, int failures)
+    {
+        _settled ??= new Dictionary<PairKey, Settled>();
+        if (_settled.TryGetValue(key, out var old) && old.Failures == 0)
+        {
+            if (failures == 0 && depth > old.Depth)
+            {
+                _settled[key] = new Settled(depth, 0);
+            }
+
+            return;
+        }
+
+        _settled[key] = new Settled(depth, failures);
     }
 
     private void CompareMembers(object subject, object expectation, TypeShape shape)
