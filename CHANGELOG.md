@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - `Func<ValueTask>` and `Func<ValueTask<T>>` now have their own `Should` overloads, so `Throw`, `NotThrow`, `ThrowAsync` and `NotThrowAsync` see the exception (#22). `.Which` after `NotThrow()` on a `Func<ValueTask<T>>` is now `T` instead of the `ValueTask`, and the sync `Throw` and `NotThrow` run the delegate on a thread-pool thread.
 - Failure messages cut each string and each `ToString` result at 200 characters, and sequences that do not know their size are no longer walked to the end (#24). A cut never splits a surrogate pair.

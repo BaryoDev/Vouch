@@ -8,7 +8,7 @@
     <Deterministic>true</Deterministic>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <PackageId>Vouch</PackageId>
     <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
     <Description>Fluent assertions for .NET with no dependencies. The .Should() surface of FluentAssertions, with failure messages built only when an assertion fails.</Description>
