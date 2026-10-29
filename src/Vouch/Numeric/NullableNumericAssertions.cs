@@ -38,7 +38,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeGreaterThan(T expected)
     {
-        if (Subject is not { } actual || !(actual > expected))
+        if (Subject is not { } actual || NumericAssertions<T>.Unordered(actual, expected) || !(actual > expected))
         {
             Fail.With($"Expected {Name} to be greater than {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -48,7 +48,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeGreaterThanOrEqualTo(T expected)
     {
-        if (Subject is not { } actual || !(actual >= expected))
+        if (Subject is not { } actual || NumericAssertions<T>.Unordered(actual, expected) || !(actual >= expected))
         {
             Fail.With($"Expected {Name} to be greater than or equal to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -58,7 +58,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeLessThan(T expected)
     {
-        if (Subject is not { } actual || !(actual < expected))
+        if (Subject is not { } actual || NumericAssertions<T>.Unordered(actual, expected) || !(actual < expected))
         {
             Fail.With($"Expected {Name} to be less than {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -68,7 +68,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeLessThanOrEqualTo(T expected)
     {
-        if (Subject is not { } actual || !(actual <= expected))
+        if (Subject is not { } actual || NumericAssertions<T>.Unordered(actual, expected) || !(actual <= expected))
         {
             Fail.With($"Expected {Name} to be less than or equal to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -88,7 +88,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeInRange(T min, T max)
     {
-        if (Subject is not { } actual || !(actual >= min && actual <= max))
+        if (Subject is not { } actual || NumericAssertions<T>.Unordered(actual, min) || NumericAssertions<T>.Unordered(actual, max) || !(actual >= min && actual <= max))
         {
             Fail.With($"Expected {Name} to be between {Formatter.Format(min)} and {Formatter.Format(max)}, but found {Formatter.Format(Subject)}.");
         }
