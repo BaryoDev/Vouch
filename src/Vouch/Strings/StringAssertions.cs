@@ -158,6 +158,10 @@ public readonly struct StringAssertions
     public AndConstraint<StringAssertions> Contain(string expected)
     {
         ArgumentNullException.ThrowIfNull(expected);
+        if (expected.Length == 0)
+        {
+            throw new ArgumentException("Expected value cannot be empty.", nameof(expected));
+        }
 
         if (Subject is null || !Subject.Contains(expected, StringComparison.Ordinal))
         {
@@ -170,6 +174,10 @@ public readonly struct StringAssertions
     public AndConstraint<StringAssertions> NotContain(string unexpected)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
+        if (unexpected.Length == 0)
+        {
+            throw new ArgumentException("Unexpected value cannot be empty.", nameof(unexpected));
+        }
 
         if (Subject is null || Subject.Contains(unexpected, StringComparison.Ordinal))
         {

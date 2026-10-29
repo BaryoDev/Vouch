@@ -81,6 +81,32 @@ public class StringAssertionsTests
     [Fact] public void NotContain_message() { var s = "abc"; Assert.Equal("Expected s not to contain \"b\", but found \"abc\".", Message(() => s.Should().NotContain("b"))); }
     [Fact] public void NotContain_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain \"b\", but found null.", Message(() => s.Should().NotContain("b"))); }
 
+    [Theory]
+    [InlineData("abc")]
+    [InlineData(null)]
+    public void Contain_empty_expected_throws_ArgumentException(string? text)
+    {
+        var ex = Assert.Throws<ArgumentException>(() => text.Should().Contain(""));
+        Assert.Equal("expected", ex.ParamName);
+    }
+
+    [Theory]
+    [InlineData("abc")]
+    [InlineData(null)]
+    public void NotContain_empty_unexpected_throws_ArgumentException(string? text)
+    {
+        var ex = Assert.Throws<ArgumentException>(() => text.Should().NotContain(""));
+        Assert.Equal("unexpected", ex.ParamName);
+    }
+
+    [Fact]
+    public void Contain_empty_expected_with_reason_throws_ArgumentException()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => "abc".Should().Contain("", "because"));
+        Assert.Equal("expected", ex.ParamName);
+    }
+
+
     [Fact] public void Match_passes() { var s = "INV-001"; s.Should().Match("INV-*"); }
     [Fact] public void Match_fails() { var s = "PO-1"; Assert.Throws<VouchException>(() => s.Should().Match("INV-*")); }
     [Fact] public void Match_message() { var s = "PO-1"; Assert.Equal("Expected s to match \"INV-*\", but found \"PO-1\".", Message(() => s.Should().Match("INV-*"))); }
