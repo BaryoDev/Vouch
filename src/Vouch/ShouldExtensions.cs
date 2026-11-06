@@ -195,6 +195,18 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    public static TaskAssertions Should(this Task? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static TaskAssertions<T> Should<T>(this Task<T>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static StreamAssertions Should(this Stream? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
     public static ValueTaskFunctionAssertions Should(this Func<ValueTask>? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);

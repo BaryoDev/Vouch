@@ -15,6 +15,43 @@ public class ShouldResolutionTests
 {
     private static readonly Guid G1 = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
+    [Fact]
+    public void Task_and_stream_assertions_expose_the_object_assertions()
+    {
+        Task task = Task.CompletedTask;
+        Task<int> number = Task.FromResult(1);
+        Stream stream = new MemoryStream();
+        MemoryStream memory = new();
+
+        task.Should().Be(task).And.NotBe(number).And.NotBeNull().And.BeSameAs(task).And.NotBeSameAs(number)
+            .And.BeOneOf(task).And.BeEquivalentTo(task).And.Match<Task>(t => t.IsCompleted);
+        task.Should().BeOfType(task.GetType()).And.BeAssignableTo<Task>();
+        task.Should().BeAssignableTo<Task>("because").Which.Should().BeSameAs(task);
+        task.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
+        Task? none = null;
+        none.Should().BeNull().And.BeNull("because");
+
+        number.Should().Be(number).And.NotBe(task).And.NotBeNull().And.BeSameAs(number).And.NotBeSameAs(task)
+            .And.BeOneOf(number).And.BeEquivalentTo(number).And.Match<Task<int>>(t => t.IsCompleted);
+        number.Should().BeOfType(number.GetType()).And.BeAssignableTo<Task>();
+        number.Should().BeAssignableTo<Task>("because").Which.Should().BeSameAs(number);
+        number.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
+
+        stream.Should().Be(stream).And.NotBe(memory).And.NotBeNull().And.BeSameAs(stream).And.NotBeSameAs(memory)
+            .And.BeOneOf(stream).And.BeEquivalentTo(stream).And.Match<Stream>(s => s.CanRead);
+        stream.Should().BeOfType(stream.GetType()).And.BeAssignableTo<Stream>();
+        stream.Should().BeOfType<MemoryStream>("because").Which.Should().BeSameAs(stream);
+        stream.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
+        Stream? noStream = null;
+        noStream.Should().BeNull().And.BeNull("because");
+
+        memory.Should().Be(memory).And.NotBe(stream).And.NotBeNull().And.BeSameAs(memory).And.NotBeSameAs(stream)
+            .And.BeOneOf(memory).And.BeEquivalentTo(memory).And.Match<MemoryStream>(s => s.CanRead);
+        memory.Should().BeOfType(typeof(MemoryStream)).And.BeAssignableTo<Stream>();
+        memory.Should().BeAssignableTo<Stream>("because").Which.Should().BeSameAs(memory);
+        memory.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
+    }
+
     [Fact] public void Guid_resolves() { var g = G1; g.Should().Be(g); }
     [Fact] public void Guid_existing_members_still_compile() { var g = G1; g.Should().Be(G1).And.NotBe(Guid.Empty).And.BeOneOf(G1, Guid.Empty).And.BeEquivalentTo(G1); }
     [Fact] public void Nullable_Guid_resolves() { Guid? g = G1; g.Should().Be(G1); g.Should().BeOneOf(G1).And.BeEquivalentTo(G1); }

@@ -442,6 +442,83 @@ public static class VouchCases
         ["date only not have day"] = () => new DateOnly(2020, 5, 6).Should().NotHaveDay(6),
         ["nullable date time have year on null"] = () => ((DateTime?)null).Should().HaveYear(2020),
         ["nullable date time have year"] = () => ((DateTime?)new DateTime(2020, 5, 6)).Should().HaveYear(2020),
+
+        ["throw exactly on exact type"] = () => Throws.Of(new InvalidOperationException("x")).Should().ThrowExactly<InvalidOperationException>(),
+        ["throw exactly on subtype"] = () => Throws.Of(new ArgumentException("x")).Should().ThrowExactly<Exception>(),
+        ["throw exactly on nothing"] = () => Throws.Nothing().Should().ThrowExactly<InvalidOperationException>(),
+        ["throw exactly async on exact type"] = () =>
+        {
+            Func<Task> act = () => Task.FromException(new InvalidOperationException("x"));
+            act.Should().ThrowExactlyAsync<InvalidOperationException>().GetAwaiter().GetResult();
+        },
+        ["throw exactly async on subtype"] = () =>
+        {
+            Func<Task> act = () => Task.FromException(new ArgumentException("x"));
+            act.Should().ThrowExactlyAsync<Exception>().GetAwaiter().GetResult();
+        },
+        ["throw within async on failing task"] = () =>
+        {
+            Func<Task> act = () => Task.FromException(new InvalidOperationException("x"));
+            act.Should().ThrowWithinAsync<InvalidOperationException>(Tasks.Long).GetAwaiter().GetResult();
+        },
+        ["throw within async on completed task"] = () =>
+        {
+            Func<Task> act = () => Task.CompletedTask;
+            act.Should().ThrowWithinAsync<InvalidOperationException>(Tasks.Long).GetAwaiter().GetResult();
+        },
+        ["throw within async on pending task"] = () =>
+        {
+            Func<Task> act = Tasks.Pending;
+            act.Should().ThrowWithinAsync<InvalidOperationException>(Tasks.Short).GetAwaiter().GetResult();
+        },
+        ["throw within async on wrong type"] = () =>
+        {
+            Func<Task> act = () => Task.FromException(new ArgumentException("x"));
+            act.Should().ThrowWithinAsync<InvalidOperationException>(Tasks.Long).GetAwaiter().GetResult();
+        },
+        ["not throw after on action that does not throw"] = () => Throws.Nothing().Should().NotThrowAfter(Tasks.Short, TimeSpan.FromMilliseconds(5)),
+        ["not throw after on action that keeps throwing"] = () => Throws.Of(new InvalidOperationException("x")).Should().NotThrowAfter(Tasks.Short, TimeSpan.FromMilliseconds(5)),
+        ["where on matching predicate"] = () => Throws.Of(new InvalidOperationException("x")).Should().Throw<InvalidOperationException>().Where(e => e.Message == "x"),
+        ["where on failing predicate"] = () => Throws.Of(new InvalidOperationException("x")).Should().Throw<InvalidOperationException>().Where(e => e.Message == "y"),
+
+        ["task complete within on completed task"] = () => Task.CompletedTask.Should().CompleteWithinAsync(Tasks.Long).GetAwaiter().GetResult(),
+        ["task complete within on pending task"] = () => Tasks.Pending().Should().CompleteWithinAsync(Tasks.Short).GetAwaiter().GetResult(),
+        ["task of int complete within on completed task"] = () => Task.FromResult(1).Should().CompleteWithinAsync(Tasks.Long).GetAwaiter().GetResult(),
+        ["task of int complete within on pending task"] = () => Tasks.PendingInt().Should().CompleteWithinAsync(Tasks.Short).GetAwaiter().GetResult(),
+        ["task not complete within on pending task"] = () => Tasks.Pending().Should().NotCompleteWithinAsync(Tasks.Short).GetAwaiter().GetResult(),
+        ["task not complete within on completed task"] = () => Task.CompletedTask.Should().NotCompleteWithinAsync(Tasks.Long).GetAwaiter().GetResult(),
+
+        ["execution time be less than on quick action"] = () => Throws.Nothing().ExecutionTime().Should().BeLessThan(Tasks.Long),
+        ["execution time be less than on impossible limit"] = () => Throws.Nothing().ExecutionTime().Should().BeLessThan(TimeSpan.FromTicks(-1)),
+        ["execution time be less than or equal to on quick action"] = () => Throws.Nothing().ExecutionTime().Should().BeLessThanOrEqualTo(Tasks.Long),
+        ["execution time be less than or equal to on impossible limit"] = () => Throws.Nothing().ExecutionTime().Should().BeLessThanOrEqualTo(TimeSpan.FromTicks(-1)),
+        ["execution time be greater than on impossible limit"] = () => Throws.Nothing().ExecutionTime().Should().BeGreaterThan(TimeSpan.FromTicks(-1)),
+        ["execution time be greater than on long limit"] = () => Throws.Nothing().ExecutionTime().Should().BeGreaterThan(Tasks.Long),
+        ["execution time be greater than or equal to on impossible limit"] = () => Throws.Nothing().ExecutionTime().Should().BeGreaterThanOrEqualTo(TimeSpan.FromTicks(-1)),
+        ["execution time be greater than or equal to on long limit"] = () => Throws.Nothing().ExecutionTime().Should().BeGreaterThanOrEqualTo(Tasks.Long),
+        ["execution time be close to on wide precision"] = () => Throws.Nothing().ExecutionTime().Should().BeCloseTo(TimeSpan.Zero, Tasks.Long),
+        ["execution time be close to on far expectation"] = () => Throws.Nothing().ExecutionTime().Should().BeCloseTo(TimeSpan.FromHours(1), TimeSpan.FromMilliseconds(1)),
+
+        ["stream be readable on live stream"] = () => Streams.Live().Should().BeReadable(),
+        ["stream be readable on disposed stream"] = () => Streams.Disposed().Should().BeReadable(),
+        ["stream not be readable on disposed stream"] = () => Streams.Disposed().Should().NotBeReadable(),
+        ["stream not be readable on live stream"] = () => Streams.Live().Should().NotBeReadable(),
+        ["stream be writable on live stream"] = () => Streams.Live().Should().BeWritable(),
+        ["stream be writable on read only stream"] = () => Streams.ReadOnly().Should().BeWritable(),
+        ["stream not be writable on read only stream"] = () => Streams.ReadOnly().Should().NotBeWritable(),
+        ["stream not be writable on live stream"] = () => Streams.Live().Should().NotBeWritable(),
+        ["stream be seekable on live stream"] = () => Streams.Live().Should().BeSeekable(),
+        ["stream be seekable on disposed stream"] = () => Streams.Disposed().Should().BeSeekable(),
+        ["stream not be seekable on disposed stream"] = () => Streams.Disposed().Should().NotBeSeekable(),
+        ["stream not be seekable on live stream"] = () => Streams.Live().Should().NotBeSeekable(),
+        ["stream have length on same length"] = () => Streams.Live().Should().HaveLength(3),
+        ["stream have length on other length"] = () => Streams.Live().Should().HaveLength(4),
+        ["stream not have length on other length"] = () => Streams.Live().Should().NotHaveLength(4),
+        ["stream not have length on same length"] = () => Streams.Live().Should().NotHaveLength(3),
+        ["stream have position on same position"] = () => Streams.Live().Should().HavePosition(0),
+        ["stream have position on other position"] = () => Streams.Live().Should().HavePosition(1),
+        ["stream not have position on other position"] = () => Streams.Live().Should().NotHavePosition(1),
+        ["stream not have position on same position"] = () => Streams.Live().Should().NotHavePosition(0),
     };
 
     public static IReadOnlyDictionary<string, Action> Messages { get; } = new Dictionary<string, Action>

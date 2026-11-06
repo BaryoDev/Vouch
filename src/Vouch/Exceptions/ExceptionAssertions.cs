@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace Vouch;
 
 public sealed class ExceptionAssertions<TException> where TException : Exception
@@ -50,6 +52,52 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
     public TException Subject => Which;
 
     public ExceptionAssertions<TException> And => this;
+
+    /// <summary>Requires at least one matched exception to satisfy the predicate.</summary>
+    public ExceptionAssertions<TException> Where(Expression<Func<TException, bool>> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        if (_matches.Count == 0)
+        {
+            return this;
+        }
+
+        var compiled = predicate.Compile();
+        foreach (var match in _matches)
+        {
+            bool matched;
+            try
+            {
+                matched = compiled(match);
+            }
+            catch (Exception ex)
+            {
+                Fail.With($"Expected {_name}'s exception to match {predicate}, but the predicate threw {Formatter.Format(ex.GetType())}: {ex.Message}");
+                return this;
+            }
+
+            if (matched)
+            {
+                return this;
+            }
+        }
+
+        Fail.With($"Expected {_name}'s exception to match {predicate}, but it did not.");
+        return this;
+    }
+
+    public ExceptionAssertions<TException> Where(Expression<Func<TException, bool>> predicate, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return Where(predicate);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
 
     public ExceptionAssertions<TException> WithMessage(string pattern)
     {
