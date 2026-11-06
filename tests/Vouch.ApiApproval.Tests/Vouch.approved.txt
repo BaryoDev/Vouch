@@ -634,8 +634,16 @@ namespace Vouch
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
             where TException : System.Exception { }
     }
-    public sealed class VouchException : System.Exception
+    public class VouchException : System.Exception
     {
         public VouchException(string message) { }
+        protected VouchException(string message, System.Exception? innerException) { }
+    }
+}
+namespace Vouch.Sdk
+{
+    public static class VouchConfiguration
+    {
+        public static System.Func<string, System.Exception> ExceptionFactory { get; set; }
     }
 }
