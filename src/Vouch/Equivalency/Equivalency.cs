@@ -391,7 +391,9 @@ internal sealed class Comparison
             }
 
             // The root pair is compared once, so it is not worth a dictionary.
+            // With path rules the same pair can differ by member path, so it is not memoized.
             var memoize = pathCount > 0
+                && !Options.HasPathRules
                 && !subject.GetType().IsValueType && !expectation.GetType().IsValueType;
             var key = default(PairKey);
             if (memoize)
@@ -481,10 +483,30 @@ internal sealed class Comparison
         for (var i = 0; i < members.Length && !Stop; i++)
         {
             var member = members[i];
-            var counterpart = subjectShape.Find(member.Name);
+            var subjectName = member.Name;
+            if (Options.HasPathRules)
+            {
+                var memberPath = MemberPath(member.Name);
+                if (!Options.IsSelected(memberPath))
+                {
+                    continue;
+                }
+
+                if (Options.Mappings.TryGetValue(memberPath, out var mapped))
+                {
+                    subjectName = mapped;
+                }
+            }
+
+            var counterpart = subjectShape.Find(subjectName);
             if (counterpart is null)
             {
-                Add(Kind.NoMember, null, null, member.Name);
+                if (Options.SkipMissingMembers)
+                {
+                    continue;
+                }
+
+                Add(Kind.NoMember, null, null, subjectName);
                 continue;
             }
 
@@ -503,6 +525,21 @@ internal sealed class Comparison
 
             _path.RemoveRange(pathCount, _path.Count - pathCount);
         }
+    }
+
+    // Dot-joined member names down to this member; index and key steps are left out.
+    private string MemberPath(string name)
+    {
+        var sb = new StringBuilder();
+        foreach (var step in _path)
+        {
+            if (step.Kind == Segment.Member)
+            {
+                sb.Append(step.Name).Append('.');
+            }
+        }
+
+        return sb.Append(name).ToString();
     }
 
     private void CompareSequences(object subject, object expectation)

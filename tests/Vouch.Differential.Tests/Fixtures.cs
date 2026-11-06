@@ -4,6 +4,8 @@ public record Person(string Name, int Age);
 
 public record OtherPerson(string Name, int Age);
 
+public record Titled(string Title, int Age);
+
 public record struct Point(int X, int Y);
 
 public record Node(string Name, string? Note);

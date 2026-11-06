@@ -50,6 +50,268 @@ public class EquivalencyTests
 
     public class Tagged { public Color Color { get; set; } public string? Tag { get; set; } }
 
+    public class OptAddress { public string? City { get; set; } public string? Zip { get; set; } }
+
+    public class OptCustomer { public string? Name { get; set; } public OptAddress? Address { get; set; } }
+
+    public class OptTitled { public int Id { get; set; } public string? Title { get; set; } public int Extra { get; set; } }
+
+    public class OptOrder { public string? Code { get; set; } public List<EqPerson> People { get; set; } = new(); }
+
+    public class OptTitledOrder { public string? Code { get; set; } public List<OptTitled> People { get; set; } = new(); }
+
+    private static OptCustomer Customer(string name, string city, string zip) =>
+        new() { Name = name, Address = new OptAddress { City = city, Zip = zip } };
+
+    private static OptOrder Order(params EqPerson[] people) => new() { Code = "o", People = people.ToList() };
+
+    private const string CustomerHead = "Expected subject to be equivalent to the expected OptCustomer, but:";
+
+    // Excluding
+
+    [Fact]
+    public void Excluding_skips_the_member() =>
+        new EqPerson { Id = 1, Name = "A", Extra = 5 }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "A", Extra = 9 }, o => o.Excluding(x => x.Extra));
+
+    [Fact]
+    public void Excluding_still_reports_other_members()
+    {
+        var subject = new EqPerson { Id = 1, Name = "A", Extra = 5 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "B", Extra = 9 }, o => o.Excluding(x => x.Extra)));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Name was \"A\", expected \"B\".", msg);
+    }
+
+    [Fact]
+    public void Excluding_nested_path_skips_that_member() =>
+        Customer("n", "X", "1").Should().BeEquivalentTo(Customer("n", "Y", "1"), o => o.Excluding(x => x.Address!.City));
+
+    [Fact]
+    public void Excluding_nested_path_keeps_siblings()
+    {
+        var subject = Customer("n", "X", "1");
+        var msg = Message(() => subject.Should().BeEquivalentTo(Customer("n", "Y", "2"), o => o.Excluding(x => x.Address!.City)));
+        Assert.Equal(CustomerHead + "\n  Address.Zip was \"1\", expected \"2\".", msg);
+    }
+
+    [Fact]
+    public void Excluding_a_collection_member_skips_the_whole_collection() =>
+        Order(new EqPerson { Id = 1 }).Should().BeEquivalentTo(Order(new EqPerson { Id = 2 }, new EqPerson { Id = 3 }), o => o.Excluding(x => x.People));
+
+    [Fact]
+    public void Excluding_an_element_member_applies_to_every_element() =>
+        Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2, Name = "B" })
+            .Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "x" }, new EqPerson { Id = 2, Name = "y" }), o => o.WithStrictOrdering().Excluding(x => x.People[0].Name));
+
+    [Fact]
+    public void Excluding_an_element_member_still_reports_other_element_members()
+    {
+        var subject = Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2, Name = "B" });
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "x" }, new EqPerson { Id = 3, Name = "y" }), o => o.WithStrictOrdering().Excluding(x => x.People[0].Name)));
+        Assert.Equal("Expected subject to be equivalent to the expected OptOrder, but:\n  People[1].Id was 2, expected 3.", msg);
+    }
+
+    [Fact]
+    public void Excluding_on_the_element_type_of_a_root_collection() =>
+        new[] { new EqPerson { Id = 1, Name = "A" } }.Should().BeEquivalentTo(new[] { new EqPerson { Id = 1, Name = "B" } }, o => o.Excluding(x => x.Name));
+
+    // Including
+
+    [Fact]
+    public void Including_compares_only_the_included_member() =>
+        new EqPerson { Id = 1, Name = "A", Extra = 5 }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "B", Extra = 9 }, o => o.Including(x => x.Id));
+
+    [Fact]
+    public void Including_fails_on_the_included_member()
+    {
+        var subject = new EqPerson { Id = 1, Name = "A" };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 2, Name = "B" }, o => o.Including(x => x.Id)));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Id was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void Including_two_members_compares_both()
+    {
+        var subject = new EqPerson { Id = 1, Name = "A", Extra = 5 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 2, Name = "B", Extra = 9 }, o => o.Including(x => x.Id).Including(x => x.Name)));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Id was 1, expected 2.\n  Name was \"A\", expected \"B\".", msg);
+    }
+
+    [Fact]
+    public void Including_nested_path_keeps_its_parent_reachable() =>
+        Customer("n", "X", "1").Should().BeEquivalentTo(Customer("m", "X", "2"), o => o.Including(x => x.Address!.City));
+
+    [Fact]
+    public void Including_nested_path_fails_on_that_member_only()
+    {
+        var subject = Customer("n", "X", "1");
+        var msg = Message(() => subject.Should().BeEquivalentTo(Customer("m", "Y", "2"), o => o.Including(x => x.Address!.City)));
+        Assert.Equal(CustomerHead + "\n  Address.City was \"X\", expected \"Y\".", msg);
+    }
+
+    [Fact]
+    public void Including_a_parent_compares_everything_below_it()
+    {
+        var subject = Customer("n", "X", "1");
+        var msg = Message(() => subject.Should().BeEquivalentTo(Customer("m", "Y", "2"), o => o.Including(x => x.Address)));
+        Assert.Equal(CustomerHead + "\n  Address.City was \"X\", expected \"Y\".\n  Address.Zip was \"1\", expected \"2\".", msg);
+    }
+
+    [Fact]
+    public void Including_an_element_member_passes_when_it_matches() =>
+        Order(new EqPerson { Id = 1, Name = "A" }).Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "B" }), o => o.WithStrictOrdering().Including(x => x.People[0].Id));
+
+    [Fact]
+    public void Including_an_element_member_fails_on_that_member()
+    {
+        var subject = Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2 });
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "B" }, new EqPerson { Id = 4 }), o => o.WithStrictOrdering().Including(x => x.People[0].Id)));
+        Assert.Equal("Expected subject to be equivalent to the expected OptOrder, but:\n  People[1].Id was 2, expected 4.", msg);
+    }
+
+    // ExcludingMissingMembers
+
+    [Fact]
+    public void Missing_member_is_reported_by_default_and_skipped_when_asked()
+    {
+        var subject = new { Id = 1 };
+        var expected = new EqPerson { Id = 1, Name = "A" };
+        Assert.Contains("has no member Name", Message(() => subject.Should().BeEquivalentTo(expected)));
+        subject.Should().BeEquivalentTo(expected, o => o.ExcludingMissingMembers());
+    }
+
+    [Fact]
+    public void ExcludingMissingMembers_still_reports_members_that_differ()
+    {
+        var subject = new { Id = 2 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "A" }, o => o.ExcludingMissingMembers()));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Id was 2, expected 1.", msg);
+    }
+
+    [Fact]
+    public void ExcludingMissingMembers_applies_to_nested_objects() =>
+        new { Name = "n", Address = new { City = "X" } }.Should().BeEquivalentTo(Customer("n", "X", "1"), o => o.ExcludingMissingMembers());
+
+    [Fact]
+    public void ExcludingMissingMembers_applies_to_collection_elements() =>
+        new[] { new { Id = 1 } }.Should().BeEquivalentTo(new[] { new EqPerson { Id = 1, Name = "A" } }, o => o.ExcludingMissingMembers());
+
+    [Fact]
+    public void ExcludingMissingMembers_in_a_collection_still_fails_on_differences()
+    {
+        var subject = new[] { new { Id = 1 } };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new[] { new EqPerson { Id = 2, Name = "A" } }, o => o.ExcludingMissingMembers().WithStrictOrdering()));
+        Assert.Contains("[0].Id was 1, expected 2.", msg);
+    }
+
+    // WithMapping
+
+    [Fact]
+    public void WithMapping_compares_against_the_renamed_member() =>
+        new OptTitled { Id = 1, Title = "A", Extra = 0 }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "A" }, o => o.WithMapping(x => x.Name, "Title"));
+
+    [Fact]
+    public void WithMapping_fails_with_the_expectation_path()
+    {
+        var subject = new OptTitled { Id = 1, Title = "A" };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "B" }, o => o.WithMapping(x => x.Name, "Title")));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Name was \"A\", expected \"B\".", msg);
+    }
+
+    [Fact]
+    public void WithMapping_to_a_missing_subject_member_reports_it()
+    {
+        var subject = new OptTitled { Id = 1, Title = "A" };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "A" }, o => o.WithMapping(x => x.Name, "Nope")));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  has no member Nope.", msg);
+    }
+
+    [Fact]
+    public void WithMapping_nested_path_maps_on_the_nested_object() =>
+        new { Name = "n", Address = new { Town = "X", Zip = "1" } }.Should().BeEquivalentTo(Customer("n", "X", "1"), o => o.WithMapping(x => x.Address!.City, "Town"));
+
+    [Fact]
+    public void WithMapping_nested_path_fails_on_the_nested_member()
+    {
+        var subject = new { Name = "n", Address = new { Town = "X", Zip = "1" } };
+        var msg = Message(() => subject.Should().BeEquivalentTo(Customer("n", "Y", "1"), o => o.WithMapping(x => x.Address!.City, "Town")));
+        Assert.Equal(CustomerHead + "\n  Address.City was \"X\", expected \"Y\".", msg);
+    }
+
+    [Fact]
+    public void WithMapping_applies_to_every_collection_element() =>
+        new OptTitledOrder { Code = "o", People = { new OptTitled { Id = 1, Title = "A" }, new OptTitled { Id = 2, Title = "B" } } }
+            .Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2, Name = "B" }), o => o.WithStrictOrdering().WithMapping(x => x.People[0].Name, "Title"));
+
+    [Fact]
+    public void WithMapping_in_a_collection_fails_on_the_mapped_member()
+    {
+        var subject = new OptTitledOrder { Code = "o", People = { new OptTitled { Id = 1, Title = "A" }, new OptTitled { Id = 2, Title = "B" } } };
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2, Name = "Z" }), o => o.WithStrictOrdering().WithMapping(x => x.People[0].Name, "Title")));
+        Assert.Equal("Expected subject to be equivalent to the expected OptOrder, but:\n  People[1].Name was \"B\", expected \"Z\".", msg);
+    }
+
+    // Immutability and bad input
+
+    [Fact]
+    public void Options_calls_on_one_base_do_not_share_state()
+    {
+        EquivalencyOptions<EqPerson>? withoutName = null;
+        EquivalencyOptions<EqPerson>? withoutExtra = null;
+        EquivalencyOptions<EqPerson>? both = null;
+        var nameDiffers = new EqPerson { Id = 1, Name = "A", Extra = 1 };
+        var nameExpected = new EqPerson { Id = 1, Name = "B", Extra = 1 };
+        var extraDiffers = new EqPerson { Id = 1, Name = "A", Extra = 1 };
+        var extraExpected = new EqPerson { Id = 1, Name = "A", Extra = 2 };
+
+        nameDiffers.Should().BeEquivalentTo(nameExpected, o =>
+        {
+            withoutName = o.Excluding(x => x.Name);
+            withoutExtra = o.Excluding(x => x.Extra);
+            both = withoutName.Excluding(x => x.Extra);
+            return withoutName;
+        });
+
+        nameDiffers.Should().BeEquivalentTo(nameExpected, _ => withoutName!);
+        Assert.Throws<VouchException>(() => nameDiffers.Should().BeEquivalentTo(nameExpected, _ => withoutExtra!));
+        extraDiffers.Should().BeEquivalentTo(extraExpected, _ => withoutExtra!);
+        Assert.Throws<VouchException>(() => extraDiffers.Should().BeEquivalentTo(extraExpected, _ => withoutName!));
+        Assert.Throws<VouchException>(() => nameDiffers.Should().BeEquivalentTo(nameExpected, o => o));
+        nameDiffers.Should().BeEquivalentTo(nameExpected, _ => both!);
+        extraDiffers.Should().BeEquivalentTo(extraExpected, _ => both!);
+    }
+
+    [Fact]
+    public void Including_on_one_base_does_not_change_another()
+    {
+        EquivalencyOptions<EqPerson>? onlyId = null;
+        var subject = new EqPerson { Id = 1, Name = "A" };
+        var expected = new EqPerson { Id = 1, Name = "B" };
+        subject.Should().BeEquivalentTo(expected, o => onlyId = o.Including(x => x.Id));
+        Assert.Throws<VouchException>(() => subject.Should().BeEquivalentTo(expected, o => o.Excluding(x => x.Id)));
+        subject.Should().BeEquivalentTo(expected, _ => onlyId!);
+    }
+
+    [Fact]
+    public void Expressions_that_are_not_member_accesses_throw()
+    {
+        var excluding = Assert.Throws<ArgumentException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Excluding(x => x.Id + 1));
+        Assert.StartsWith("Excluding needs a member access such as x => x.Name or x => x.Address.City, but got '", excluding.Message);
+        Assert.Equal("member", excluding.ParamName);
+        Assert.Throws<ArgumentException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Including(x => x.ToString()));
+        Assert.Throws<ArgumentException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithMapping(x => x, "Title"));
+        Assert.Throws<ArgumentException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithMapping(x => x.Name, ""));
+        Assert.Throws<ArgumentNullException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Excluding(null!));
+    }
+
+    [Fact]
+    public void Default_options_carry_no_path_rules()
+    {
+        Assert.False(EquivalencyOptions.Default.HasPathRules);
+        Assert.False(new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithStrictOrdering().State.HasPathRules);
+        Assert.False(new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).ExcludingMissingMembers().State.HasPathRules);
+        Assert.True(new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Excluding(x => x.Id).State.HasPathRules);
+    }
+
     private static string Message(Action act) => Assert.Throws<VouchException>(act).Message;
 
     private static EqNode Chain(int n)

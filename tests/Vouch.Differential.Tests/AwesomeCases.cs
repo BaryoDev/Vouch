@@ -134,6 +134,10 @@ public static class AwesomeCases
 
         ["equivalent record same"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 1)),
         ["equivalent record one member changed"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 2)),
+        ["equivalent excluding changed member"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 2), o => o.Excluding(x => x.Age)),
+        ["equivalent including only unchanged member"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("b", 1), o => o.Including(x => x.Age)),
+        ["equivalent excluding missing members"] = () => new { Name = "a" }.Should().BeEquivalentTo(new Person("a", 1), o => o.ExcludingMissingMembers()),
+        ["equivalent with mapping to renamed member"] = () => new Titled("a", 1).Should().BeEquivalentTo(new Person("a", 1), o => o.WithMapping("Name", "Title")),
         ["equivalent record against anonymous"] = () => new Person("a", 1).Should().BeEquivalentTo(new { Name = "a", Age = 1 }),
         ["equivalent record against anonymous changed"] = () => new Person("a", 1).Should().BeEquivalentTo(new { Name = "a", Age = 2 }),
         ["equivalent record against other record type"] = () => new Person("a", 1).Should().BeEquivalentTo(new OtherPerson("a", 1)),
