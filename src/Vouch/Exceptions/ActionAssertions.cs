@@ -105,11 +105,25 @@ public readonly struct ActionAssertions
 public readonly struct FunctionAssertions<T>
 {
     private readonly ActionAssertions _inner;
+    private readonly Box? _box;
 
     internal FunctionAssertions(Func<T>? subject, string? expression)
     {
         Subject = subject;
-        _inner = new ActionAssertions(subject is null ? null : () => subject(), expression);
+        if (subject is null)
+        {
+            _inner = new ActionAssertions(null, expression);
+        }
+        else
+        {
+            var box = new Box();
+            _box = box;
+            _inner = new ActionAssertions(() =>
+            {
+                box.Value = default!;
+                box.Value = subject();
+            }, expression);
+        }
     }
 
     public Func<T>? Subject { get; }
@@ -117,19 +131,24 @@ public readonly struct FunctionAssertions<T>
     public ExceptionAssertions<TException> Throw<TException>() where TException : Exception
         => _inner.Throw<TException>();
 
-    public AndConstraint<FunctionAssertions<T>> NotThrow()
+    public AndWhichConstraint<FunctionAssertions<T>, T> NotThrow()
     {
         _inner.NotThrow();
-        return new(this);
+        return new(this, _box is null ? default! : _box.Value);
     }
 
     public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
         => _inner.Throw<TException>(because);
 
-    public AndConstraint<FunctionAssertions<T>> NotThrow(string because)
+    public AndWhichConstraint<FunctionAssertions<T>, T> NotThrow(string because)
     {
         _inner.NotThrow(because);
-        return new(this);
+        return new(this, _box is null ? default! : _box.Value);
+    }
+
+    private sealed class Box
+    {
+        public T Value = default!;
     }
 }
 

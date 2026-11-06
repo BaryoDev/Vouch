@@ -110,6 +110,62 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    public static NumericAssertions<char> Should(this char subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<char> Should(this char? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NumericAssertions<sbyte> Should(this sbyte subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<sbyte> Should(this sbyte? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NumericAssertions<ushort> Should(this ushort subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<ushort> Should(this ushort? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NumericAssertions<uint> Should(this uint subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<uint> Should(this uint? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NumericAssertions<ulong> Should(this ulong subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<ulong> Should(this ulong? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static GuidAssertions Should(this Guid subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableGuidAssertions Should(this Guid? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static TimeOnlyAssertions Should(this TimeOnly subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableTimeOnlyAssertions Should(this TimeOnly? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
     public static GenericCollectionAssertions<T> Should<T>(this IEnumerable<T>? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);

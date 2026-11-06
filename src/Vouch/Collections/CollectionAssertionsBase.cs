@@ -351,6 +351,47 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return new((TSelf)this, default!);
     }
 
+    public AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element)
+    {
+        if (IsNull)
+        {
+            ReportNull($"to have element {Formatter.Format(element)} at index {index}");
+            return new((TSelf)this, default!);
+        }
+
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
+        if (index < 0 || index >= items.Count)
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(element)} at index {index}, but found no element at that index.{HasTail(items)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (!EqualityComparer<T>.Default.Equals(items[index], element))
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(element)} at index {index}, but found {Formatter.Format(items[index])}.");
+            return new((TSelf)this, default!);
+        }
+
+        return new((TSelf)this, items[index]);
+    }
+
+    public AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveElementAt(index, element);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
     public AndConstraint<TSelf> NotContain(T unexpected)
     {
         if (IsNull)

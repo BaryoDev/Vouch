@@ -27,7 +27,7 @@ public class ValueAssertionsTests
             Assert.Throws<VouchException>(() => status.Should().Be(Status.Active)).Message);
     }
 
-    [Fact] public void Guid_goes_to_ValueAssertions() => Assert.IsType<ValueAssertions<Guid>>(Guid.Empty.Should());
+    [Fact] public void Guid_goes_to_GuidAssertions() => Assert.IsType<GuidAssertions>(Guid.Empty.Should());
 
     [Fact] public void Guid_Be_passes() { var id = Guid.NewGuid(); id.Should().Be(id); }
 

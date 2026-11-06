@@ -49,6 +49,7 @@ internal static class Formatter
             case DateTime dt: sb.Append(dt.ToString("o", Invariant)); return;
             case DateTimeOffset dto: sb.Append(dto.ToString("o", Invariant)); return;
             case DateOnly dateOnly: sb.Append(dateOnly.ToString("yyyy-MM-dd", Invariant)); return;
+            case TimeOnly timeOnly: sb.Append(timeOnly.ToString("o", Invariant)); return;
             case TimeSpan ts: sb.Append(ts.ToString("c", Invariant)); return;
             case Guid g: sb.Append(g.ToString("D", Invariant)); return;
             case Enum e: sb.Append(TypeName(e.GetType())).Append('.').Append(e.ToString()); return;

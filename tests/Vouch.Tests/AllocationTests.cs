@@ -20,6 +20,22 @@ public class AllocationTests
 
     [Fact] public void Guid_Be() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().Be(id)); }
 
+    [Fact] public void Char_Be() { var c = 'a'; AssertNoAllocation(() => c.Should().Be('a')); }
+
+    [Fact] public void TimeOnly_BeAfter() { var t = new TimeOnly(11, 0); var earlier = new TimeOnly(10, 0); AssertNoAllocation(() => t.Should().BeAfter(earlier)); }
+
+    [Fact] public void Enum_HaveValue() { var s = Signed.Negative; var w = Wide.Huge; AssertNoAllocation(() => s.Should().HaveValue(-5)); AssertNoAllocation(() => w.Should().HaveValue(ulong.MaxValue)); }
+
+    [Fact] public void Enum_HaveSameValueAs() { var s = Status.Draft; AssertNoAllocation(() => s.Should().HaveSameValueAs(Mood.Draft)); }
+
+    [Fact] public void Enum_HaveSameNameAs() { var s = Status.Draft; AssertNoAllocation(() => s.Should().HaveSameNameAs(Mood.Draft)); }
+
+    [Fact] public void Enum_BeDefined() { var s = Status.Closed; AssertNoAllocation(() => s.Should().BeDefined()); }
+
+    [Fact] public void Enum_HaveFlag() { var p = Perm.Read | Perm.Write; AssertNoAllocation(() => p.Should().HaveFlag(Perm.Read)); }
+
+    [Fact] public void TimeSpan_BePositive() { var t = TimeSpan.FromSeconds(1); AssertNoAllocation(() => t.Should().BePositive()); }
+
     [Fact] public void Enum_Be() { var s = Status.Active; AssertNoAllocation(() => s.Should().Be(Status.Active)); }
 
     [Fact] public void Bool_BeTrue() { var b = true; AssertNoAllocation(() => b.Should().BeTrue()); }
