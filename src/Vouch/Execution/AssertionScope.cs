@@ -39,7 +39,7 @@ public sealed class AssertionScope : IDisposable
             }
         }
 
-        throw failure;
+        Fail.Throw(failure.Message);
     }
 
     /// <summary>Returns the collected failure messages and clears them.</summary>
@@ -82,6 +82,6 @@ public sealed class AssertionScope : IDisposable
             return;
         }
 
-        throw new VouchException(string.Join("\n\n", messages));
+        Fail.Throw(string.Join("\n\n", messages));
     }
 }

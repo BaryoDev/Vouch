@@ -2,6 +2,11 @@ using Xunit;
 
 namespace Vouch.Tests;
 
+// Measured alone: other tests running at the same time can add to this thread's byte count.
+[CollectionDefinition("Allocation", DisableParallelization = true)]
+public sealed class AllocationCollection;
+
+[Collection("Allocation")]
 public class AllocationTests
 {
     private const int Calls = 1000;
