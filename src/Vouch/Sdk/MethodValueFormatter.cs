@@ -14,7 +14,8 @@ internal sealed class MethodValueFormatter(MethodInfo method, Type valueType) : 
         }
         catch (TargetInvocationException ex) when (ex.InnerException is not null)
         {
-            throw ex.InnerException;
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+            throw;
         }
     }
 
@@ -26,19 +27,33 @@ internal sealed class MethodValueFormatter(MethodInfo method, Type valueType) : 
         {
             types = assembly.GetExportedTypes();
         }
+        catch (NotSupportedException)
+        {
+            return found;
+        }
         catch (ReflectionTypeLoadException ex)
         {
             types = ex.Types.Where(t => t is not null && t.IsVisible).ToArray()!;
         }
 
-        foreach (var type in types)
+        foreach (var type in types.OrderBy(t => t.FullName, StringComparer.Ordinal))
         {
             if (type.IsGenericTypeDefinition)
             {
                 continue;
             }
 
-            foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly))
+            MethodInfo[] methods;
+            try
+            {
+                methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly);
+            }
+            catch (Exception ex) when (ex is TypeLoadException or IOException or NotSupportedException or ReflectionTypeLoadException)
+            {
+                continue;
+            }
+
+            foreach (var method in methods.OrderBy(m => m.Name, StringComparer.Ordinal))
             {
                 if (!method.IsDefined(typeof(ValueFormatterAttribute), false)
                     || method.IsGenericMethodDefinition

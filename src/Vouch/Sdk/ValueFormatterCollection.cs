@@ -2,7 +2,8 @@ namespace Vouch.Sdk;
 
 /// <summary>
 /// The registered <see cref="IValueFormatter"/>s. Copy on write, so it is safe to change while tests run in parallel.
-/// The most recently added formatter is tried first, before the built-in rules.
+/// The most recently added formatter is tried first, before the built-in rules, so a formatter for object
+/// or an interface handles everything it accepts.
 /// </summary>
 public sealed class ValueFormatterCollection
 {
@@ -24,17 +25,26 @@ public sealed class ValueFormatterCollection
         ArgumentNullException.ThrowIfNull(formatter);
         lock (_gate)
         {
-            var old = _items;
-            var next = new IValueFormatter[old.Length + 1];
-            next[0] = formatter;
-            Array.Copy(old, 0, next, 1, old.Length);
-            Volatile.Write(ref _items, next);
+            AddUnlocked(formatter);
         }
+    }
+
+    internal object Gate => _gate;
+
+    // The caller must hold the gate.
+    internal void AddUnlocked(IValueFormatter formatter)
+    {
+        var old = _items;
+        var next = new IValueFormatter[old.Length + 1];
+        next[0] = formatter;
+        Array.Copy(old, 0, next, 1, old.Length);
+        Volatile.Write(ref _items, next);
     }
 
     /// <summary>Removes a formatter. Returns false when it was not registered.</summary>
     public bool Remove(IValueFormatter formatter)
     {
+        ArgumentNullException.ThrowIfNull(formatter);
         lock (_gate)
         {
             var index = Array.IndexOf(_items, formatter);
@@ -52,7 +62,11 @@ public sealed class ValueFormatterCollection
     }
 
     /// <summary>True when the formatter is registered.</summary>
-    public bool Contains(IValueFormatter formatter) => Array.IndexOf(Snapshot, formatter) >= 0;
+    public bool Contains(IValueFormatter formatter)
+    {
+        ArgumentNullException.ThrowIfNull(formatter);
+        return Array.IndexOf(Snapshot, formatter) >= 0;
+    }
 
     /// <summary>Removes every registered formatter.</summary>
     public void Clear()

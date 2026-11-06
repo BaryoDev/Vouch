@@ -9,9 +9,9 @@ namespace Vouch;
 
 internal static class Formatter
 {
-    private const int HardDepthLimit = 100;
+    private const int HardDepthLimit = FormattingOptions.HardMaxDepth;
 
-    public static int MaxDepth => VouchConfiguration.Formatting.MaxDepth;
+    public static int MaxDepth => Math.Min(VouchConfiguration.Formatting.MaxDepth, HardDepthLimit);
     public static int MaxItems => VouchConfiguration.Formatting.MaxItems;
     public const int MaxStringLength = 200;
 
@@ -25,7 +25,7 @@ internal static class Formatter
         var sb = new StringBuilder();
         try
         {
-            Write(sb, value, 0, new HashSet<object>(ReferenceEqualityComparer.Instance));
+            Write(sb, value, 0, new FormatState());
         }
         catch (Exception ex)
         {
@@ -35,8 +35,18 @@ internal static class Formatter
         return LimitLines(sb.ToString());
     }
 
-    internal static void WriteNested(StringBuilder sb, object? value, int depth, HashSet<object> path) =>
-        Write(sb, value, depth, path);
+    internal static void WriteNested(StringBuilder sb, object? value, int depth, FormatState state) =>
+        Write(sb, value, depth, state);
+
+    /// <summary>Per top-level Format call: cycle path, values with a running custom formatter, and a call budget.</summary>
+    internal sealed class FormatState
+    {
+        private const int CustomCallBudget = 10_000;
+
+        public HashSet<object> Path { get; } = new(ReferenceEqualityComparer.Instance);
+        public HashSet<object> Active { get; } = new(ReferenceEqualityComparer.Instance);
+        public int Budget = CustomCallBudget;
+    }
 
     private static string LimitLines(string text)
     {
@@ -46,45 +56,60 @@ internal static class Formatter
             return text;
         }
 
-        var lines = 1;
+        var breaks = 0;
+        foreach (var ch in text)
+        {
+            if (ch == '\n')
+            {
+                breaks++;
+            }
+        }
+
+        // A trailing newline ends the last line, it does not start another one. "\r\n" counts once.
+        var total = text.EndsWith('\n') ? breaks : breaks + 1;
+        if (total <= max)
+        {
+            return text;
+        }
+
+        var seen = 0;
         for (var i = 0; i < text.Length; i++)
         {
-            if (text[i] != '\n')
+            if (text[i] == '\n' && ++seen == max)
             {
-                continue;
+                var cut = i > 0 && text[i - 1] == '\r' ? i - 1 : i;
+                return text.Substring(0, cut) + "\n... (" + (total - max) + " more lines)";
             }
-
-            if (lines == max)
-            {
-                var rest = 1;
-                for (var j = i + 1; j < text.Length; j++)
-                {
-                    if (text[j] == '\n')
-                    {
-                        rest++;
-                    }
-                }
-
-                return text.Substring(0, i) + "\n... (" + rest + " more lines)";
-            }
-
-            lines++;
         }
 
         return text;
     }
 
-    private static bool TryWriteCustom(StringBuilder sb, object? value, int depth, HashSet<object> path)
+    private static void AppendCapped(StringBuilder sb, string text)
+    {
+        if (text.Length > MaxStringLength)
+        {
+            var cut = CutLength(text);
+            sb.Append(text, 0, cut).Append("... (").Append(text.Length - cut).Append(" more chars)");
+        }
+        else
+        {
+            sb.Append(text);
+        }
+    }
+
+    private static bool TryWriteCustom(StringBuilder sb, object? value, int depth, FormatState state)
     {
         var formatters = VouchConfiguration.Formatters.Snapshot;
-        if (formatters.Length == 0 || depth >= HardDepthLimit)
+        if (formatters.Length == 0 || depth > MaxDepth || state.Budget <= 0)
         {
             return false;
         }
 
         // A formatter that formats its own value again must not recurse forever: the second visit skips custom formatters.
+        // This set is separate from the cycle path, so the built-in rules do not mistake it for a real cycle.
         var tracked = value is not null && !value.GetType().IsValueType;
-        if (tracked && !path.Add(value!))
+        if (tracked && !state.Active.Add(value!))
         {
             return false;
         }
@@ -93,14 +118,22 @@ internal static class Formatter
         {
             foreach (var formatter in formatters)
             {
-                if (!formatter.CanHandle(value))
+                try
+                {
+                    if (!formatter.CanHandle(value))
+                    {
+                        continue;
+                    }
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
                     continue;
                 }
 
+                state.Budget--;
                 try
                 {
-                    sb.Append(formatter.Format(value, new FormattingContext(depth, path)));
+                    AppendCapped(sb, formatter.Format(value, new FormattingContext(depth, state)) ?? "null");
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
@@ -116,14 +149,14 @@ internal static class Formatter
         {
             if (tracked)
             {
-                path.Remove(value!);
+                state.Active.Remove(value!);
             }
         }
     }
 
-    private static void Write(StringBuilder sb, object? value, int depth, HashSet<object> path)
+    private static void Write(StringBuilder sb, object? value, int depth, FormatState state)
     {
-        if (TryWriteCustom(sb, value, depth, path))
+        if (TryWriteCustom(sb, value, depth, state))
         {
             return;
         }
@@ -152,7 +185,7 @@ internal static class Formatter
 
         var type = value.GetType();
         var isReference = !type.IsValueType;
-        if (isReference && !path.Add(value))
+        if (isReference && !state.Path.Add(value))
         {
             sb.Append("<cycle ").Append(TypeName(type)).Append('>');
             return;
@@ -162,19 +195,19 @@ internal static class Formatter
         {
             if (value is IDictionary dictionary)
             {
-                WriteDictionary(sb, dictionary, depth, path);
+                WriteDictionary(sb, dictionary, depth, state);
             }
             else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
             {
-                WriteKeyValuePair(sb, value, type, depth, path);
+                WriteKeyValuePair(sb, value, type, depth, state);
             }
             else if (value is IEnumerable enumerable)
             {
-                WriteSequence(sb, enumerable, depth, path);
+                WriteSequence(sb, enumerable, depth, state);
             }
             else if (SafeMembers(type) is { } safe)
             {
-                WriteObject(sb, value, type, depth, path, safe);
+                WriteObject(sb, value, type, depth, state, safe);
             }
             else if (!IsRecord(type) && !IsAnonymous(type) && OverridesToString(type))
             {
@@ -182,14 +215,14 @@ internal static class Formatter
             }
             else
             {
-                WriteObject(sb, value, type, depth, path);
+                WriteObject(sb, value, type, depth, state);
             }
         }
         finally
         {
             if (isReference)
             {
-                path.Remove(value);
+                state.Path.Remove(value);
             }
         }
     }
@@ -242,7 +275,7 @@ internal static class Formatter
         return sb?.ToString() ?? s;
     }
 
-    private static void WriteSequence(StringBuilder sb, IEnumerable sequence, int depth, HashSet<object> path)
+    private static void WriteSequence(StringBuilder sb, IEnumerable sequence, int depth, FormatState state)
     {
         if (depth >= MaxDepth)
         {
@@ -264,7 +297,7 @@ internal static class Formatter
                         sb.Append(", ");
                     }
 
-                    Write(sb, enumerator.Current, depth + 1, path);
+                    Write(sb, enumerator.Current, depth + 1, state);
                     count++;
                 }
 
@@ -283,7 +316,7 @@ internal static class Formatter
         sb.Append(']');
     }
 
-    private static void WriteDictionary(StringBuilder sb, IDictionary dictionary, int depth, HashSet<object> path)
+    private static void WriteDictionary(StringBuilder sb, IDictionary dictionary, int depth, FormatState state)
     {
         if (depth >= MaxDepth)
         {
@@ -306,9 +339,9 @@ internal static class Formatter
                     }
 
                     sb.Append('[');
-                    Write(sb, enumerator.Key, depth + 1, path);
+                    Write(sb, enumerator.Key, depth + 1, state);
                     sb.Append("] = ");
-                    Write(sb, enumerator.Value, depth + 1, path);
+                    Write(sb, enumerator.Value, depth + 1, state);
                     count++;
                 }
 
@@ -327,12 +360,12 @@ internal static class Formatter
         sb.Append('}');
     }
 
-    private static void WriteKeyValuePair(StringBuilder sb, object pair, Type type, int depth, HashSet<object> path)
+    private static void WriteKeyValuePair(StringBuilder sb, object pair, Type type, int depth, FormatState state)
     {
         sb.Append('[');
-        Write(sb, type.GetProperty("Key")!.GetValue(pair), depth + 1, path);
+        Write(sb, type.GetProperty("Key")!.GetValue(pair), depth + 1, state);
         sb.Append("] = ");
-        Write(sb, type.GetProperty("Value")!.GetValue(pair), depth + 1, path);
+        Write(sb, type.GetProperty("Value")!.GetValue(pair), depth + 1, state);
     }
 
     private static void WriteRemainder(StringBuilder sb, IEnumerator enumerator, object source, int shown)
@@ -401,7 +434,7 @@ internal static class Formatter
         }
     }
 
-    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, HashSet<object> path, MemberGetter[]? only = null)
+    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, FormatState state, MemberGetter[]? only = null)
     {
         var anonymous = IsAnonymous(type);
         if (!anonymous)
@@ -443,13 +476,13 @@ internal static class Formatter
                 continue;
             }
 
-            if (only is not null && memberValue is Enum state)
+            if (only is not null && memberValue is Enum enumValue)
             {
-                sb.Append(state.ToString());
+                sb.Append(enumValue.ToString());
                 continue;
             }
 
-            Write(sb, memberValue, depth + 1, path);
+            Write(sb, memberValue, depth + 1, state);
         }
 
         sb.Append(" }");
