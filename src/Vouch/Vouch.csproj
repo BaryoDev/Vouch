@@ -5,10 +5,6 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <IsTrimmable>true</IsTrimmable>
-    <IsAotCompatible>true</IsAotCompatible>
-    <!-- Existing reflection in Formatter, MemberCache and Equivalency; still reported as warnings, not errors. -->
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL2070;IL2075</WarningsNotAsErrors>
     <PackageId>Vouch</PackageId>
     <Description>Fluent assertions for .NET with no dependencies. The .Should() surface of FluentAssertions, with failure messages built only when an assertion fails.</Description>
     <PackageTags>assertions testing fluentassertions should</PackageTags>
