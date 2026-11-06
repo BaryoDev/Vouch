@@ -88,10 +88,10 @@ internal static class Equivalency
     public static bool IsDictionary(object value) =>
         MemberCache.ShapeOf(value.GetType()).Kind == TypeKind.Dictionary;
 
-    public static EquivalencyOptions Options(Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public static EquivalencyOptions Options<TExpectation>(Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
-        return EquivalencyOptions.Resolve(configure);
+        return EquivalencyOptions<TExpectation>.Resolve(configure);
     }
 
     private static string Message(string name, Type expectedType, List<Difference> differences, int total)

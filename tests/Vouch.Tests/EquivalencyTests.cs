@@ -195,7 +195,7 @@ public class EquivalencyTests
     public void Configure_null_throws_up_front()
     {
         Assert.Throws<ArgumentNullException>(() => 1.Should().BeEquivalentTo(1, null!));
-        Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().BeEquivalentTo(new[] { 1 }, (Func<EquivalencyOptions, EquivalencyOptions>)null!));
+        Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().BeEquivalentTo(new[] { 1 }, (Func<EquivalencyOptions<int>, EquivalencyOptions<int>>)null!));
         Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().BeEquivalentTo((IEnumerable<int>)null!));
         Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().BeEquivalentTo((int[])null!));
     }
@@ -641,8 +641,36 @@ public class EquivalencyTests
     [Fact]
     public void Array_with_configure_uses_the_instance_overload()
     {
-        Func<int[], Func<EquivalencyOptions, EquivalencyOptions>, AndConstraint<GenericCollectionAssertions<int>>> f = new[] { 1 }.Should().BeEquivalentTo;
+        Func<int[], Func<EquivalencyOptions<int>, EquivalencyOptions<int>>, AndConstraint<GenericCollectionAssertions<int>>> f = new[] { 1 }.Should().BeEquivalentTo;
         f(new[] { 1 }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Strict_ordering_callback_infers_for_object_list_array_and_anonymous_expectations()
+    {
+        var point = new Point(1, 2);
+        point.Should().BeEquivalentTo(new Point(1, 2), o => o.WithStrictOrdering());
+        var list = new List<int> { 1, 2 };
+        list.Should().BeEquivalentTo(new List<int> { 1, 2 }, o => o.WithStrictOrdering());
+        Assert.Throws<VouchException>(() => list.Should().BeEquivalentTo(new List<int> { 2, 1 }, o => o.WithStrictOrdering()));
+        var array = new[] { 1, 2 };
+        array.Should().BeEquivalentTo(new[] { 1, 2 }, o => o.WithStrictOrdering());
+        Assert.Throws<VouchException>(() => array.Should().BeEquivalentTo(new[] { 2, 1 }, o => o.WithStrictOrdering()));
+        var anon = new { A = 1, B = new[] { 1, 2 } };
+        anon.Should().BeEquivalentTo(new { A = 1, B = new[] { 1, 2 } }, o => o.WithStrictOrdering());
+    }
+
+    [Fact]
+    public void Options_callbacks_on_the_same_base_do_not_share_state()
+    {
+        var baseOptions = new EquivalencyOptions<int>(EquivalencyOptions.Default);
+        var strict = baseOptions.WithStrictOrdering();
+        var other = baseOptions.WithStrictOrdering();
+        Assert.NotSame(baseOptions, strict);
+        Assert.NotSame(strict, other);
+        Assert.False(baseOptions.State.StrictOrdering);
+        Assert.True(strict.State.StrictOrdering);
+        Assert.False(EquivalencyOptions.Default.StrictOrdering);
     }
 
     private static IEnumerable<int> Endless() { var i = 0; while (true) { yield return i++; } }

@@ -70,9 +70,9 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> BeEmpty() { }
         public Vouch.AndConstraint<TSelf> BeEmpty(string because) { }
         public Vouch.AndConstraint<TSelf> BeEquivalentTo(params T[] expectation) { }
-        public Vouch.AndConstraint<TSelf> BeEquivalentTo(T[] expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<TSelf> BeEquivalentTo(T[] expectation, System.Func<Vouch.EquivalencyOptions<T>, Vouch.EquivalencyOptions<T>> configure) { }
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation) { }
-        public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, string because) { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder() { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
@@ -141,7 +141,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeBefore(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> NotBe(System.DateOnly unexpected) { }
@@ -154,7 +154,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeBefore(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotBe(System.DateTime unexpected) { }
@@ -167,7 +167,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
@@ -181,9 +181,9 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected) { }
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because) { }
     }
-    public sealed class EquivalencyOptions
+    public sealed class EquivalencyOptions<TExpectation>
     {
-        public Vouch.EquivalencyOptions WithStrictOrdering() { }
+        public Vouch.EquivalencyOptions<TExpectation> WithStrictOrdering() { }
     }
     public sealed class ExceptionAssertions<TException>
         where TException : System.Exception
@@ -244,7 +244,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeBefore(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
@@ -259,7 +259,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeBefore(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
@@ -274,7 +274,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
@@ -294,7 +294,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThanOrEqualTo(T expected) { }
@@ -316,7 +316,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> NotBe(T unexpected) { }
@@ -336,7 +336,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThan(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThan(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected) { }
@@ -361,7 +361,7 @@ namespace Vouch
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, T> BeAssignableTo<T>() { }
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, T> BeAssignableTo<T>(string because) { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull(string because) { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeOfType(System.Type expectedType) { }
@@ -471,7 +471,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions, Vouch.EquivalencyOptions> configure) { }
+        public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected, string because) { }
