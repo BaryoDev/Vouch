@@ -7,20 +7,21 @@ namespace Vouch.Sdk;
 /// </summary>
 public static class Assertion
 {
-    /// <summary>Reports a failed assertion with the given message.</summary>
-    public static void Fail(string message)
-    {
-        ArgumentNullException.ThrowIfNull(message);
-        Vouch.Fail.With(message);
-    }
-
     /// <summary>
-    /// Reports a failed assertion. A non-blank <paramref name="because"/> is added to the message
-    /// as "Because ...", the same way built-in assertions do it.
+    /// Reports a failed assertion. When <paramref name="because"/> is null or whitespace, the failure is
+    /// reported directly and the reason is left alone, so an outer reason that is already set still applies.
+    /// When it is given, the current reason is saved, replaced by <paramref name="because"/> (added to the
+    /// message as "Because ..."), the failure is reported, and the saved reason is restored in a finally.
     /// </summary>
-    public static void Fail(string message, string? because)
+    public static void Fail(string message, string? because = null)
     {
         ArgumentNullException.ThrowIfNull(message);
+        if (string.IsNullOrWhiteSpace(because))
+        {
+            Vouch.Fail.With(message);
+            return;
+        }
+
         var previous = Reason.Current;
         Reason.Set(because);
         try

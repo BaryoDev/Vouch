@@ -139,6 +139,80 @@ public class CustomAssertionTests
         var ex = Assert.Throws<VouchException>(() => Assertion.Fail("custom failure"));
         Assert.Equal("custom failure", ex.Message);
     }
+
+    [Fact]
+    public void Fail_with_because_restores_the_outer_reason_under_a_scope()
+    {
+        Reason.Set("outer");
+        try
+        {
+            Assert.Throws<VouchException>(() =>
+            {
+                using var scope = new AssertionScope();
+                Assertion.Fail("m", "inner");
+            });
+            Assert.Equal("outer", Reason.Current);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    [Fact]
+    public void Fail_with_because_restores_the_outer_reason_when_thrown()
+    {
+        Reason.Set("outer");
+        try
+        {
+            Assert.Throws<VouchException>(() => Assertion.Fail("m", "inner"));
+            Assert.Equal("outer", Reason.Current);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    [Fact]
+    public void Because_shows_in_an_AllSatisfy_item_message()
+    {
+        var items = new object[] { 3 };
+        var ex = Assert.Throws<VouchException>(() =>
+            items.Should().AllSatisfy(x => x.Should().BeEven("r")));
+        Assert.Contains("Because r", ex.Message);
+    }
+
+    [Fact]
+    public void Because_shows_in_a_scope_message()
+    {
+        object count = 3;
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            count.Should().BeEven("why");
+        });
+        Assert.Contains("Because why.", ex.Message);
+    }
+
+    [Fact]
+    public void Expression_is_the_call_site_text_for_built_in_types()
+    {
+        var text = "a";
+        var numbers = new[] { 1 };
+        var map = new Dictionary<string, int> { ["a"] = 1 };
+        var number = 5;
+        var flag = true;
+        Func<int> f = () => 1;
+
+        Assert.Equal("text", text.Should().Expression);
+        Assert.Equal("numbers", numbers.Should().Expression);
+        Assert.Equal("new[] {1}", new[] { 1 }.Should().Expression);
+        Assert.Equal("map", map.Should().Expression);
+        Assert.Equal("number", number.Should().Expression);
+        Assert.Equal("flag", flag.Should().Expression);
+        Assert.Equal("f", f.Should().Expression);
+    }
 }
 
 [Collection("ExceptionFactory")]

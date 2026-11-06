@@ -74,13 +74,14 @@ Messages are built only when an assertion fails. A passing assertion on a value 
 
 ## Custom assertions
 
-Assertion types are readonly structs, so you extend Vouch with extension methods, not by inheriting. Report a failure with `Assertion.Fail(message, because)` from `Vouch.Sdk`. It works like a built-in failure: inside an `AssertionScope` it is collected, otherwise it is thrown through `VouchConfiguration.ExceptionFactory`, and the `because` text is added to the message. `Assertion.Name(expression)` gives the subject name, or "value" when there is none.
+Assertion types are readonly structs, so you extend Vouch with extension methods, not by inheriting. Report a failure with `Assertion.Fail(message, because)` from `Vouch.Sdk`; `because` is optional. It works like a built-in failure: inside an `AssertionScope` it is collected, otherwise it is thrown through `VouchConfiguration.ExceptionFactory`, and a non-blank `because` text is added to the message. Without one, an outer reason that is already set still applies. `Assertion.Name(expression)` gives the subject name, or "value" when there is none.
 
-Every assertion type has an `Expression` property with the text captured from the call site.
+Every assertion type has an `Expression` property with the text captured from the call site. `ExceptionAssertions` is the one exception: it has no `Expression`, and its message name comes from the action under test.
 
 An extension method on an existing assertion type:
 
 ```csharp
+using Vouch;
 using Vouch.Sdk;
 
 public static class MyAssertions
@@ -104,7 +105,11 @@ A type of your own needs its own `Should()` and a readonly struct. Take the expr
 
 ```csharp
 using System.Runtime.CompilerServices;
+using Vouch;
 using Vouch.Sdk;
+
+// Placeholder type for this example.
+public sealed record Money(decimal Amount, string Currency);
 
 public static class MoneyExtensions
 {
