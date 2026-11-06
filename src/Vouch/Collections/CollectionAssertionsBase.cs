@@ -808,7 +808,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
                 {
                     assertion(items[i]);
                 }
-                catch (VouchException ex)
+                catch (Exception ex) when (Fail.IsFailure(ex))
                 {
                     (failures ??= []).Add((i, ex.Message));
                 }

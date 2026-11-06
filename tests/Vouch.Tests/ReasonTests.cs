@@ -310,6 +310,15 @@ public class ReasonTests
     }
 
     [Fact]
+    public void An_interpolated_reason_appears_in_the_message()
+    {
+        var id = 42;
+        var n = 3;
+        var ex = Assert.Throws<VouchException>(() => n.Should().Be(5, $"order {id} is special"));
+        Assert.EndsWith("Because order 42 is special.", ex.Message);
+    }
+
+    [Fact]
     public void A_second_string_on_a_string_collection_is_read_as_the_reason()
     {
         var xs = new List<string> { "a" };

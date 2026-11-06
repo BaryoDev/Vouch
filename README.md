@@ -104,6 +104,20 @@ It does not exist on the date assertions, `BeApproximately`, `BeSameAs`, `NotBeS
 
 `Contain(T, because)` and `NotContain(T, because)` exist and win over the `params` form, as in FluentAssertions. On a collection of strings, `Contain("a", "b")` and `NotContain("a", "b")` read the second string as the reason, not as a second item. To check several items, pass a collection: `Contain(["a", "b"])`.
 
+### Reason arguments
+
+`because` is a single string. There is no `becauseArgs` and no format-string overload. To put values in the reason, use string interpolation:
+
+```csharp
+order.Total.Should().Be(100, $"order {order.Id} has no discount");
+```
+
+The interpolated string is built before the call, so it costs an allocation even when the assertion passes. Keep it for cases where the extra context is worth it.
+
+### Custom exception type
+
+A failing assertion throws `VouchException`. The class is not sealed. Adapter code can change what is thrown by setting `Vouch.Sdk.VouchConfiguration.ExceptionFactory`, a `Func<string, Exception>` that receives the final failure message. Setting it to null restores the default. The setting is global, and it is read only when an assertion fails.
+
 ### Where Vouch differs on purpose
 
 Vouch was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAssertions 8) with a differential test project that runs edge inputs through both libraries and compares pass and fail. It was also tried on a large existing FluentAssertions test suite, switched over by changing the package and the `using`. Where Vouch differs from FluentAssertions:
