@@ -221,9 +221,9 @@ Targets: 0 bytes on passing value type, string and bool assertions, and `BeEquiv
 |---|---:|---:|
 | Passing `int Be` | 0.58 ns, 0 B | 131.6 ns, 1,072 B |
 | Passing `string Be` | 2.83 ns, 0 B | 503.4 ns, 3,120 B |
-| `BeEquivalentTo`, one record | 796 ns, 960 B | 29.2 us, 106,426 B |
-| `BeEquivalentTo`, 100 records reordered | 142.5 us, 89 KB | 1,085 ms, 1.76 GB |
-| `BeEquivalentTo`, 1,000 rows reordered | 49.0 ms, 24 MB | 5,667 ms, 10.5 GB |
+| `BeEquivalentTo`, one record | 865 ns, 1.56 KB | 29.2 us, 106,426 B |
+| `BeEquivalentTo`, 100 records reordered | 142.6 us, 161 KB | 1,085 ms, 1.76 GB |
+| `BeEquivalentTo`, 1,000 rows reordered | 54.2 ms, 23.7 MB | 5,667 ms, 10.5 GB |
 
 Full tables in [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
 
