@@ -13,10 +13,11 @@ public class AllocationTests
 
     private static void AssertNoAllocation(Action call)
     {
-        call();
+        // Warm up past tiered compilation, so the runtime's one-off work happens before the count.
+        for (var i = 0; i < Calls; i++) call();
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < Calls; i++) call();
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        AssertNoExtra(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
     private sealed class NoopFormatter : Vouch.Sdk.IValueFormatter
