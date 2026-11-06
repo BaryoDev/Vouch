@@ -13,8 +13,8 @@ internal static class Wildcard
         }
     }
 
-    public static bool MatchesString(string text, string pattern)
-        => IsMatch(text, pattern) || (text.EndsWith('\n') && IsMatch(text[..^1], pattern));
+    public static bool MatchesString(string text, string pattern, bool ignoreCase = false)
+        => IsMatch(text, pattern, ignoreCase) || (text.EndsWith('\n') && IsMatch(text[..^1], pattern, ignoreCase));
 
     public static bool MatchesMessage(string message, string pattern)
         => IsMatch(WithoutNewlines(message), WithoutNewlines(pattern), ignoreCase: true);
