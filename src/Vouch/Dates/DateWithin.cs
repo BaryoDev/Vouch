@@ -154,5 +154,15 @@ internal static class DatePart
         }
     }
 
+    public static TimeSpan RequireNonNegative(TimeSpan span)
+    {
+        if (span < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(span), "The time span must not be negative.");
+        }
+
+        return span;
+    }
+
     public static bool InWindow(TimeSpan difference, TimeSpan span) => difference >= TimeSpan.Zero && difference <= span;
 }

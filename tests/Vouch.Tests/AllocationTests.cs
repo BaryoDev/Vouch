@@ -27,6 +27,12 @@ public class AllocationTests
 
     [Fact] public void Int_BeCloseTo() { var n = 5; AssertNoAllocation(() => n.Should().BeCloseTo(7, 2)); }
 
+    [Fact] public void Int_NotBeCloseTo_across_the_full_range() { var n = int.MinValue; AssertNoAllocation(() => n.Should().NotBeCloseTo(int.MaxValue, 1)); }
+
+    [Fact] public void Double_NotBeCloseTo() { var d = 5.0; AssertNoAllocation(() => d.Should().NotBeCloseTo(9.0, 2.0)); }
+
+    [Fact] public void Double_NotBeCloseTo_across_the_full_range() { var d = double.MinValue; AssertNoAllocation(() => d.Should().NotBeCloseTo(double.MaxValue, 1.0)); }
+
     [Fact] public void Int_NotBeCloseTo() { var n = 5; AssertNoAllocation(() => n.Should().NotBeCloseTo(9, 2)); }
 
     [Fact] public void Int_BeNegative() { var n = -5; AssertNoAllocation(() => n.Should().BeNegative()); }

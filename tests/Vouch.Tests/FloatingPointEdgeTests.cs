@@ -75,7 +75,8 @@ public class FloatingPointEdgeTests
         Fails(() => double.NaN.Should().BeCloseTo(double.NaN, 1));
         Fails(() => double.NaN.Should().BeCloseTo(1.0, double.MaxValue));
         Fails(() => 1.0.Should().BeCloseTo(double.NaN, double.MaxValue));
-        Fails(() => 1.0.Should().BeCloseTo(1.0, double.NaN));
+        // A NaN delta is rejected before anything else, even when the values are equal.
+        Assert.Throws<ArgumentOutOfRangeException>(() => 1.0.Should().BeCloseTo(1.0, double.NaN));
         double.NaN.Should().NotBeCloseTo(double.NaN, 1);
         double.NaN.Should().NotBeCloseTo(1.0, double.MaxValue);
 

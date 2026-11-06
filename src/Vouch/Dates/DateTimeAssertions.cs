@@ -86,6 +86,7 @@ public readonly struct DateTimeAssertions
         return new(this);
     }
 
+    /// <summary>Compares the <c>Date</c> parts only; <see cref="DateTimeKind"/> is ignored and no time zone conversion is done.</summary>
     public AndConstraint<DateTimeAssertions> BeSameDateAs(DateTime expected)
     {
         if (Subject.Date != expected.Date)
@@ -130,7 +131,8 @@ public readonly struct DateTimeAssertions
 
     public AndConstraint<DateTimeAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject.Second); return new(this); }
 
-    public DateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public DateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
     public AndConstraint<DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
@@ -247,6 +249,29 @@ public readonly struct NullableDateTimeAssertions
         return new(this);
     }
 
+    /// <summary>Same as <see cref="NotBeNull"/>: the subject must have a value, which is returned as Which.</summary>
+    public AndWhichConstraint<NullableDateTimeAssertions, DateTime> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    /// <summary>Same as <see cref="BeNull"/>: the subject must be null.</summary>
+    public AndConstraint<NullableDateTimeAssertions> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndWhichConstraint<NullableDateTimeAssertions, DateTime> NotBeNull()
     {
         if (Subject is not { } value)
@@ -258,6 +283,7 @@ public readonly struct NullableDateTimeAssertions
         return new(this, value);
     }
 
+    /// <summary>Compares the <c>Date</c> parts only; <see cref="DateTimeKind"/> is ignored and no time zone conversion is done.</summary>
     public AndConstraint<NullableDateTimeAssertions> BeSameDateAs(DateTime expected)
     {
         if (Subject is not { } actual || actual.Date != expected.Date)
@@ -302,7 +328,8 @@ public readonly struct NullableDateTimeAssertions
 
     public AndConstraint<NullableDateTimeAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject?.Second); return new(this); }
 
-    public NullableDateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public NullableDateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
     public AndConstraint<NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);

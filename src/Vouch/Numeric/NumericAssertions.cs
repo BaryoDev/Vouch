@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Vouch;
 
@@ -101,9 +102,9 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> BeCloseTo(T expected, T delta)
     {
-        if (!NumericDifference.IsWithin(Subject, expected, delta, out var detail))
+        if (!NumericDifference.IsWithin(Subject, expected, delta, out var difference, out var outOfRange))
         {
-            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(Subject)} {detail}.");
+            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(Subject)} {NumericDifference.Detail(difference, outOfRange)}.");
         }
 
         return new(this);
@@ -111,7 +112,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> NotBeCloseTo(T unexpected, T delta)
     {
-        if (NumericDifference.IsWithin(Subject, unexpected, delta, out _))
+        if (NumericDifference.IsWithin(Subject, unexpected, delta, out _, out _))
         {
             Fail.With($"Expected {Name} not to be within {Formatter.Format(delta)} of {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -313,9 +314,9 @@ public static class NumericApproximationExtensions
     private static AndConstraint<NumericAssertions<T>> Approximate<T>(NumericAssertions<T> assertions, T expected, T precision)
         where T : struct, INumber<T>
     {
-        if (!NumericDifference.IsWithin(assertions.Subject, expected, precision, out var detail))
+        if (!NumericDifference.IsWithin(assertions.Subject, expected, precision, out var difference, out var outOfRange))
         {
-            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(assertions.Subject)} {detail}.");
+            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(assertions.Subject)} {NumericDifference.Detail(difference, outOfRange)}.");
         }
 
         return new(assertions);
@@ -357,6 +358,46 @@ public static class NumericFloatingPointExtensions
     public static AndConstraint<NumericAssertions<double>> NotBeFinite(this NumericAssertions<double> assertions)
     {
         if (double.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<Half>> BeNaN(this NumericAssertions<Half> assertions)
+    {
+        if (!Half.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be NaN, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<Half>> NotBeNaN(this NumericAssertions<Half> assertions)
+    {
+        if (Half.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be NaN, but it was.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<Half>> BeFinite(this NumericAssertions<Half> assertions)
+    {
+        if (!Half.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<Half>> NotBeFinite(this NumericAssertions<Half> assertions)
+    {
+        if (Half.IsFinite(assertions.Subject))
         {
             Fail.With($"Expected {assertions.Name} not to be finite, but found {Formatter.Format(assertions.Subject)}.");
         }
@@ -407,33 +448,64 @@ public static class NumericFloatingPointExtensions
 
 internal static class NumericDifference
 {
-    public static bool IsWithin<T>(T actual, T expected, T precision, out string detail)
+    public static void ValidateDelta<T>(T delta)
         where T : struct, INumber<T>
     {
-        detail = string.Empty;
+        if (T.IsNaN(delta) || delta < T.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(delta), "The delta must not be NaN or negative.");
+        }
+    }
+
+    // True when |actual - expected| <= precision. When the difference cannot be represented, outOfRange is
+    // set and the result is false. Allocates nothing: the detail text is built by Detail on the failure path.
+    public static bool IsWithin<T>(T actual, T expected, T precision, out T difference, out bool outOfRange)
+        where T : struct, INumber<T>
+    {
+        ValidateDelta(precision);
+        difference = T.Zero;
+        outOfRange = false;
         if (actual == expected)
         {
             return true;
         }
 
-        T difference;
-        try
+        if (T.IsNaN(actual) || T.IsNaN(expected))
         {
-            // Subtract the smaller from the larger so unsigned types cannot wrap; checked so signed overflow throws.
-            difference = actual >= expected ? checked(actual - expected) : checked(expected - actual);
-        }
-        catch (OverflowException)
-        {
-            detail = "(difference is out of range)";
+            // NaN is close to nothing.
+            difference = T.IsNaN(actual) ? actual : expected;
             return false;
         }
 
-        if (difference <= precision)
+        // Subtract the smaller from the larger so unsigned types cannot wrap.
+        T larger = actual >= expected ? actual : expected;
+        T smaller = actual >= expected ? expected : actual;
+
+        if (typeof(T) == typeof(decimal))
         {
-            return true;
+            // decimal throws on overflow, so check first: larger - smaller > MaxValue <=> larger > MaxValue + smaller.
+            var l = Unsafe.As<T, decimal>(ref larger);
+            var s = Unsafe.As<T, decimal>(ref smaller);
+            if (s < 0m && l > decimal.MaxValue + s)
+            {
+                outOfRange = true;
+                return false;
+            }
         }
 
-        detail = $"(off by {Formatter.Format(difference)})";
-        return false;
+        difference = unchecked(larger - smaller);
+
+        // A wrapped signed difference is negative; an overflowed floating-point difference is infinite.
+        if (difference < T.Zero || !T.IsFinite(difference))
+        {
+            outOfRange = true;
+            return false;
+        }
+
+        return difference <= precision;
     }
+
+    public static string Detail<T>(T difference, bool outOfRange)
+        where T : struct, INumber<T>
+        => outOfRange ? "(difference is out of range)" : $"(off by {Formatter.Format(difference)})";
 }

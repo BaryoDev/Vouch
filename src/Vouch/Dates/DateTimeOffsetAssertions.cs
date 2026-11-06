@@ -86,6 +86,10 @@ public readonly struct DateTimeOffsetAssertions
         return new(this);
     }
 
+    /// <summary>
+    /// Compares the calendar dates in each value's own offset (its local <c>Date</c>), as FluentAssertions does.
+    /// The instants are not converted to a common offset, so 23:30+02:00 and 22:30+01:00 on the next day differ.
+    /// </summary>
     public AndConstraint<DateTimeOffsetAssertions> BeSameDateAs(DateTimeOffset expected)
     {
         if (Subject.Date != expected.Date)
@@ -106,6 +110,10 @@ public readonly struct DateTimeOffsetAssertions
         return new(this);
     }
 
+    /// <summary>
+    /// HaveYear through HaveSecond (and their Not variants) check the offset's local fields, not UTC,
+    /// as FluentAssertions does: 23:30+02:00 has hour 23 even though it is 21:30 UTC.
+    /// </summary>
     public AndConstraint<DateTimeOffsetAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject.Year); return new(this); }
 
     public AndConstraint<DateTimeOffsetAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject.Year); return new(this); }
@@ -130,7 +138,8 @@ public readonly struct DateTimeOffsetAssertions
 
     public AndConstraint<DateTimeOffsetAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject.Second); return new(this); }
 
-    public DateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public DateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
@@ -247,6 +256,29 @@ public readonly struct NullableDateTimeOffsetAssertions
         return new(this);
     }
 
+    /// <summary>Same as <see cref="NotBeNull"/>: the subject must have a value, which is returned as Which.</summary>
+    public AndWhichConstraint<NullableDateTimeOffsetAssertions, DateTimeOffset> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    /// <summary>Same as <see cref="BeNull"/>: the subject must be null.</summary>
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndWhichConstraint<NullableDateTimeOffsetAssertions, DateTimeOffset> NotBeNull()
     {
         if (Subject is not { } value)
@@ -258,6 +290,10 @@ public readonly struct NullableDateTimeOffsetAssertions
         return new(this, value);
     }
 
+    /// <summary>
+    /// Compares the calendar dates in each value's own offset (its local <c>Date</c>), as FluentAssertions does.
+    /// The instants are not converted to a common offset.
+    /// </summary>
     public AndConstraint<NullableDateTimeOffsetAssertions> BeSameDateAs(DateTimeOffset expected)
     {
         if (Subject is not { } actual || actual.Date != expected.Date)
@@ -278,6 +314,10 @@ public readonly struct NullableDateTimeOffsetAssertions
         return new(this);
     }
 
+    /// <summary>
+    /// HaveYear through HaveSecond (and their Not variants) check the offset's local fields, not UTC,
+    /// as FluentAssertions does.
+    /// </summary>
     public AndConstraint<NullableDateTimeOffsetAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject?.Year); return new(this); }
 
     public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject?.Year); return new(this); }
@@ -302,7 +342,8 @@ public readonly struct NullableDateTimeOffsetAssertions
 
     public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject?.Second); return new(this); }
 
-    public NullableDateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public NullableDateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);

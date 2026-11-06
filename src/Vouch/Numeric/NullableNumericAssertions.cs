@@ -101,15 +101,16 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> BeCloseTo(T expected, T delta)
     {
+        NumericDifference.ValidateDelta(delta);
         if (Subject is not { } actual)
         {
             Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found null.");
             return new(this);
         }
 
-        if (!NumericDifference.IsWithin(actual, expected, delta, out var detail))
+        if (!NumericDifference.IsWithin(actual, expected, delta, out var difference, out var outOfRange))
         {
-            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(actual)} {detail}.");
+            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(actual)} {NumericDifference.Detail(difference, outOfRange)}.");
         }
 
         return new(this);
@@ -117,7 +118,8 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> NotBeCloseTo(T unexpected, T delta)
     {
-        if (Subject is { } actual && NumericDifference.IsWithin(actual, unexpected, delta, out _))
+        NumericDifference.ValidateDelta(delta);
+        if (Subject is { } actual && NumericDifference.IsWithin(actual, unexpected, delta, out _, out _))
         {
             Fail.With($"Expected {Name} not to be within {Formatter.Format(delta)} of {Formatter.Format(unexpected)}, but found {Formatter.Format(actual)}.");
         }
@@ -274,6 +276,50 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
     }
 }
 
+public static class NullableNumericFloatingPointExtensions
+{
+    public static AndConstraint<NullableNumericAssertions<double>> BeNaN(this NullableNumericAssertions<double> assertions)
+        => BeNaNCore(assertions);
+
+    public static AndConstraint<NullableNumericAssertions<float>> BeNaN(this NullableNumericAssertions<float> assertions)
+        => BeNaNCore(assertions);
+
+    public static AndConstraint<NullableNumericAssertions<Half>> BeNaN(this NullableNumericAssertions<Half> assertions)
+        => BeNaNCore(assertions);
+
+    public static AndConstraint<NullableNumericAssertions<double>> BeFinite(this NullableNumericAssertions<double> assertions)
+        => BeFiniteCore(assertions);
+
+    public static AndConstraint<NullableNumericAssertions<float>> BeFinite(this NullableNumericAssertions<float> assertions)
+        => BeFiniteCore(assertions);
+
+    public static AndConstraint<NullableNumericAssertions<Half>> BeFinite(this NullableNumericAssertions<Half> assertions)
+        => BeFiniteCore(assertions);
+
+    // A null subject is neither NaN nor finite, so both assertions fail for null.
+    private static AndConstraint<NullableNumericAssertions<T>> BeNaNCore<T>(NullableNumericAssertions<T> assertions)
+        where T : struct, INumber<T>
+    {
+        if (assertions.Subject is not { } value || !T.IsNaN(value))
+        {
+            Fail.With($"Expected {assertions.Name} to be NaN, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    private static AndConstraint<NullableNumericAssertions<T>> BeFiniteCore<T>(NullableNumericAssertions<T> assertions)
+        where T : struct, INumber<T>
+    {
+        if (assertions.Subject is not { } value || !T.IsFinite(value))
+        {
+            Fail.With($"Expected {assertions.Name} to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+}
+
 public static class NullableNumericApproximationExtensions
 {
     public static AndConstraint<NullableNumericAssertions<decimal>> BeApproximately(this NullableNumericAssertions<decimal> assertions, decimal expected, decimal precision)
@@ -288,15 +334,16 @@ public static class NullableNumericApproximationExtensions
     private static AndConstraint<NullableNumericAssertions<T>> Approximate<T>(NullableNumericAssertions<T> assertions, T expected, T precision)
         where T : struct, INumber<T>
     {
+        NumericDifference.ValidateDelta(precision);
         if (assertions.Subject is not { } actual)
         {
             Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found null.");
             return new(assertions);
         }
 
-        if (!NumericDifference.IsWithin(actual, expected, precision, out var detail))
+        if (!NumericDifference.IsWithin(actual, expected, precision, out var difference, out var outOfRange))
         {
-            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(actual)} {detail}.");
+            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(actual)} {NumericDifference.Detail(difference, outOfRange)}.");
         }
 
         return new(assertions);
