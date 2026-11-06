@@ -129,7 +129,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (count != 0)
         {
-            var items = Items;
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to be empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
@@ -195,7 +199,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (count != expected)
         {
-            var items = Items;
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -216,7 +224,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (count <= expected)
         {
-            var items = Items;
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain more than {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -237,7 +249,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (count < expected)
         {
-            var items = Items;
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain at least {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -540,7 +556,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return And();
         }
 
-        var failing =Where(items, predicate.Compile(), expected: false);
+        var failing = Where(items, predicate.Compile(), expected: false);
         if (failing is not null)
         {
             Fail.With($"Expected {Name} to only contain items matching {predicate.Body}, but these did not{Listing(items, failing)}");
@@ -1142,7 +1158,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (count != 0)
         {
-            var items = Items;
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to be null or empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
@@ -1197,7 +1217,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return And();
         }
 
-        var offset =items.Count - tail.Count;
+        var offset = items.Count - tail.Count;
         var comparer = EqualityComparer<T>.Default;
         var matches = offset >= 0;
         for (var i = 0; matches && i < tail.Count; i++)

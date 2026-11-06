@@ -293,6 +293,40 @@ public class FailurePathTests
         Assert.Throws<VouchException>(() => Lazy(over).Should().HaveCount(1));
     }
 
+    [Fact]
+    public void Over_cap_counted_collection_records_exactly_one_failure()
+    {
+        var over = Equivalency.MaxItems + 1;
+        Assert.Single(Record(() => new Queue<int>(Enumerable.Range(0, over)).Should().HaveCount(1)));
+        Assert.Single(Record(() => new Queue<int>(Enumerable.Range(0, over)).Should().BeEmpty()));
+        Assert.Single(Record(() => new Queue<int>(Enumerable.Range(0, over)).Should().HaveCountGreaterThan(Equivalency.MaxItems + 5)));
+        Assert.Single(Record(() => new Queue<int>(Enumerable.Range(0, over)).Should().BeNullOrEmpty()));
+    }
+
+    private static IEnumerable<KeyValuePair<int, int>> LazyPairs(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            yield return new KeyValuePair<int, int>(i, i);
+        }
+    }
+
+    [Fact]
+    public void Over_cap_lazy_dictionary_records_exactly_one_failure()
+    {
+        var over = Equivalency.MaxItems + 1;
+        Assert.Single(Record(() => LazyPairs(over).Should().ContainKey(-1)));
+        Assert.Single(Record(() => LazyPairs(over).Should().ContainKeys(-1, -2)));
+    }
+
+    [Fact]
+    public void Over_cap_dictionary_records_exactly_one_failure()
+    {
+        var big = new Dictionary<int, int>(LazyPairs(Equivalency.MaxItems + 1));
+        Assert.Single(Record(() => big.Should().ContainKey(-1)));
+        Assert.Single(Record(() => big.Should().ContainKeys(-1, -2)));
+    }
+
     [Fact] public void Equivalency_failure() => Same(() => new Person { Name = "A" }.Should().BeEquivalentTo(new { Name = "B" }));
     [Fact] public void Equivalency_null_subject() => Same(() => ((Person?)null).Should().BeEquivalentTo(new Person { Name = "B" }));
     [Fact] public void Equivalency_collection() => Same(() => new[] { 1, 2 }.Should().BeEquivalentTo(new[] { 1, 3 }));

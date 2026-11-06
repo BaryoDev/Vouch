@@ -18,6 +18,11 @@ public sealed class DictionaryAssertions<TKey, TValue>
             return new(this, default!);
         }
 
+        if (!Prepare())
+        {
+            return new(this, default!);
+        }
+
         if (!TryGetValue(expected, out var value))
         {
             if (TryItems(out var items))
@@ -37,6 +42,11 @@ public sealed class DictionaryAssertions<TKey, TValue>
         if (IsNull)
         {
             Fail.With($"Expected {Name} not to contain key {Formatter.Format(unexpected)}, but found null.");
+            return And();
+        }
+
+        if (!Prepare())
+        {
             return And();
         }
 
@@ -62,6 +72,11 @@ public sealed class DictionaryAssertions<TKey, TValue>
             return And();
         }
 
+        if (!Prepare())
+        {
+            return And();
+        }
+
         List<TKey>? missing = null;
         foreach (var key in expected)
         {
@@ -71,13 +86,15 @@ public sealed class DictionaryAssertions<TKey, TValue>
             }
         }
 
-        if (missing is not null)
+        if (missing is not null && TryItems(out var items))
         {
-            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(Items)}");
+            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(items)}");
         }
 
         return And();
     }
+
+    private bool Prepare() => Source is IDictionary<TKey, TValue> or IReadOnlyDictionary<TKey, TValue> || TryItems(out _);
 
     private bool TryGetValue(TKey key, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TValue value)
     {
