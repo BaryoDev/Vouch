@@ -110,18 +110,18 @@ public readonly struct StreamAssertions
     {
         if (Subject is null)
         {
-            return NullSubject($"to have length {expected}");
+            return NullSubject("to have", "length", expected);
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable($"to have length {expected}", "length");
+            return Unavailable("to have", "length", expected);
         }
 
         var error = TryRead(false, out var actual);
         if (error is not null)
         {
-            return ReadFailed($"to have length {expected}", "length", error);
+            return ReadFailed("to have", "length", expected, error);
         }
 
         if (actual != expected)
@@ -136,18 +136,18 @@ public readonly struct StreamAssertions
     {
         if (Subject is null)
         {
-            return NullSubject($"not to have length {unexpected}");
+            return NullSubject("not to have", "length", unexpected);
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable($"not to have length {unexpected}", "length");
+            return Unavailable("not to have", "length", unexpected);
         }
 
         var error = TryRead(false, out var actual);
         if (error is not null)
         {
-            return ReadFailed($"not to have length {unexpected}", "length", error);
+            return ReadFailed("not to have", "length", unexpected, error);
         }
 
         if (actual == unexpected)
@@ -162,18 +162,18 @@ public readonly struct StreamAssertions
     {
         if (Subject is null)
         {
-            return NullSubject($"to have position {expected}");
+            return NullSubject("to have", "position", expected);
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable($"to have position {expected}", "position");
+            return Unavailable("to have", "position", expected);
         }
 
         var error = TryRead(true, out var actual);
         if (error is not null)
         {
-            return ReadFailed($"to have position {expected}", "position", error);
+            return ReadFailed("to have", "position", expected, error);
         }
 
         if (actual != expected)
@@ -188,18 +188,18 @@ public readonly struct StreamAssertions
     {
         if (Subject is null)
         {
-            return NullSubject($"not to have position {unexpected}");
+            return NullSubject("not to have", "position", unexpected);
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable($"not to have position {unexpected}", "position");
+            return Unavailable("not to have", "position", unexpected);
         }
 
         var error = TryRead(true, out var actual);
         if (error is not null)
         {
-            return ReadFailed($"not to have position {unexpected}", "position", error);
+            return ReadFailed("not to have", "position", unexpected, error);
         }
 
         if (actual == unexpected)
@@ -216,9 +216,15 @@ public readonly struct StreamAssertions
         return new(this);
     }
 
-    private AndConstraint<StreamAssertions> Unavailable(string expectation, string what)
+    private AndConstraint<StreamAssertions> NullSubject(string verb, string what, long value)
     {
-        Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but its {what} is unavailable because it is not seekable.");
+        Fail.With($"Expected {Fail.Name(_expression)} {verb} {what} {value}, but found null.");
+        return new(this);
+    }
+
+    private AndConstraint<StreamAssertions> Unavailable(string verb, string what, long value)
+    {
+        Fail.With($"Expected {Fail.Name(_expression)} {verb} {what} {value}, but its {what} is unavailable because it is not seekable.");
         return new(this);
     }
 
@@ -237,9 +243,9 @@ public readonly struct StreamAssertions
         }
     }
 
-    private AndConstraint<StreamAssertions> ReadFailed(string expectation, string what, Exception error)
+    private AndConstraint<StreamAssertions> ReadFailed(string verb, string what, long value, Exception error)
     {
-        Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but reading its {what} threw {Formatter.Format(error.GetType())}: {error.Message}");
+        Fail.With($"Expected {Fail.Name(_expression)} {verb} {what} {value}, but reading its {what} threw {Formatter.Format(error.GetType())}: {error.Message}");
         return new(this);
     }
 
