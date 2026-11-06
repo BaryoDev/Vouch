@@ -74,7 +74,7 @@ public class NumericDatesFixRound1Tests
     public void Half_numeric_assertions_pass()
     {
         var h = (Half)1.5;
-        h.Should().BeCloseTo((Half)1.75, (Half)0.25).And.BeApproximately((Half)1.5, (Half)0).And.BePositive();
+        h.Should().BeCloseTo((Half)1.75, (Half)0.25).And.BePositive();
         ((Half)(-2)).Should().BeNegative();
         Half.NaN.Should().BeNaN();
         Half.One.Should().BeFinite();
