@@ -74,7 +74,7 @@ public readonly struct NullableValueAssertions<T> where T : struct
     public AndConstraint<NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
-    public AndConstraint<NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
     private AndConstraint<NullableValueAssertions<T>> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)

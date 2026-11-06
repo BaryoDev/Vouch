@@ -296,7 +296,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return CheckEquivalent(expectation, EquivalencyOptions.Default);
     }
 
-    public AndConstraint<TSelf> BeEquivalentTo(T[] expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<TSelf> BeEquivalentTo(T[] expectation, Func<EquivalencyOptions<T>, EquivalencyOptions<T>> configure)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, Equivalency.Options(configure));
@@ -308,7 +308,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return CheckEquivalent(expectation, EquivalencyOptions.Default);
     }
 
-    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, Equivalency.Options(configure));

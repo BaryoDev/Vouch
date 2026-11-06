@@ -86,7 +86,7 @@ public readonly struct DateTimeOffsetAssertions
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
-    public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
     private AndConstraint<DateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
@@ -209,7 +209,7 @@ public readonly struct NullableDateTimeOffsetAssertions
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
-    public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
     private AndConstraint<NullableDateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)

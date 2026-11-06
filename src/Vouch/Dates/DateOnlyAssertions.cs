@@ -75,7 +75,7 @@ public readonly struct DateOnlyAssertions
     public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
-    public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
     private AndConstraint<DateOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
@@ -181,7 +181,7 @@ public readonly struct NullableDateOnlyAssertions
     public AndConstraint<NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
-    public AndConstraint<NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    public AndConstraint<NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
     private AndConstraint<NullableDateOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)

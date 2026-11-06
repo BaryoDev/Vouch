@@ -1,6 +1,6 @@
 namespace Vouch;
 
-public sealed class EquivalencyOptions
+internal sealed class EquivalencyOptions
 {
     internal static readonly EquivalencyOptions Default = new();
 
@@ -10,15 +10,28 @@ public sealed class EquivalencyOptions
 
     internal bool StrictOrdering { get; private init; }
 
-    public EquivalencyOptions WithStrictOrdering() => new() { StrictOrdering = true };
+    internal EquivalencyOptions WithStrictOrdering() => new() { StrictOrdering = true };
+}
 
-    internal static EquivalencyOptions Resolve(Func<EquivalencyOptions, EquivalencyOptions>? configure)
+public sealed class EquivalencyOptions<TExpectation>
+{
+    internal EquivalencyOptions(EquivalencyOptions state)
+    {
+        State = state;
+    }
+
+    internal EquivalencyOptions State { get; }
+
+    public EquivalencyOptions<TExpectation> WithStrictOrdering() => new(State.WithStrictOrdering());
+
+    internal static EquivalencyOptions Resolve(Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>>? configure)
     {
         if (configure is null)
         {
-            return Default;
+            return EquivalencyOptions.Default;
         }
 
-        return configure(Default) ?? throw new InvalidOperationException("The configure callback returned null.");
+        var result = configure(new EquivalencyOptions<TExpectation>(EquivalencyOptions.Default));
+        return (result ?? throw new InvalidOperationException("The configure callback returned null.")).State;
     }
 }
