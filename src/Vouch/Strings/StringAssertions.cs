@@ -237,12 +237,14 @@ public readonly struct StringAssertions
         return RegexCore(null, regex, RegexOptions.None, null, negate: false);
     }
 
+    /// <remarks>Counting matches allocates inside the regex engine, even when the assertion passes.</remarks>
     public AndConstraint<StringAssertions> MatchRegex(string pattern, OccurrenceConstraint occurrence)
     {
         ArgumentNullException.ThrowIfNull(pattern);
         return RegexCore(pattern, null, RegexOptions.None, occurrence, negate: false);
     }
 
+    /// <remarks>Counting matches allocates inside the regex engine, even when the assertion passes.</remarks>
     public AndConstraint<StringAssertions> MatchRegex(Regex regex, OccurrenceConstraint occurrence)
     {
         ArgumentNullException.ThrowIfNull(regex);

@@ -93,10 +93,6 @@ public class AllocationTests
 
     [Fact] public void String_MatchRegex_regex() { var s = "abc"; var r = new System.Text.RegularExpressions.Regex("^a", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)); AssertNoAllocation(() => s.Should().MatchRegex(r)); }
 
-    [Fact] public void String_MatchRegex_occurrence() { var s = "a1b2"; AssertNoAllocation(() => s.Should().MatchRegex("[0-9]", Exactly.Twice())); }
-
-    [Fact] public void String_MatchRegex_regex_occurrence() { var s = "a1b2"; var r = new System.Text.RegularExpressions.Regex("[0-9]", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)); AssertNoAllocation(() => s.Should().MatchRegex(r, Exactly.Twice())); }
-
     [Fact] public void String_NotMatchRegex() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatchRegex("^b")); }
 
     [Fact] public void String_NotMatchRegex_options() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatchRegex("^B", System.Text.RegularExpressions.RegexOptions.None)); }
