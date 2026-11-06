@@ -212,7 +212,19 @@ namespace Vouch
     }
     public sealed class EquivalencyOptions<TExpectation>
     {
+        public Vouch.EquivalencyOptions<TExpectation> ComparingByMembers<T>() { }
+        public Vouch.EquivalencyOptions<TExpectation> ComparingByValue<T>() { }
+        public Vouch.EquivalencyOptions<TExpectation> Excluding(System.Linq.Expressions.Expression<System.Func<TExpectation, object?>> member) { }
+        public Vouch.EquivalencyOptions<TExpectation> ExcludingMissingMembers() { }
+        public Vouch.EquivalencyOptions<TExpectation> IgnoringCyclicReferences() { }
+        public Vouch.EquivalencyOptions<TExpectation> Including(System.Linq.Expressions.Expression<System.Func<TExpectation, object?>> member) { }
+        public Vouch.EquivalencyOptions<TExpectation> RespectingRuntimeTypes() { }
+        public Vouch.EquivalencyOptions<TExpectation> Using<TMember>(System.Collections.Generic.IEqualityComparer<TMember> comparer) { }
+        public Vouch.EquivalencyOptions<TExpectation> Using<TMember>(System.Linq.Expressions.Expression<System.Func<TExpectation, TMember>> member, System.Collections.Generic.IEqualityComparer<TMember> comparer) { }
+        public Vouch.EquivalencyOptions<TExpectation> WithMapping(System.Linq.Expressions.Expression<System.Func<TExpectation, object?>> expectationMember, string subjectMemberName) { }
+        public Vouch.EquivalencyOptions<TExpectation> WithMaxDepth(int depth) { }
         public Vouch.EquivalencyOptions<TExpectation> WithStrictOrdering() { }
+        public Vouch.EquivalencyOptions<TExpectation> WithoutStrictOrdering() { }
     }
     public sealed class ExceptionAssertions<TException>
         where TException : System.Exception
