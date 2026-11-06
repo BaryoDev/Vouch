@@ -368,12 +368,12 @@ namespace Vouch
         public Vouch.ExceptionAssertions<TException> And { get; }
         public TException Subject { get; }
         public TException Which { get; }
+        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate) { }
+        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, string because) { }
         public Vouch.ExceptionAssertions<TInner> WithInnerException<TInner>()
             where TInner : System.Exception { }
         public Vouch.ExceptionAssertions<TInner> WithInnerExceptionExactly<TInner>()
             where TInner : System.Exception { }
-        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate) { }
-        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, string because) { }
         public Vouch.ExceptionAssertions<TException> WithMessage(string pattern) { }
     }
     public static class ExceptionTaskExtensions
