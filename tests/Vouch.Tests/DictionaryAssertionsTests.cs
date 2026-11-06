@@ -129,7 +129,7 @@ public class DictionaryAssertionsTests
     [Fact] public void Equal_fails() => Assert.Throws<VouchException>(() => Sample().Should().Equal(Pairs(("a", 1))));
     [Fact] public void Equal_message() { var d = Sample(); Assert.Equal("Expected d to equal [[\"a\"] = 1, [\"b\"] = 3, [\"c\"] = 4], but it differs:\n  key \"b\" has value 2, expected 3\n  missing key \"c\" with value 4", Message(() => d.Should().Equal(Pairs(("a", 1), ("b", 3), ("c", 4))))); }
     [Fact] public void Equal_message_with_extra_key() { var d = Sample(); Assert.Equal("Expected d to equal [[\"a\"] = 1], but it differs:\n  unexpected key \"b\" with value 2", Message(() => d.Should().Equal(Pairs(("a", 1))))); }
-    [Fact] public void Equal_duplicate_expected_keys_do_not_hide_an_extra_key() => Assert.Throws<VouchException>(() => Sample().Should().Equal(Pairs(("a", 1), ("a", 1))));
+    [Fact] public void Equal_duplicate_expected_keys_throw() => Assert.Throws<ArgumentException>(() => Sample().Should().Equal(Pairs(("a", 1), ("a", 1))));
     [Fact] public void Equal_null_subject_fails() { Dictionary<string, int>? d = null; Assert.Equal("Expected d to equal [[\"a\"] = 1], but found null.", Message(() => d.Should().Equal(Pairs(("a", 1))))); }
     [Fact] public void Equal_null_expected_throws() => Assert.Throws<ArgumentNullException>(() => Sample().Should().Equal((IEnumerable<KeyValuePair<string, int>>)null!));
     [Fact] public void Equal_uses_the_dictionary_key_comparer() => new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase) { ["a"] = 1 }.Should().Equal(Pairs(("A", 1)));
@@ -239,7 +239,7 @@ public class DictionaryAssertionsTests
         var keys = new[] { "z" };
         var values = new[] { 1 };
         Sample().Should().NotContainKeys(keys, "why").And.ContainValues(values, "why");
-        Assert.Contains("because why", Message(() => Sample().Should().NotContainKeys(new[] { "a" }, "why")));
-        Assert.Contains("because why", Message(() => Sample().Should().ContainValues(new[] { 9 }, "why")));
+        Assert.Contains("Because why", Message(() => Sample().Should().NotContainKeys(new[] { "a" }, "why")));
+        Assert.Contains("Because why", Message(() => Sample().Should().ContainValues(new[] { 9 }, "why")));
     }
 }

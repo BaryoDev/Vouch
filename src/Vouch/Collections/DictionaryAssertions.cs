@@ -521,6 +521,11 @@ public sealed class DictionaryAssertions<TKey, TValue>
                 if (pair.Key is null)
                 {
                     count++;
+                    if (firstOnly)
+                    {
+                        return count;
+                    }
+
                     line = $"missing key {Formatter.Format(pair.Key)} with value {Formatter.Format(pair.Value)}";
                 }
                 else
@@ -540,11 +545,21 @@ public sealed class DictionaryAssertions<TKey, TValue>
                     if (!TryGetValue(pair.Key, out var actual))
                     {
                         count++;
+                        if (firstOnly)
+                        {
+                            return count;
+                        }
+
                         line = $"missing key {Formatter.Format(pair.Key)} with value {Formatter.Format(pair.Value)}";
                     }
                     else if (!values.Equals(actual, pair.Value))
                     {
                         count++;
+                        if (firstOnly)
+                        {
+                            return count;
+                        }
+
                         line = $"key {Formatter.Format(pair.Key)} has value {Formatter.Format(actual)}, expected {Formatter.Format(pair.Value)}";
                     }
                 }
