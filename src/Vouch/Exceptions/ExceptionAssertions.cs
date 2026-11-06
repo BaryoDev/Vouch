@@ -13,6 +13,13 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
 
     internal string Name => _name;
 
+    private bool _reported;
+
+    /// <summary>
+    /// The matched exception. Inside an <see cref="AssertionScope"/>, Which is null after a
+    /// failure was recorded (no exception, or more than one); the failure is recorded once
+    /// per instance.
+    /// </summary>
     public TException Which
     {
         get
@@ -24,7 +31,13 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
 
             if (_matches.Count > 1)
             {
-                Fail.With("More than one exception was thrown. Vouch cannot tell which one was meant.");
+                if (!_reported)
+                {
+                    _reported = true;
+                    Fail.With("More than one exception was thrown. Vouch cannot tell which one was meant.");
+                }
+
+                return default!;
             }
 
             return _matches[0];

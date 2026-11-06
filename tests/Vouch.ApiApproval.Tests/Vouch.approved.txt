@@ -30,6 +30,12 @@ namespace Vouch
         public static Vouch.ExceptionAssertions<T> WithParameterName<T>(this Vouch.ExceptionAssertions<T> assertions, string paramName)
             where T : System.ArgumentException { }
     }
+    public sealed class AssertionScope : System.IDisposable
+    {
+        public AssertionScope() { }
+        public string[] Discard() { }
+        public void Dispose() { }
+    }
     public readonly struct AsyncFunctionAssertions
     {
         public System.Func<System.Threading.Tasks.Task>? Subject { get; }

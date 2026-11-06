@@ -16,6 +16,8 @@ public class AllocationTests
 
     [Fact] public void Int_Be() { var n = 5; AssertNoAllocation(() => n.Should().Be(5)); }
 
+    [Fact] public void Passing_assertion_inside_scope() { var n = 5; using var scope = new AssertionScope(); AssertNoAllocation(() => n.Should().Be(5)); }
+
     [Fact] public void Guid_Be() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().Be(id)); }
 
     [Fact] public void Enum_Be() { var s = Status.Active; AssertNoAllocation(() => s.Should().Be(Status.Active)); }
