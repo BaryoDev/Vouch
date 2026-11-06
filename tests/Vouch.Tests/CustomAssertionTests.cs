@@ -207,7 +207,7 @@ public class CustomAssertionTests
 
         Assert.Equal("text", text.Should().Expression);
         Assert.Equal("numbers", numbers.Should().Expression);
-        Assert.Equal("new[] {1}", new[] { 1 }.Should().Expression);
+        Assert.Equal("new[] { 1 }", new[] { 1 }.Should().Expression);
         Assert.Equal("map", map.Should().Expression);
         Assert.Equal("number", number.Should().Expression);
         Assert.Equal("flag", flag.Should().Expression);

@@ -681,8 +681,7 @@ namespace Vouch.Sdk
 {
     public static class Assertion
     {
-        public static void Fail(string message) { }
-        public static void Fail(string message, string? because) { }
+        public static void Fail(string message, string? because = null) { }
         public static string Name(string? expression) { }
     }
     public static class VouchConfiguration
