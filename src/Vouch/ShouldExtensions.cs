@@ -178,6 +178,29 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    /// <summary>
+    /// An <see cref="System.Collections.Immutable.ImmutableArray{T}"/> is a struct, so it would not reach the
+    /// <see cref="IEnumerable{T}"/> overload without boxing. This reads the backing array instead; a default
+    /// (uninitialised) array is treated as null.
+    /// </summary>
+    public static ImmutableArrayAssertions<T> Should<T>(this System.Collections.Immutable.ImmutableArray<T> subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    /// <summary>
+    /// A non-generic sequence (for example an ArrayList) gets the collection assertions over <see cref="object"/>, plus every
+    /// <see cref="ObjectAssertions"/> member, forwarded to the original object.
+    /// </summary>
+    public static NonGenericCollectionAssertions Should(this System.Collections.IEnumerable? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, subject switch
+        {
+            null => null,
+            IEnumerable<object> already => already,
+            System.Collections.IList list => new ObjectList(list),
+            _ => new ObjectSequence(subject),
+        }, expression);
+
     public static DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>>? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         where TKey : notnull

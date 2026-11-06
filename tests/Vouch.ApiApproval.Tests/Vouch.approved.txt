@@ -111,10 +111,16 @@ namespace Vouch
     {
         public string? Expression { get; }
         public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
+        public Vouch.AndConstraint<TSelf> AllBe(T expected) { }
+        public Vouch.AndConstraint<TSelf> AllBe(T expected, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>() { }
+        public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>(string because) { }
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) { }
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because) { }
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>() { }
+        public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>(string because) { }
         public Vouch.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
         public Vouch.AndConstraint<TSelf> BeEmpty() { }
         public Vouch.AndConstraint<TSelf> BeEmpty(string because) { }
@@ -125,10 +131,10 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, string because) { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder() { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
-        public Vouch.AndConstraint<TSelf> BeInAscendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
+        public Vouch.OrderedAndConstraint<TSelf, T, TKey> BeInAscendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
         public Vouch.AndConstraint<TSelf> BeInDescendingOrder() { }
         public Vouch.AndConstraint<TSelf> BeInDescendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
-        public Vouch.AndConstraint<TSelf> BeInDescendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
+        public Vouch.OrderedAndConstraint<TSelf, T, TKey> BeInDescendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
         public Vouch.AndConstraint<TSelf> BeNull() { }
         public Vouch.AndConstraint<TSelf> BeNull(string because) { }
         public Vouch.AndConstraint<TSelf> BeNullOrEmpty() { }
@@ -142,6 +148,10 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(T expected, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(params T[] expected) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected, string because) { }
@@ -162,10 +172,27 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> HaveCount(int expected, string because) { }
         public Vouch.AndConstraint<TSelf> HaveCountGreaterThan(int expected) { }
         public Vouch.AndConstraint<TSelf> HaveCountGreaterThanOrEqualTo(int expected) { }
+        public Vouch.AndConstraint<TSelf> HaveCountLessThan(int expected) { }
+        public Vouch.AndConstraint<TSelf> HaveCountLessThan(int expected, string because) { }
+        public Vouch.AndConstraint<TSelf> HaveCountLessThanOrEqualTo(int expected) { }
+        public Vouch.AndConstraint<TSelf> HaveCountLessThanOrEqualTo(int expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element) { }
         public Vouch.AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementPreceding(T successor, T expected) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementPreceding(T successor, T expected, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementSucceeding(T predecessor, T expected) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementSucceeding(T predecessor, T expected, string because) { }
+        public Vouch.AndConstraint<TSelf> HaveSameCount<TOther>(System.Collections.Generic.IEnumerable<TOther> other) { }
+        public Vouch.AndConstraint<TSelf> HaveSameCount<TOther>(System.Collections.Generic.IEnumerable<TOther> other, string because) { }
+        public Vouch.AndConstraint<TSelf> IntersectWith(System.Collections.Generic.IEnumerable<T> other) { }
+        public Vouch.AndConstraint<TSelf> IntersectWith(System.Collections.Generic.IEnumerable<T> other, string because) { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty() { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty(string because) { }
+        public Vouch.AndConstraint<TSelf> NotBeEquivalentTo(params T[] unexpected) { }
+        public Vouch.AndConstraint<TSelf> NotBeEquivalentTo(T[] unexpected, System.Func<Vouch.EquivalencyOptions<T>, Vouch.EquivalencyOptions<T>> configure) { }
+        public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected) { }
+        public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected, string because) { }
         public Vouch.AndConstraint<TSelf> NotBeNull() { }
         public Vouch.AndConstraint<TSelf> NotBeNull(string because) { }
         public Vouch.AndConstraint<TSelf> NotContain(System.Collections.Generic.IEnumerable<T> unexpected) { }
@@ -175,11 +202,18 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> NotContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndConstraint<TSelf> NotContain(T unexpected, string because) { }
         public Vouch.AndConstraint<TSelf> NotContainEquivalentOf<TExpectation>(TExpectation unexpected) { }
+        public Vouch.AndConstraint<TSelf> NotContainNulls() { }
+        public Vouch.AndConstraint<TSelf> NotContainNulls(string because) { }
         public Vouch.AndConstraint<TSelf> NotEqual(System.Collections.Generic.IEnumerable<T> unexpected) { }
+        public Vouch.AndConstraint<TSelf> NotHaveCount(int unexpected) { }
+        public Vouch.AndConstraint<TSelf> NotHaveCount(int unexpected, string because) { }
         public Vouch.AndConstraint<TSelf> NotIntersectWith(System.Collections.Generic.IEnumerable<T> other) { }
+        public Vouch.AndConstraint<TSelf> NotIntersectWith(System.Collections.Generic.IEnumerable<T> other, string because) { }
         public Vouch.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
         public Vouch.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndConstraint<TSelf> OnlyHaveUniqueItems() { }
+        public Vouch.AndConstraint<TSelf> Satisfy(params System.Linq.Expressions.Expression<System.Func<T, bool>>[] predicates) { }
+        public Vouch.AndConstraint<TSelf> SatisfyRespectively(params System.Action<T>[] assertions) { }
     }
     public static class ComparableValueAssertions
     {
@@ -454,6 +488,17 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.GuidAssertions> NotBeEmpty() { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> NotBeEmpty(string because) { }
     }
+    public sealed class ImmutableArrayAssertions<T> : Vouch.CollectionAssertionsBase<T, Vouch.ImmutableArrayAssertions<T>>
+    {
+        public new System.Collections.Immutable.ImmutableArray<T> Subject { get; }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> Be(System.Collections.Immutable.ImmutableArray<T> expected) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> Be(System.Collections.Immutable.ImmutableArray<T> expected, string because) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeOneOf(params System.Collections.Immutable.ImmutableArray<T>[] validValues) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> NotBe(System.Collections.Immutable.ImmutableArray<T> unexpected) { }
+        public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> NotBe(System.Collections.Immutable.ImmutableArray<T> unexpected, string because) { }
+    }
     public static class InvokingExtensions
     {
         public static System.Action Invoking<T>(this T subject, System.Action<T> action) { }
@@ -470,6 +515,33 @@ namespace Vouch
         public static Vouch.OccurrenceConstraint Once() { }
         public static Vouch.OccurrenceConstraint Times(int times) { }
         public static Vouch.OccurrenceConstraint Twice() { }
+    }
+    public sealed class NonGenericCollectionAssertions : Vouch.CollectionAssertionsBase<object, Vouch.NonGenericCollectionAssertions>
+    {
+        public new object? Subject { get; }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeAssignableTo<TExpected>() { }
+        public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeAssignableTo<TExpected>(string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public new Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull() { }
+        public new Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeOfType(System.Type expectedType) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeOfType(System.Type expectedType, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeOfType<TExpected>() { }
+        public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeOfType<TExpected>(string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeOneOf(params object?[] validValues) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> BeSameAs(object? expected) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> Match<TExpected>(System.Linq.Expressions.Expression<System.Func<TExpected, bool>> predicate) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> Match<TExpected>(System.Linq.Expressions.Expression<System.Func<TExpected, bool>> predicate, string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBe(object? unexpected) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBe(object? unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeAssignableTo<TUnexpected>() { }
+        public new Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeNull() { }
+        public new Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeOfType<TUnexpected>() { }
+        public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeSameAs(object? unexpected) { }
     }
     public readonly struct NullableBooleanAssertions
     {
@@ -777,9 +849,17 @@ namespace Vouch
         public int Times { get; }
         public bool IsSatisfiedBy(int actual) { }
     }
+    public readonly struct OrderedAndConstraint<TAssertions, T, TKey>
+    {
+        public TAssertions And { get; }
+        public Vouch.OrderedAndConstraint<TAssertions, T, TNext> ThenBeInAscendingOrder<TNext>(System.Func<T, TNext> keySelector) { }
+        public Vouch.OrderedAndConstraint<TAssertions, T, TNext> ThenBeInDescendingOrder<TNext>(System.Func<T, TNext> keySelector) { }
+        public static Vouch.AndConstraint<TAssertions> op_Implicit(Vouch.OrderedAndConstraint<TAssertions, T, TKey> constraint) { }
+    }
     public static class ShouldExtensions
     {
         public static Vouch.ActionAssertions Should(this System.Action? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NonGenericCollectionAssertions Should(this System.Collections.IEnumerable? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.DateOnlyAssertions Should(this System.DateOnly subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableDateOnlyAssertions Should(this System.DateOnly? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.DateTimeAssertions Should(this System.DateTime subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -825,6 +905,7 @@ namespace Vouch
         public static Vouch.NumericAssertions<ushort> Should(this ushort subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<ushort> Should(this ushort? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.GenericCollectionAssertions<T> Should<T>(this System.Collections.Generic.IEnumerable<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.ImmutableArrayAssertions<T> Should<T>(this System.Collections.Immutable.ImmutableArray<T> subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.AsyncFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.Task<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueTaskFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.ValueTask<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.FunctionAssertions<T> Should<T>(this System.Func<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }

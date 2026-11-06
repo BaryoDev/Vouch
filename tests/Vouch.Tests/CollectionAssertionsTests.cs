@@ -407,4 +407,269 @@ public class CollectionAssertionsTests
     [Fact] public void AllBeEquivalentTo_fails_when_one_element_is_null() => Assert.Throws<VouchException>(() => new string[] { null!, "a" }.Should().AllBeEquivalentTo("a"));
     [Fact] public void AllBeEquivalentTo_passes_on_an_empty_subject_with_options() => new Row[0].Should().AllBeEquivalentTo(new Row("A", 1), o => o.Excluding(r => r.Qty));
     [Fact] public void AllBeEquivalentTo_with_options_takes_a_reason() { var rows = new[] { new Row("B", 2) }; Assert.Contains("Because why.", Message(() => rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty), "why"))); }
+    // issue #15: resolution
+
+    [Fact] public void ImmutableArray_resolves_to_collection_assertions() => Assert.IsType<ImmutableArrayAssertions<int>>(System.Collections.Immutable.ImmutableArray.Create(1, 2).Should());
+    [Fact] public void ImmutableArray_assertions_see_the_items() { var arr = System.Collections.Immutable.ImmutableArray.Create(1, 2); arr.Should().HaveCount(2).And.Contain(2); Assert.Equal("Expected arr to contain 3 items, but found 2:\n  [0] 1\n  [1] 2", Message(() => arr.Should().HaveCount(3))); }
+    [Fact] public void Default_ImmutableArray_is_treated_as_null() { System.Collections.Immutable.ImmutableArray<int> arr = default; Assert.Equal("Expected arr to contain 1 item, but found null.", Message(() => arr.Should().HaveCount(1))); arr.Should().BeNullOrEmpty(); }
+    [Fact] public void IReadOnlyList_resolves_to_collection_assertions() { IReadOnlyList<int> xs = new List<int> { 1 }; Assert.IsType<GenericCollectionAssertions<int>>(xs.Should()); }
+    [Fact] public void String_array_resolves_to_collection_assertions() => Assert.IsType<GenericCollectionAssertions<string>>(new[] { "a" }.Should());
+    [Fact] public void ArrayList_resolves_to_object_collection_assertions() { var xs = new System.Collections.ArrayList { 1, "a" }; Assert.IsType<NonGenericCollectionAssertions>(xs.Should()); xs.Should().HaveCount(2).And.Contain("a"); }
+    [Fact] public void Non_generic_IEnumerable_resolves_to_object_collection_assertions() { System.Collections.IEnumerable xs = new System.Collections.ArrayList { 1 }; Assert.IsType<NonGenericCollectionAssertions>(xs.Should()); }
+    [Fact] public void Non_generic_one_shot_sequence_is_enumerated_for_assertions() { System.Collections.IEnumerable Gen() { yield return 1; yield return 2; } Gen().Should().HaveCount(2).And.Contain(2); }
+    [Fact] public void Null_non_generic_IEnumerable_is_a_null_subject() { System.Collections.IEnumerable? xs = null; Assert.Equal("Expected xs to contain 1 item, but found null.", Message(() => xs.Should().HaveCount(1))); }
+    [Fact] public void Non_generic_ArrayList_failure_message() { var xs = new System.Collections.ArrayList { 1, 2 }; Assert.Equal("Expected xs to contain 3 items, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveCount(3))); }
+
+    // an empty string is a valid element of a collection (StringAssertions.Contain("") is covered in StringAssertionsTests)
+
+    [Fact] public void Contain_accepts_an_empty_string_element() { new[] { "", "a" }.Should().Contain(""); new List<string> { "" }.Should().Contain(""); }
+    [Fact] public void NotContain_accepts_an_empty_string_element() { new[] { "a" }.Should().NotContain(""); }
+    [Fact] public void Contain_empty_string_fails_on_a_collection_without_it() { var xs = new[] { "a" }; Assert.Throws<VouchException>(() => xs.Should().Contain("")); }
+    [Fact] public void NotContain_empty_string_fails_on_a_collection_with_it() { var xs = new[] { "", "a" }; Assert.Throws<VouchException>(() => xs.Should().NotContain("")); }
+
+    // HaveElementPreceding / HaveElementSucceeding
+
+    [Fact] public void HaveElementPreceding_passes_and_returns_the_element() { var which = new[] { 1, 2, 3 }.Should().HaveElementPreceding(2, 1); Assert.Equal(1, which.Which); }
+    [Fact] public void HaveElementPreceding_message_for_another_element() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to have element 3 preceding 2, but found 1.", Message(() => xs.Should().HaveElementPreceding(2, 3))); }
+    [Fact] public void HaveElementPreceding_message_when_successor_is_first() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to have element 3 preceding 1, but it is the first item and has nothing before it.", Message(() => xs.Should().HaveElementPreceding(1, 3))); }
+    [Fact] public void HaveElementPreceding_message_when_successor_is_missing() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to have element 1 preceding 9, but 9 was not found. It has:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveElementPreceding(9, 1))); }
+    [Fact] public void HaveElementPreceding_message_on_an_empty_collection() { var xs = new int[0]; Assert.Equal("Expected xs to have element 1 preceding 2, but 2 was not found.", Message(() => xs.Should().HaveElementPreceding(2, 1))); }
+    [Fact] public void HaveElementPreceding_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to have element 1 preceding 2, but found null.", Message(() => xs.Should().HaveElementPreceding(2, 1))); }
+    [Fact] public void HaveElementPreceding_with_reason() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to have element 3 preceding 2, but found 1. Because order matters.", Message(() => xs.Should().HaveElementPreceding(2, 3, "order matters"))); }
+    [Fact] public void HaveElementSucceeding_passes_and_returns_the_element() { var which = new[] { 1, 2, 3 }.Should().HaveElementSucceeding(2, 3); Assert.Equal(3, which.Which); }
+    [Fact] public void HaveElementSucceeding_message_for_another_element() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to have element 1 succeeding 2, but found 3.", Message(() => xs.Should().HaveElementSucceeding(2, 1))); }
+    [Fact] public void HaveElementSucceeding_message_when_predecessor_is_last() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to have element 3 succeeding 2, but it is the last item and has nothing after it.", Message(() => xs.Should().HaveElementSucceeding(2, 3))); }
+    [Fact] public void HaveElementSucceeding_message_when_predecessor_is_missing() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to have element 1 succeeding 9, but 9 was not found. It has:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveElementSucceeding(9, 1))); }
+    [Fact] public void HaveElementSucceeding_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to have element 1 succeeding 2, but found null.", Message(() => xs.Should().HaveElementSucceeding(2, 1))); }
+
+    // ContainEquivalentOf
+
+    [Fact] public void ContainEquivalentOf_passes_and_returns_the_matched_item() { var which = new List<Row> { new("A", 1), new("B", 2) }.Should().ContainEquivalentOf(new Row("B", 2)); Assert.Equal(new Row("B", 2), which.Which); }
+    [Fact] public void ContainEquivalentOf_matches_by_members_of_another_type() { new List<Row> { new("A", 1) }.Should().ContainEquivalentOf(new { Code = "A", Qty = 1 }); }
+    [Fact] public void ContainEquivalentOf_with_options_passes() { new List<Row> { new("A", 1) }.Should().ContainEquivalentOf(new Row("A", 9), o => o.Excluding(r => r.Qty)); }
+    [Fact] public void ContainEquivalentOf_message_on_an_empty_collection() { var xs = new List<int>(); Assert.Equal("Expected xs to contain an item equivalent to 5, but it was empty.", Message(() => xs.Should().ContainEquivalentOf(5))); }
+    [Fact] public void ContainEquivalentOf_message_lists_the_items() { var xs = new List<int> { 1, 2 }; Assert.Equal("Expected xs to contain an item equivalent to 5, but it did not. It has:\n  [0] 1\n  [1] 2", Message(() => xs.Should().ContainEquivalentOf(5))); }
+    [Fact] public void ContainEquivalentOf_null_subject_fails() { List<int>? xs = null; Assert.Equal("Expected xs to contain an item equivalent to 5, but found null.", Message(() => xs.Should().ContainEquivalentOf(5))); }
+    [Fact] public void ContainEquivalentOf_with_reason() { var xs = new List<int>(); Assert.Equal("Expected xs to contain an item equivalent to 5, but it was empty. Because we need it.", Message(() => xs.Should().ContainEquivalentOf(5, "we need it"))); }
+
+    // SatisfyRespectively
+
+    [Fact] public void SatisfyRespectively_passes() { new[] { 1, 2 }.Should().SatisfyRespectively(x => x.Should().Be(1), x => x.Should().Be(2)); }
+    [Fact] public void SatisfyRespectively_message_for_a_wrong_count() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain 1 item to satisfy the assertions respectively, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().SatisfyRespectively(x => x.Should().Be(1)))); }
+    [Fact] public void SatisfyRespectively_collects_the_failures_per_item() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to satisfy the assertions respectively, but 2 did not:\n  [0] Expected x to be 9, but found 1.\n  [2] Expected x to be 8, but found 3.", Message(() => xs.Should().SatisfyRespectively(x => x.Should().Be(9), x => x.Should().Be(2), x => x.Should().Be(8)))); }
+    [Fact] public void SatisfyRespectively_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to satisfy the assertions respectively, but found null.", Message(() => xs.Should().SatisfyRespectively(x => x.Should().Be(1)))); }
+    [Fact] public void SatisfyRespectively_null_assertions_throw_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().SatisfyRespectively(null!)); }
+
+    // Satisfy
+
+    [Fact] public void Satisfy_matches_each_predicate_to_a_distinct_item_in_any_order() { new[] { 1, 2, 3 }.Should().Satisfy(x => x == 3, x => x > 0, x => x == 1); }
+    [Fact] public void Satisfy_does_not_let_a_loose_predicate_starve_a_strict_one() { new[] { 1, 2 }.Should().Satisfy(x => x > 0, x => x == 1); }
+    [Fact] public void Satisfy_message_for_a_wrong_count() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain 1 item to satisfy the predicates, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().Satisfy(x => x > 0))); }
+    [Fact] public void Satisfy_message_names_the_unmatched_predicate() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to satisfy the predicates with a distinct item each, but no unused item matched:\n  (x > 5)", Message(() => xs.Should().Satisfy(x => x > 5, x => x > 0))); }
+    [Fact] public void Satisfy_fails_when_two_predicates_need_the_same_item() { var xs = new[] { 1, 2 }; Assert.Throws<VouchException>(() => xs.Should().Satisfy(x => x == 1, x => x == 1)); }
+    [Fact] public void Satisfy_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to satisfy the predicates, but found null.", Message(() => xs.Should().Satisfy(x => x > 0))); }
+
+    // AllBe / AllBeOfType / AllBeAssignableTo
+
+    [Fact] public void AllBe_passes() { new[] { 2, 2 }.Should().AllBe(2); new int[0].Should().AllBe(2); }
+    [Fact] public void AllBe_message_lists_the_differing_items() { var xs = new[] { 2, 3, 2, 4 }; Assert.Equal("Expected xs to have all items be 2, but found 2 that differ:\n  [1] 3\n  [3] 4", Message(() => xs.Should().AllBe(2))); }
+    [Fact] public void AllBe_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to have all items be 2, but found null.", Message(() => xs.Should().AllBe(2))); }
+    [Fact] public void AllBe_with_reason() { var xs = new[] { 3 }; Assert.Equal("Expected xs to have all items be 2, but found 1 that differ:\n  [0] 3\nBecause they match.", Message(() => xs.Should().AllBe(2, "they match"))); }
+    [Fact] public void AllBeOfType_passes_and_returns_the_cast_items() { var which = new object[] { 1, 2 }.Should().AllBeOfType<int>(); Assert.Equal(new[] { 1, 2 }, which.Which); }
+    [Fact] public void AllBeOfType_rejects_a_derived_type() { var xs = new object[] { new ArgumentException(), new Exception() }; Assert.Throws<VouchException>(() => xs.Should().AllBeOfType<ArgumentException>()); Assert.Throws<VouchException>(() => new object[] { new ArgumentException() }.Should().AllBeOfType<Exception>()); }
+    [Fact] public void AllBeOfType_message() { var xs = new object[] { 1, "x" }; Assert.Equal("Expected xs to have all items be of type Int32, but found 1 that are not:\n  [1] \"x\"", Message(() => xs.Should().AllBeOfType<int>())); }
+    [Fact] public void AllBeOfType_null_subject_fails() { object[]? xs = null; Assert.Equal("Expected xs to have all items be of type Int32, but found null.", Message(() => xs.Should().AllBeOfType<int>())); }
+    [Fact] public void AllBeAssignableTo_passes_and_returns_the_cast_items() { var which = new object[] { "a", "b" }.Should().AllBeAssignableTo<IComparable>(); Assert.Equal(2, which.Which.Count); Assert.Equal("a", which.Which[0]); }
+    [Fact] public void AllBeAssignableTo_accepts_a_derived_type() { new object[] { new ArgumentException() }.Should().AllBeAssignableTo<Exception>(); }
+    [Fact] public void AllBeAssignableTo_message() { var xs = new object[] { "a", 1 }; Assert.Equal("Expected xs to have all items be assignable to String, but found 1 that are not:\n  [1] 1", Message(() => xs.Should().AllBeAssignableTo<string>())); }
+    [Fact] public void AllBeAssignableTo_null_subject_fails() { object[]? xs = null; Assert.Equal("Expected xs to have all items be assignable to String, but found null.", Message(() => xs.Should().AllBeAssignableTo<string>())); }
+
+    // counts
+
+    [Fact] public void NotHaveCount_passes() { new[] { 1, 2 }.Should().NotHaveCount(3); }
+    [Fact] public void NotHaveCount_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs not to contain 2 items, but it did:\n  [0] 1\n  [1] 2", Message(() => xs.Should().NotHaveCount(2))); }
+    [Fact] public void NotHaveCount_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs not to contain 2 items, but found null.", Message(() => xs.Should().NotHaveCount(2))); }
+    [Fact] public void NotHaveCount_with_reason() { var xs = new int[0]; Assert.Equal("Expected xs not to contain 0 items, but it did. Because it must have some.", Message(() => xs.Should().NotHaveCount(0, "it must have some"))); }
+    [Fact] public void HaveCountLessThan_passes() { new[] { 1, 2 }.Should().HaveCountLessThan(3); }
+    [Fact] public void HaveCountLessThan_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain fewer than 2 items, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveCountLessThan(2))); }
+    [Fact] public void HaveCountLessThan_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to contain fewer than 2 items, but found null.", Message(() => xs.Should().HaveCountLessThan(2))); }
+    [Fact] public void HaveCountLessThanOrEqualTo_passes() { new[] { 1, 2 }.Should().HaveCountLessThanOrEqualTo(2); }
+    [Fact] public void HaveCountLessThanOrEqualTo_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain at most 1 item, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveCountLessThanOrEqualTo(1))); }
+    [Fact] public void HaveCountLessThanOrEqualTo_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to contain at most 2 items, but found null.", Message(() => xs.Should().HaveCountLessThanOrEqualTo(2))); }
+    [Fact] public void HaveSameCount_passes_across_element_types() { new[] { 1, 2 }.Should().HaveSameCount(new[] { "a", "b" }); }
+    [Fact] public void HaveSameCount_counts_a_one_shot_sequence() { IEnumerable<string> Gen() { yield return "a"; yield return "b"; } new[] { 1, 2 }.Should().HaveSameCount(Gen()); }
+    [Fact] public void HaveSameCount_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain the same number of items as the other collection (1 item), but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().HaveSameCount(new[] { "a" }))); }
+    [Fact] public void HaveSameCount_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to contain the same number of items as the other collection, but found null.", Message(() => xs.Should().HaveSameCount(new[] { "a" }))); }
+    [Fact] public void HaveSameCount_null_other_throws_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().HaveSameCount<int>(null!)); }
+
+    // NotBeEquivalentTo
+
+    [Fact] public void NotBeEquivalentTo_passes() { new[] { 1, 2 }.Should().NotBeEquivalentTo(new[] { 3, 4 }); }
+    [Fact] public void NotBeEquivalentTo_params_passes() { new[] { 1, 2 }.Should().NotBeEquivalentTo(3, 4); }
+    [Fact] public void NotBeEquivalentTo_message_ignores_order() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs not to be equivalent to [2, 1], but it was.", Message(() => xs.Should().NotBeEquivalentTo(new[] { 2, 1 }))); }
+    [Fact] public void NotBeEquivalentTo_with_options_can_make_a_difference_equal() { var xs = new List<Row> { new("A", 1) }; Assert.Throws<VouchException>(() => xs.Should().NotBeEquivalentTo(new[] { new Row("A", 9) }, o => o.Excluding(r => r.Qty))); xs.Should().NotBeEquivalentTo(new[] { new Row("A", 9) }); }
+    [Fact] public void NotBeEquivalentTo_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs not to be equivalent to [1], but found null.", Message(() => xs.Should().NotBeEquivalentTo(new[] { 1 }))); }
+    [Fact] public void NotBeEquivalentTo_with_reason() { var xs = new[] { 1 }; Assert.Equal("Expected xs not to be equivalent to [1], but it was. Because it differs.", Message(() => xs.Should().NotBeEquivalentTo(new[] { 1 }, "it differs"))); }
+
+    // IntersectWith / NotIntersectWith
+
+    [Fact] public void IntersectWith_passes() { new[] { 1, 2 }.Should().IntersectWith(new[] { 2, 3 }); }
+    [Fact] public void IntersectWith_passes_on_large_inputs() { new[] { 1, 99999 }.Should().IntersectWith(Enumerable.Range(50000, 60000).ToArray()); }
+    [Fact] public void IntersectWith_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to intersect with [3, 4], but they have no common items.", Message(() => xs.Should().IntersectWith(new[] { 3, 4 }))); }
+    [Fact] public void IntersectWith_null_subject_fails() { int[]? xs = null; Assert.Equal("Expected xs to intersect with [3], but found null.", Message(() => xs.Should().IntersectWith(new[] { 3 }))); }
+    [Fact] public void IntersectWith_with_reason() { var xs = new[] { 1 }; Assert.Equal("Expected xs to intersect with [3], but they have no common items. Because overlap is needed.", Message(() => xs.Should().IntersectWith(new[] { 3 }, "overlap is needed"))); }
+    [Fact] public void NotIntersectWith_passes_and_has_a_reason_overload() { new[] { 1, 2 }.Should().NotIntersectWith(new[] { 3 }, "disjoint"); }
+    [Fact] public void NotIntersectWith_with_reason_fails() { var xs = new[] { 1, 2 }; Assert.Throws<VouchException>(() => xs.Should().NotIntersectWith(new[] { 2 }, "disjoint")); }
+    [Fact] public void NotIntersectWith_null_subject_fails() { int[]? xs = null; Assert.Throws<VouchException>(() => xs.Should().NotIntersectWith(new[] { 2 }, "disjoint")); }
+
+    // NotContainNulls
+
+    [Fact] public void NotContainNulls_passes() { new[] { "a", "" }.Should().NotContainNulls(); new string?[0].Should().NotContainNulls(); }
+    [Fact] public void NotContainNulls_message() { var xs = new string?[] { "a", null, "b", null }; Assert.Equal("Expected xs not to contain nulls, but found 2:\n  [1] null\n  [3] null", Message(() => xs.Should().NotContainNulls())); }
+    [Fact] public void NotContainNulls_null_subject_fails() { string?[]? xs = null; Assert.Equal("Expected xs not to contain nulls, but found null.", Message(() => xs.Should().NotContainNulls())); }
+    [Fact] public void NotContainNulls_with_reason() { var xs = new string?[] { null }; Assert.Throws<VouchException>(() => xs.Should().NotContainNulls("nulls are bugs")); }
+
+    // ThenBeInAscendingOrder / ThenBeInDescendingOrder
+
+    [Fact] public void ThenBeInAscendingOrder_passes() { new[] { "a1", "a2", "b0" }.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]); }
+    [Fact] public void ThenBeInAscendingOrder_only_compares_items_that_tied_on_earlier_keys() { new[] { "a9", "b0" }.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]); }
+    [Fact] public void ThenBeInAscendingOrder_message() { var xs = new[] { "ab", "aa" }; Assert.Equal("Expected xs to be in ascending order, but [1] \"aa\" comes after [0] \"ab\", among items with equal earlier keys.", Message(() => xs.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]))); }
+    [Fact] public void ThenBeInDescendingOrder_passes() { new[] { "b2", "b1", "a5" }.Should().BeInDescendingOrder(s => s[0]).ThenBeInDescendingOrder(s => s[1]); }
+    [Fact] public void ThenBeInDescendingOrder_message() { var xs = new[] { "b1", "b2" }; Assert.Equal("Expected xs to be in descending order, but [1] \"b2\" comes after [0] \"b1\", among items with equal earlier keys.", Message(() => xs.Should().BeInDescendingOrder(s => s[0]).ThenBeInDescendingOrder(s => s[1]))); }
+    [Fact] public void ThenBe_can_mix_directions_and_chain_a_third_key() { new[] { "a2x", "a1x", "a1y", "b0a" }.Should().BeInAscendingOrder(s => s[0]).ThenBeInDescendingOrder(s => s[1]).ThenBeInAscendingOrder(s => s[2]); }
+    [Fact] public void ThenBe_third_key_only_compares_items_tied_on_both_earlier_keys() { var xs = new[] { "a1y", "a1x" }; Assert.Throws<VouchException>(() => xs.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]).ThenBeInAscendingOrder(s => s[2])); new[] { "a1y", "a2x" }.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]).ThenBeInAscendingOrder(s => s[2]); }
+    [Fact] public void ThenBe_And_returns_the_assertions() { var ordered = new[] { "a1", "a2" }.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]); ordered.And.HaveCount(2); }
+    [Fact] public void BeInAscendingOrder_by_key_And_returns_the_assertions() { new[] { "a", "b" }.Should().BeInAscendingOrder(s => s).And.HaveCount(2); }
+    [Fact] public void ThenBe_null_key_selector_throws_ArgumentNullException() { var ordered = new[] { "a" }.Should().BeInAscendingOrder(s => s); Assert.Throws<ArgumentNullException>(() => ordered.ThenBeInAscendingOrder<char>(null!)); }
+    [Fact]
+    public void ThenBe_on_a_null_subject_records_only_the_null_failure()
+    {
+        string[]? xs = null;
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            xs.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]);
+        });
+        Assert.Contains("found null", ex.Message);
+        Assert.DoesNotContain("\n\n", ex.Message);
+    }
+
+    [Fact]
+    public void ThenBe_keys_are_read_only_for_tied_groups()
+    {
+        var xs = new[] { "a", "b", "c" };
+        xs.Should().BeInAscendingOrder(s => s)
+            .ThenBeInAscendingOrder<int>(s => throw new InvalidOperationException("second key read for an untied pair"));
+    }
+
+    [Fact]
+    public void Failing_ThenBe_inside_a_scope_is_recorded()
+    {
+        var xs = new[] { "a2", "a1" };
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            xs.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1]);
+        });
+        Assert.NotEmpty(ex.Message);
+    }
+
+    [Fact]
+    public void Failing_AllBe_inside_a_scope_is_recorded()
+    {
+        var xs = new[] { 1, 2 };
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            xs.Should().AllBe(1);
+        });
+        Assert.NotEmpty(ex.Message);
+    }
+
+    [Fact]
+    public void Failing_Satisfy_inside_a_scope_is_recorded()
+    {
+        var xs = new[] { 1, 2 };
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            xs.Should().Satisfy(x => x > 5, x => x > 6);
+        });
+        Assert.NotEmpty(ex.Message);
+    }
+
+    [Fact]
+    public void Ordering_result_converts_to_AndConstraint()
+    {
+        var xs = new[] { "a", "b" };
+        AndConstraint<GenericCollectionAssertions<string>> c = xs.Should().BeInAscendingOrder(s => s);
+        c.And.HaveCount(2);
+    }
+
+    [Fact]
+    public void AllBeOfType_exact_mode_unwraps_nullable()
+    {
+        new object[] { 1, 2 }.Should().AllBeOfType<int?>();
+        new object[] { 1, 2 }.Should().AllBeAssignableTo<int>();
+    }
+
+    [Fact]
+    public void HaveSameCount_null_subject_does_not_enumerate_other()
+    {
+        IEnumerable<int>? xs = null;
+        var enumerated = false;
+        IEnumerable<int> Lazy() { enumerated = true; yield return 1; }
+        var ex = Assert.Throws<VouchException>(() => xs.Should().HaveSameCount(Lazy()));
+        Assert.Contains("found null", ex.Message);
+        Assert.False(enumerated);
+    }
+
+    [Fact]
+    public void HaveSameCount_counts_a_lazy_other()
+    {
+        IEnumerable<int> Lazy() { yield return 1; yield return 2; }
+        new[] { 5, 6 }.Should().HaveSameCount(Lazy());
+        Assert.Throws<VouchException>(() => new[] { 5 }.Should().HaveSameCount(Lazy()));
+    }
+
+    [Fact]
+    public void HaveSameCount_caps_the_other_collection()
+    {
+        // Enumerable.Range knows its count, so use an iterator to reach the capped path.
+        static IEnumerable<int> Endless(int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                yield return i;
+            }
+        }
+
+        var ex = Assert.Throws<VouchException>(() => new[] { 1 }.Should().HaveSameCount(Endless(Equivalency.MaxItems + 1)));
+        Assert.Contains("more than", ex.Message);
+    }
+
+    [Fact]
+    public void Count_checks_past_the_item_cap_on_a_lazy_sequence()
+    {
+        var over = Equivalency.MaxItems + 1;
+        Enumerable.Range(0, over).Should().NotHaveCount(5);
+        Enumerable.Range(0, over).Should().HaveCountLessThan(over + 1);
+        Enumerable.Range(0, over).Should().HaveCountLessThanOrEqualTo(over);
+        Assert.Throws<VouchException>(() => Enumerable.Range(0, over).Should().NotHaveCount(over));
+        Assert.Throws<VouchException>(() => Enumerable.Range(0, over).Should().HaveCountLessThan(5));
+        Assert.Throws<VouchException>(() => Enumerable.Range(0, over).Should().HaveCountLessThanOrEqualTo(5));
+    }
+
+    [Fact] public void Satisfy_finds_a_matching_that_needs_reassignment() => new[] { 6, 1 }.Should().Satisfy(x => x > 0, x => x > 5);
+
+    [Fact]
+    public void Satisfy_refuses_more_than_the_size_guard()
+    {
+        var items = Enumerable.Range(0, 10_001).ToArray();
+        var predicates = Enumerable.Repeat<System.Linq.Expressions.Expression<Func<int, bool>>>(_ => true, 10_001).ToArray();
+        var ex = Assert.Throws<VouchException>(() => items.Should().Satisfy(predicates));
+        Assert.Contains("10000", ex.Message.Replace(",", "").Replace("_", ""));
+    }
+
+    [Fact] public void ThenBe_on_a_null_subject_fails_at_the_first_ordering() { string[]? xs = null; Assert.Throws<VouchException>(() => xs.Should().BeInAscendingOrder(s => s[0]).ThenBeInAscendingOrder(s => s[1])); }
 }

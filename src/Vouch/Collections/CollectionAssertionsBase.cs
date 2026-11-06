@@ -48,6 +48,58 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return true;
     }
 
+    // Counts items for a check that only needs the count. A source that knows its size, or one already read, gives its exact
+    // count. A lazy sequence is read once and kept (for the failure listing) up to the item cap; past the cap it is counted
+    // without storing, up to limit, so a long sequence is judged on its real length instead of being rejected for it.
+    private int CountUpTo(int limit)
+    {
+        switch (Source)
+        {
+            case IReadOnlyCollection<T> c:
+                return c.Count;
+            case ICollection<T> c:
+                return c.Count;
+            case System.Collections.ICollection c:
+                return c.Count;
+        }
+
+        if (_list is not null)
+        {
+            return _list.Count;
+        }
+
+        var kept = new List<T>();
+        var storing = true;
+        var count = 0;
+        foreach (var item in Source!)
+        {
+            if (storing)
+            {
+                if (kept.Count == Equivalency.MaxItems)
+                {
+                    storing = false;
+                }
+                else
+                {
+                    kept.Add(item);
+                }
+            }
+
+            count++;
+            if (!storing && count >= limit)
+            {
+                break;
+            }
+        }
+
+        if (storing)
+        {
+            _list = kept;
+        }
+
+        return count;
+    }
+
     private List<T>? Materialise()
     {
         if (Source is ICollection<T>)
@@ -730,65 +782,51 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> BeInAscendingOrder() => InOrder(Comparer<T>.Default, "ascending", false);
 
-    public AndConstraint<TSelf> BeInAscendingOrder<TKey>(Func<T, TKey> keySelector)
+    /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
+    public OrderedAndConstraint<TSelf, T, TKey> BeInAscendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrder(Comparer<TKey>.Default, keySelector, "ascending", false);
+        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "ascending", false);
     }
 
     public AndConstraint<TSelf> BeInDescendingOrder() => InOrder(Comparer<T>.Default, "descending", true);
 
-    public AndConstraint<TSelf> BeInDescendingOrder<TKey>(Func<T, TKey> keySelector)
+    /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
+    public OrderedAndConstraint<TSelf, T, TKey> BeInDescendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrder(Comparer<TKey>.Default, keySelector, "descending", true);
+        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "descending", true);
     }
 
-    private AndConstraint<TSelf> InOrder(IComparer<T> comparer, string direction, bool descending) =>
-        InOrder(comparer, static x => x, direction, descending);
+    private AndConstraint<TSelf> InOrder(IComparer<T> comparer, string direction, bool descending)
+    {
+        CheckOrder(comparer, static x => x, direction, descending, out _);
+        return And();
+    }
 
-    private AndConstraint<TSelf> InOrder<TKey>(IComparer<TKey> comparer, Func<T, TKey> key, string direction, bool descending)
+    private OrderedAndConstraint<TSelf, T, TKey> InOrderKeyed<TKey>(IComparer<TKey> comparer, Func<T, TKey> key, string direction, bool descending)
+    {
+        CheckOrder(comparer, key, direction, descending, out var items);
+        return new((TSelf)this, items, Name, key, comparer, null);
+    }
+
+    private void CheckOrder<TKey>(IComparer<TKey> comparer, Func<T, TKey> key, string direction, bool descending, out IReadOnlyList<T>? items)
     {
         if (IsNull)
         {
-            return FailNull($"to be in {direction} order");
+            ReportNull($"to be in {direction} order");
+            items = null;
+            return;
         }
 
-        if (!TryItems(out var items))
+        if (!TryItems(out var list))
         {
-            return And();
+            items = null;
+            return;
         }
 
-        if (items.Count < 2)
-        {
-            return And();
-        }
-
-        var previous = key(items[0]);
-        for (var i = 1; i < items.Count; i++)
-        {
-            var current = key(items[i]);
-            int order;
-            try
-            {
-                order = comparer.Compare(previous, current);
-            }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
-            {
-                Fail.With($"Expected {Name} to be in {direction} order, but {Formatter.Format(typeof(TKey))} is not comparable.");
-                return And();
-            }
-
-            if (descending ? order < 0 : order > 0)
-            {
-                Fail.With($"Expected {Name} to be in {direction} order, but [{i}] {Formatter.Format(items[i])} comes after [{i - 1}] {Formatter.Format(items[i - 1])}.");
-                return And();
-            }
-
-            previous = current;
-        }
-
-        return And();
+        items = list;
+        OrderCheck.Run(Name, list, key, comparer, null, direction, descending);
     }
 
     public AndConstraint<TSelf> AllSatisfy(Action<T> assertion)
@@ -1058,10 +1096,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> NotIntersectWith(IEnumerable<T> other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        var expected = Materialise(other);
         if (IsNull)
         {
-            return FailNull($"not to intersect with {Formatter.Format(expected)}");
+            return FailNull($"not to intersect with {Formatter.Format(Materialise(other))}");
         }
 
         if (!TryItems(out var items))
@@ -1069,6 +1106,46 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return And();
         }
 
+        // The pass path scans in place: a list or ICollection<T> other is never copied, and no set is built unless they share an item.
+        IReadOnlyList<T>? expected = null;
+        bool intersects;
+        switch (other)
+        {
+            case IReadOnlyList<T> list:
+                intersects = Intersects(items, list);
+                break;
+            case ICollection<T> collection:
+                intersects = false;
+                for (var i = 0; !intersects && i < items.Count; i++)
+                {
+                    intersects = collection.Contains(items[i]);
+                }
+
+                break;
+            case IReadOnlyCollection<T> sized:
+                intersects = false;
+                foreach (var candidate in sized)
+                {
+                    if (IndexOf(items, candidate) >= 0)
+                    {
+                        intersects = true;
+                        break;
+                    }
+                }
+
+                break;
+            default:
+                expected = Materialise(other);
+                intersects = Intersects(items, expected);
+                break;
+        }
+
+        if (!intersects)
+        {
+            return And();
+        }
+
+        expected ??= Materialise(other);
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? common = null;
@@ -1499,5 +1576,833 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(comparer);
         return InOrder(comparer, "descending", true);
+    }
+
+    public AndWhichConstraint<TSelf, T> HaveElementPreceding(T successor, T expected)
+    {
+        if (IsNull)
+        {
+            ReportNull($"to have element {Formatter.Format(expected)} preceding {Formatter.Format(successor)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
+        var index = IndexOf(items, successor);
+        if (index < 0)
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} preceding {Formatter.Format(successor)}, but {Formatter.Format(successor)} was not found.{HasTail(items)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (index == 0)
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} preceding {Formatter.Format(successor)}, but it is the first item and has nothing before it.");
+            return new((TSelf)this, default!);
+        }
+
+        if (!EqualityComparer<T>.Default.Equals(items[index - 1], expected))
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} preceding {Formatter.Format(successor)}, but found {Formatter.Format(items[index - 1])}.");
+            return new((TSelf)this, default!);
+        }
+
+        return new((TSelf)this, items[index - 1]);
+    }
+
+    public AndWhichConstraint<TSelf, T> HaveElementPreceding(T successor, T expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveElementPreceding(successor, expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> HaveElementSucceeding(T predecessor, T expected)
+    {
+        if (IsNull)
+        {
+            ReportNull($"to have element {Formatter.Format(expected)} succeeding {Formatter.Format(predecessor)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
+        var index = IndexOf(items, predecessor);
+        if (index < 0)
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} succeeding {Formatter.Format(predecessor)}, but {Formatter.Format(predecessor)} was not found.{HasTail(items)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (index == items.Count - 1)
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} succeeding {Formatter.Format(predecessor)}, but it is the last item and has nothing after it.");
+            return new((TSelf)this, default!);
+        }
+
+        if (!EqualityComparer<T>.Default.Equals(items[index + 1], expected))
+        {
+            Fail.With($"Expected {Name} to have element {Formatter.Format(expected)} succeeding {Formatter.Format(predecessor)}, but found {Formatter.Format(items[index + 1])}.");
+            return new((TSelf)this, default!);
+        }
+
+        return new((TSelf)this, items[index + 1]);
+    }
+
+    public AndWhichConstraint<TSelf, T> HaveElementSucceeding(T predecessor, T expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveElementSucceeding(predecessor, expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) =>
+        ContainEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
+        ContainEquivalent(expectation, Equivalency.Options(configure));
+
+    public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainEquivalentOf(expectation);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainEquivalentOf(expectation, configure);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndWhichConstraint<TSelf, T> ContainEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        if (IsNull)
+        {
+            ReportNull($"to contain an item equivalent to {Formatter.Format(expectation)}");
+            return new((TSelf)this, default!);
+        }
+
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (Equivalency.AreEquivalent(items[i], expectation, options))
+            {
+                return new((TSelf)this, items[i]);
+            }
+        }
+
+        Fail.With($"Expected {Name} to contain an item equivalent to {Formatter.Format(expectation)}, {NotFound(items)}");
+        return new((TSelf)this, default!);
+    }
+
+    /// <summary>One assertion per item, in order. The number of assertions must equal the number of items.</summary>
+    public AndConstraint<TSelf> SatisfyRespectively(params Action<T>[] assertions)
+    {
+        ArgumentNullException.ThrowIfNull(assertions);
+        for (var i = 0; i < assertions.Length; i++)
+        {
+            ArgumentNullException.ThrowIfNull(assertions[i], nameof(assertions));
+        }
+
+        if (!TryRequire("to satisfy the assertions respectively", out var items))
+        {
+            return And();
+        }
+
+        if (items.Count != assertions.Length)
+        {
+            Fail.With($"Expected {Name} to contain {Plural(assertions.Length)} to satisfy the assertions respectively, but found {items.Count}{Listing(items)}");
+            return And();
+        }
+
+        List<(int Index, string Message)>? failures = null;
+        for (var i = 0; i < items.Count; i++)
+        {
+            var message = RunInspector(assertions[i], items[i]);
+            if (message is not null)
+            {
+                (failures ??= []).Add((i, message));
+            }
+        }
+
+        if (failures is not null)
+        {
+            var sb = new StringBuilder();
+            sb.Append("Expected ").Append(Name).Append(" to satisfy the assertions respectively, but ").Append(failures.Count).Append(" did not:");
+            var shown = Math.Min(failures.Count, Formatter.MaxItems);
+            for (var i = 0; i < shown; i++)
+            {
+                sb.Append("\n  [").Append(failures[i].Index).Append("] ").Append(failures[i].Message);
+            }
+
+            AppendMore(sb, failures.Count - shown);
+            Fail.With(sb.ToString());
+        }
+
+        return And();
+    }
+
+    // Runs one inspector with failures collected, the way AllSatisfy does: no recorder and no reason while it runs.
+    private static string? RunInspector(Action<T> assertion, T item)
+    {
+        var outerReason = Reason.Current;
+        var outerRecorder = Fail.Recorder;
+        Fail.Recorder = null;
+        Reason.Clear();
+        try
+        {
+            assertion(item);
+            return null;
+        }
+        catch (Exception ex) when (Fail.IsFailure(ex))
+        {
+            return Fail.FailureMessage(ex);
+        }
+        finally
+        {
+            Fail.Recorder = outerRecorder;
+            Reason.Set(outerReason);
+        }
+    }
+
+    /// <summary>Each predicate is matched by its own item, in any order. The number of predicates must equal the number of items.</summary>
+    public AndConstraint<TSelf> Satisfy(params Expression<Func<T, bool>>[] predicates)
+    {
+        ArgumentNullException.ThrowIfNull(predicates);
+        for (var i = 0; i < predicates.Length; i++)
+        {
+            ArgumentNullException.ThrowIfNull(predicates[i], nameof(predicates));
+        }
+
+        if (!TryRequire("to satisfy the predicates", out var items))
+        {
+            return And();
+        }
+
+        if (predicates.Length > MaxSatisfy || items.Count > MaxSatisfy)
+        {
+            Fail.With($"Expected {Name} to satisfy the predicates, but {items.Count} items and {predicates.Length} predicates are more than the {MaxSatisfy} that Satisfy matches.");
+            return And();
+        }
+
+        var n = predicates.Length;
+        if (items.Count != n)
+        {
+            Fail.With($"Expected {Name} to contain {Plural(n)} to satisfy the predicates, but found {items.Count}{Listing(items)}");
+            return And();
+        }
+
+        if (n == 0)
+        {
+            return And();
+        }
+
+        var matches = new bool[n * n];
+        for (var p = 0; p < n; p++)
+        {
+            var test = predicates[p].Compile();
+            for (var j = 0; j < n; j++)
+            {
+                matches[p * n + j] = test(items[j]);
+            }
+        }
+
+        var owner = new int[n];
+        Array.Fill(owner, -1);
+        var seen = new bool[n];
+        var path = new int[n];
+        var next = new int[n];
+        var via = new int[n];
+        List<int>? unmatched = null;
+        for (var p = 0; p < n; p++)
+        {
+            Array.Clear(seen);
+            if (!Assign(p, n, matches, seen, owner, path, next, via))
+            {
+                (unmatched ??= []).Add(p);
+            }
+        }
+
+        if (unmatched is not null)
+        {
+            var sb = new StringBuilder();
+            sb.Append("Expected ").Append(Name).Append(" to satisfy the predicates with a distinct item each, but no unused item matched:");
+            var shown = Math.Min(unmatched.Count, Formatter.MaxItems);
+            for (var i = 0; i < shown; i++)
+            {
+                sb.Append("\n  ").Append(predicates[unmatched[i]].Body);
+            }
+
+            AppendMore(sb, unmatched.Count - shown);
+            Fail.With(sb.ToString());
+        }
+
+        return And();
+    }
+
+    private const int MaxSatisfy = 10_000;
+
+    // Augmenting-path matching, so a predicate that fits several items never starves a stricter one. The search keeps
+    // its own stack (at most one frame per item), so a long chain of re-assignments cannot overflow the call stack.
+    private static bool Assign(int start, int n, bool[] matches, bool[] seen, int[] owner, int[] path, int[] next, int[] via)
+    {
+        var depth = 0;
+        path[0] = start;
+        next[0] = 0;
+        while (depth >= 0)
+        {
+            var predicate = path[depth];
+            var descended = false;
+            for (var j = next[depth]; j < n; j++)
+            {
+                if (!matches[predicate * n + j] || seen[j])
+                {
+                    continue;
+                }
+
+                seen[j] = true;
+                next[depth] = j + 1;
+                via[depth] = j;
+                if (owner[j] < 0)
+                {
+                    for (var d = depth; d >= 0; d--)
+                    {
+                        owner[via[d]] = path[d];
+                    }
+
+                    return true;
+                }
+
+                depth++;
+                path[depth] = owner[j];
+                next[depth] = 0;
+                descended = true;
+                break;
+            }
+
+            if (!descended)
+            {
+                depth--;
+            }
+        }
+
+        return false;
+    }
+
+    public AndConstraint<TSelf> AllBe(T expected)
+    {
+        // The expectation text is built only on a failing path, so a pass allocates nothing.
+        if (IsNull)
+        {
+            return FailNull($"to have all items be {Formatter.Format(expected)}");
+        }
+
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
+        var comparer = EqualityComparer<T>.Default;
+        List<int>? differing = null;
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (!comparer.Equals(items[i], expected))
+            {
+                (differing ??= []).Add(i);
+            }
+        }
+
+        if (differing is not null)
+        {
+            Fail.With($"Expected {Name} to have all items be {Formatter.Format(expected)}, but found {differing.Count} that differ{Listing(items, differing)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> AllBe(T expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return AllBe(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    /// <summary>Every item is exactly of type <typeparamref name="TExpected"/>. Which is the items cast to it.</summary>
+    /// <remarks>
+    /// Unlike the other assertions this allocates when it passes (the array behind <c>Which</c>), so it is exempt from the 0 B rule.
+    /// After a failure inside an <see cref="AssertionScope"/>, <c>Which</c> is empty. A nullable <typeparamref name="TExpected"/> matches its underlying type.
+    /// </remarks>
+    public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeOfType<TExpected>() => AllOfType<TExpected>(exact: true);
+
+    public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeOfType<TExpected>(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return AllOfType<TExpected>(exact: true);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    /// <summary>Every item is assignable to <typeparamref name="TExpected"/>. Which is the items cast to it.</summary>
+    /// <remarks>
+    /// Unlike the other assertions this allocates when it passes (the array behind <c>Which</c>), so it is exempt from the 0 B rule.
+    /// After a failure inside an <see cref="AssertionScope"/>, <c>Which</c> is empty.
+    /// </remarks>
+    public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>() => AllOfType<TExpected>(exact: false);
+
+    public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return AllOfType<TExpected>(exact: false);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllOfType<TExpected>(bool exact)
+    {
+        if (IsNull)
+        {
+            ReportNull($"to have all items {TypeWording<TExpected>(exact)}");
+            return new((TSelf)this, []);
+        }
+
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, []);
+        }
+
+        // A nullable target is matched by its underlying type, because a boxed int? is a boxed int.
+        var exactType = Nullable.GetUnderlyingType(typeof(TExpected)) ?? typeof(TExpected);
+        List<int>? wrong = null;
+        for (var i = 0; i < items.Count; i++)
+        {
+            // Tested on the item itself, so a value-type item is not boxed for the check.
+            var item = items[i];
+            if (item is TExpected && (!exact || item.GetType() == exactType))
+            {
+                continue;
+            }
+
+            (wrong ??= []).Add(i);
+        }
+
+        if (wrong is not null)
+        {
+            Fail.With($"Expected {Name} to have all items {TypeWording<TExpected>(exact)}, but found {wrong.Count} that are not{Listing(items, wrong)}");
+            return new((TSelf)this, []);
+        }
+
+        // Only a passing check builds the array behind Which.
+        var cast = new TExpected[items.Count];
+        for (var i = 0; i < cast.Length; i++)
+        {
+            cast[i] = (TExpected)(object)items[i]!;
+        }
+
+        return new((TSelf)this, cast);
+    }
+
+    private static string TypeWording<TExpected>(bool exact) =>
+        (exact ? "be of type " : "be assignable to ") + Formatter.Format(typeof(TExpected));
+
+    public AndConstraint<TSelf> NotHaveCount(int unexpected)
+    {
+        if (IsNull)
+        {
+            return FailNull($"not to contain {Plural(unexpected)}");
+        }
+
+        // Counts without storing past the item cap, so a long lazy sequence is judged on its real length.
+        var count = CountUpTo(unexpected == int.MaxValue ? unexpected : unexpected + 1);
+        if (count == unexpected)
+        {
+            Fail.With($"Expected {Name} not to contain {Plural(unexpected)}, but it did{ListingIfStored()}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> NotHaveCount(int unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotHaveCount(unexpected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<TSelf> HaveCountLessThan(int expected)
+    {
+        if (IsNull)
+        {
+            return FailNull($"to contain fewer than {Plural(expected)}");
+        }
+
+        var count = CountUpTo(expected);
+        if (count >= expected)
+        {
+            Fail.With($"Expected {Name} to contain fewer than {Plural(expected)}, but found {FoundCount(count)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> HaveCountLessThan(int expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveCountLessThan(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<TSelf> HaveCountLessThanOrEqualTo(int expected)
+    {
+        if (IsNull)
+        {
+            return FailNull($"to contain at most {Plural(expected)}");
+        }
+
+        var count = CountUpTo(expected == int.MaxValue ? expected : expected + 1);
+        if (count > expected)
+        {
+            Fail.With($"Expected {Name} to contain at most {Plural(expected)}, but found {FoundCount(count)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> HaveCountLessThanOrEqualTo(int expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveCountLessThanOrEqualTo(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<TSelf> HaveSameCount<TOther>(IEnumerable<TOther> other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        if (IsNull)
+        {
+            return FailNull("to contain the same number of items as the other collection");
+        }
+
+        if (!TryCountOf(other, out var expected))
+        {
+            return And();
+        }
+
+        if (!TryCount(out var count))
+        {
+            return And();
+        }
+
+        if (count != expected)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
+            Fail.With($"Expected {Name} to contain the same number of items as the other collection ({Plural(expected)}), but found {items.Count}{Listing(items)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> HaveSameCount<TOther>(IEnumerable<TOther> other, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveSameCount(other);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    // Counts without copying when the other collection already knows its size. A sequence is counted up to the same
+    // item cap as the subject, and a longer one is reported as a failure.
+    private static bool TryCountOf<TOther>(IEnumerable<TOther> other, out int count)
+    {
+        switch (other)
+        {
+            case IReadOnlyCollection<TOther> c:
+                count = c.Count;
+                return true;
+            case ICollection<TOther> c:
+                count = c.Count;
+                return true;
+            case System.Collections.ICollection c:
+                count = c.Count;
+                return true;
+        }
+
+        count = 0;
+        foreach (var _ in other)
+        {
+            if (count == Equivalency.MaxItems)
+            {
+                Fail.With($"The other collection has more than {Equivalency.MaxItems} items, not compared.");
+                return false;
+            }
+
+            count++;
+        }
+
+        return true;
+    }
+
+    // The count and listing when the items were kept; otherwise the count reached (a lazy sequence past the cap).
+    private string FoundCount(int count) =>
+        _list is not null ? $"{_list.Count}{Listing(_list)}" : $"at least {count}.";
+
+    private string ListingIfStored() =>
+        _list is not null ? Listing(_list) : ".";
+
+    public AndConstraint<TSelf> NotBeEquivalentTo(params T[] unexpected)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+        return CheckNotEquivalent(unexpected, EquivalencyOptions.Default);
+    }
+
+    public AndConstraint<TSelf> NotBeEquivalentTo(T[] unexpected, Func<EquivalencyOptions<T>, EquivalencyOptions<T>> configure)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+        return CheckNotEquivalent(unexpected, Equivalency.Options(configure));
+    }
+
+    public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+        return CheckNotEquivalent(unexpected, EquivalencyOptions.Default);
+    }
+
+    public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+        return CheckNotEquivalent(unexpected, Equivalency.Options(configure));
+    }
+
+    public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBeEquivalentTo<TExpectation>(unexpected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndConstraint<TSelf> CheckNotEquivalent(object unexpected, EquivalencyOptions options)
+    {
+        if (IsNull)
+        {
+            return FailNull($"not to be equivalent to {Formatter.Format(unexpected)}");
+        }
+
+        object? subject;
+        if (Equivalency.IsDictionary(Source!) && Equivalency.IsDictionary(unexpected))
+        {
+            subject = Source;
+        }
+        else if (TryItems(out var items))
+        {
+            subject = items;
+        }
+        else
+        {
+            return And();
+        }
+
+        if (Equivalency.AreEquivalent(subject, unexpected, options))
+        {
+            Fail.With($"Expected {Name} not to be equivalent to {Formatter.Format(unexpected)}, but it was.");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> IntersectWith(IEnumerable<T> other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        var expected = Materialise(other);
+        if (IsNull)
+        {
+            return FailNull($"to intersect with {Formatter.Format(expected)}");
+        }
+
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
+        if (!Intersects(items, expected))
+        {
+            Fail.With($"Expected {Name} to intersect with {Formatter.Format(expected)}, but they have no common items.");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> IntersectWith(IEnumerable<T> other, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return IntersectWith(other);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<TSelf> NotIntersectWith(IEnumerable<T> other, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotIntersectWith(other);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    // Small inputs are scanned in place so a passing check allocates nothing; large ones go through a set.
+    private static bool Intersects(IReadOnlyList<T> items, IReadOnlyList<T> expected)
+    {
+        if ((long)items.Count * expected.Count <= 4096)
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (IndexOf(expected, items[i]) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        var set = new HashSet<T>(expected);
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (set.Contains(items[i]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public AndConstraint<TSelf> NotContainNulls()
+    {
+        if (!TryRequire("not to contain nulls", out var items))
+        {
+            return And();
+        }
+
+        List<int>? nulls = null;
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (items[i] is null)
+            {
+                (nulls ??= []).Add(i);
+            }
+        }
+
+        if (nulls is not null)
+        {
+            Fail.With($"Expected {Name} not to contain nulls, but found {nulls.Count}{Listing(items, nulls)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> NotContainNulls(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotContainNulls();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
     }
 }

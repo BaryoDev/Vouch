@@ -109,4 +109,74 @@ public class ShouldResolutionTests
 
     [Fact] public void TimeSpan_resolves() { var t = TimeSpan.FromSeconds(5); t.Should().Be(t).And.BePositive(); }
     [Fact] public void Nullable_TimeSpan_resolves() { TimeSpan? t = TimeSpan.FromSeconds(5); t.Should().Be(TimeSpan.FromSeconds(5)); }
+
+    // ImmutableArray<T> has its own assertions type: the collection assertions plus every member ValueAssertions<ImmutableArray<T>> had.
+    [Fact] public void ImmutableArray_resolves_to_its_own_assertions() => Assert.IsType<ImmutableArrayAssertions<int>>(System.Collections.Immutable.ImmutableArray.Create(1).Should());
+
+    [Fact]
+    public void ImmutableArray_every_ValueAssertions_member_still_compiles()
+    {
+        var a = System.Collections.Immutable.ImmutableArray.Create(1, 2);
+        var same = a;
+        var other = System.Collections.Immutable.ImmutableArray.Create(1, 2);
+        a.Should().Be(same).And.NotBe(other).And.BeOneOf(other, same).And.BeEquivalentTo(a);
+        a.Should().Be(same, "because").And.NotBe(other, "because");
+        a.Should().BeEquivalentTo(new[] { 1, 2 });
+        a.Should().BeEquivalentTo(a, o => o);
+        Assert.Equal(a, a.Should().Subject);
+        Assert.Equal("a", a.Should().Expression);
+        a.Should().Be(same).And.HaveCount(2).And.Contain(2);
+        Assert.Throws<VouchException>(() => a.Should().Be(other));
+        Assert.Throws<VouchException>(() => a.Should().NotBe(same));
+        Assert.Throws<VouchException>(() => a.Should().BeOneOf(other));
+    }
+
+    private sealed class Bag(params object[] items) : System.Collections.IEnumerable
+    {
+        public System.Collections.IEnumerator GetEnumerator() => items.GetEnumerator();
+    }
+
+    // A non-generic IEnumerable keeps every ObjectAssertions member and gains the collection assertions.
+    [Fact]
+    public void Non_generic_IEnumerable_keeps_every_ObjectAssertions_member()
+    {
+        var list = new System.Collections.ArrayList { 1, "a" };
+        var otherList = new System.Collections.ArrayList { 1, "a" };
+        list.Should().Be(list).And.NotBe(otherList).And.NotBeNull().And.BeSameAs(list).And.NotBeSameAs(otherList);
+        list.Should().Be(list, "because").And.NotBe(otherList, "because").And.NotBeNull("because");
+        list.Should().BeOfType<System.Collections.ArrayList>().Which.Count.Should().Be(2);
+        list.Should().BeOfType<System.Collections.ArrayList>("because");
+        list.Should().BeOfType(typeof(System.Collections.ArrayList)).And.BeOfType(typeof(System.Collections.ArrayList), "because");
+        list.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
+        list.Should().BeAssignableTo<System.Collections.IList>().And.BeAssignableTo<System.Collections.IList>("because");
+        list.Should().Match<System.Collections.ArrayList>(l => l.Count == 2).And.Match<System.Collections.ArrayList>(l => l.Count == 2, "because");
+        list.Should().BeOneOf(otherList, list).And.BeEquivalentTo(list);
+        list.Should().BeEquivalentTo(list, o => o);
+        Assert.Same(list, list.Should().Subject);
+        list.Should().HaveCount(2).And.Contain("a");
+        Assert.Throws<VouchException>(() => list.Should().BeNull());
+        Assert.Throws<VouchException>(() => list.Should().Be(otherList));
+        Assert.Throws<VouchException>(() => list.Should().BeSameAs(otherList));
+        System.Collections.ArrayList? none = null;
+        none.Should().BeNull().And.BeNull("because");
+        Assert.Throws<VouchException>(() => none.Should().NotBeNull());
+        Assert.Null(none.Should().Subject);
+    }
+
+    [Fact]
+    public void IEnumerable_only_user_type_keeps_every_ObjectAssertions_member()
+    {
+        var bag = new Bag(1, "a");
+        var other = new Bag(1, "a");
+        bag.Should().Be(bag).And.NotBe(other).And.NotBeNull().And.BeSameAs(bag).And.NotBeSameAs(other);
+        bag.Should().BeOfType<Bag>().And.NotBeOfType<string>();
+        bag.Should().BeOfType(typeof(Bag));
+        bag.Should().BeAssignableTo<System.Collections.IEnumerable>().And.NotBeAssignableTo<string>();
+        bag.Should().Match<Bag>(b => b != null);
+        bag.Should().BeOneOf(other, bag).And.BeEquivalentTo(bag);
+        Assert.Same(bag, bag.Should().Subject);
+        bag.Should().HaveCount(2);
+        Assert.Throws<VouchException>(() => bag.Should().BeNull());
+        Assert.Throws<VouchException>(() => bag.Should().Be(other));
+    }
 }

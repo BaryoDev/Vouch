@@ -389,6 +389,40 @@ public class AllocationTests
         Assert.Equal(baseline, Bytes(() => d.Should().NotBeEmpty()));
     }
 
+    // issue #15: the new collection assertions
+
+    private static readonly int[] Ints = [1, 2, 3, 4];
+    private static readonly int[] OtherInts = [4, 5];
+    private static readonly string?[] Strings = ["a", "b"];
+    private static readonly Action<int>[] RespectivelyChecks =
+        [static _ => { }, static _ => { }, static _ => { }, static _ => { }]; // no-op bodies: Should() inside would allocate its own assertions object
+    private static readonly int[] DisjointInts = [1, 2];
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(10_000)]
+    public void New_count_methods_do_not_copy_a_set(int size)
+    {
+        var set = Enumerable.Range(0, size).ToHashSet();
+        var other = Enumerable.Range(0, size).ToHashSet();
+        AssertNoCopy(set, a => a.NotHaveCount(size + 1));
+        AssertNoCopy(set, a => a.HaveCountLessThan(size + 1));
+        AssertNoCopy(set, a => a.HaveCountLessThanOrEqualTo(size));
+        AssertNoCopy(set, a => a.HaveSameCount(other));
+    }
+
+    [Fact] public void NotHaveCount_allocates_nothing() => AssertNoCopy(Ints, a => a.NotHaveCount(9));
+    [Fact] public void HaveCountLessThan_allocates_nothing() => AssertNoCopy(Ints, a => a.HaveCountLessThan(9));
+    [Fact] public void HaveCountLessThanOrEqualTo_allocates_nothing() => AssertNoCopy(Ints, a => a.HaveCountLessThanOrEqualTo(4));
+    [Fact] public void HaveSameCount_allocates_nothing() => AssertNoCopy(Ints, a => a.HaveSameCount(Ints));
+    [Fact] public void HaveElementPreceding_allocates_nothing() => AssertNoCopy(Ints, a => a.HaveElementPreceding(3, 2));
+    [Fact] public void HaveElementSucceeding_allocates_nothing() => AssertNoCopy(Ints, a => a.HaveElementSucceeding(2, 3));
+    [Fact] public void AllBe_allocates_nothing() => AssertNoCopy(new[] { 2, 2, 2 }, a => a.AllBe(2));
+    [Fact] public void NotContainNulls_allocates_nothing() => AssertNoCopy(Strings, a => a.NotContainNulls());
+    [Fact] public void IntersectWith_allocates_nothing() => AssertNoCopy(Ints, a => a.IntersectWith(OtherInts));
+    [Fact] public void NotIntersectWith_allocates_nothing() => AssertNoCopy(OtherInts, a => a.NotIntersectWith(DisjointInts));
+    [Fact] public void SatisfyRespectively_allocates_nothing() => AssertNoCopy(Ints, a => a.SatisfyRespectively(RespectivelyChecks));
+
     private static Dictionary<string, int> Dict() => new() { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
 
     // The assertions object from Should() is a class and costs a few bytes on its own, so a passing assertion is measured
