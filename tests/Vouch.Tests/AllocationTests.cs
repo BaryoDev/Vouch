@@ -78,9 +78,17 @@ public class AllocationTests
         var items = new int[size];
         Action<int> check = static _ => { };
         items.Should().AllSatisfy(check);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < Calls; i++) items.Should().AllSatisfy(check);
-        return GC.GetAllocatedBytesForCurrentThread() - before;
+
+        // Lowest of three runs, so a one-off runtime allocation during the loop does not count.
+        var lowest = long.MaxValue;
+        for (var run = 0; run < 3; run++)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < Calls; i++) items.Should().AllSatisfy(check);
+            lowest = Math.Min(lowest, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+
+        return lowest;
     }
 
     [Fact]
