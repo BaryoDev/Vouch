@@ -2,6 +2,7 @@ namespace Vouch
 {
     public readonly struct ActionAssertions
     {
+        public string? Expression { get; }
         public System.Action? Subject { get; }
         public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrow() { }
         public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrow(string because) { }
@@ -38,6 +39,7 @@ namespace Vouch
     }
     public readonly struct AsyncFunctionAssertions
     {
+        public string? Expression { get; }
         public System.Func<System.Threading.Tasks.Task>? Subject { get; }
         public System.Threading.Tasks.Task NotThrowAsync() { }
         public System.Threading.Tasks.Task NotThrowAsync(string because) { }
@@ -48,6 +50,7 @@ namespace Vouch
     }
     public readonly struct AsyncFunctionAssertions<T>
     {
+        public string? Expression { get; }
         public System.Func<System.Threading.Tasks.Task<T>>? Subject { get; }
         public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.AsyncFunctionAssertions<T>, T>> NotThrowAsync() { }
         public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.AsyncFunctionAssertions<T>, T>> NotThrowAsync(string because) { }
@@ -58,6 +61,7 @@ namespace Vouch
     }
     public readonly struct BooleanAssertions
     {
+        public string? Expression { get; }
         public bool Subject { get; }
         public Vouch.AndConstraint<Vouch.BooleanAssertions> Be(bool expected) { }
         public Vouch.AndConstraint<Vouch.BooleanAssertions> Be(bool expected, string because) { }
@@ -71,6 +75,7 @@ namespace Vouch
     public abstract class CollectionAssertionsBase<T, TSelf>
         where TSelf : Vouch.CollectionAssertionsBase<T, TSelf>
     {
+        public string? Expression { get; }
         public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
         public Vouch.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
         public Vouch.AndConstraint<TSelf> BeEmpty() { }
@@ -144,6 +149,7 @@ namespace Vouch
     }
     public readonly struct DateOnlyAssertions
     {
+        public string? Expression { get; }
         public System.DateOnly Subject { get; }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> Be(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeAfter(System.DateOnly expected) { }
@@ -156,6 +162,7 @@ namespace Vouch
     }
     public readonly struct DateTimeAssertions
     {
+        public string? Expression { get; }
         public System.DateTime Subject { get; }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> Be(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeAfter(System.DateTime expected) { }
@@ -169,6 +176,7 @@ namespace Vouch
     }
     public readonly struct DateTimeOffsetAssertions
     {
+        public string? Expression { get; }
         public System.DateTimeOffset Subject { get; }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> Be(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
@@ -248,6 +256,7 @@ namespace Vouch
     }
     public readonly struct FunctionAssertions<T>
     {
+        public string? Expression { get; }
         public System.Func<T>? Subject { get; }
         public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow() { }
         public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow(string because) { }
@@ -259,6 +268,7 @@ namespace Vouch
     public sealed class GenericCollectionAssertions<T> : Vouch.CollectionAssertionsBase<T, Vouch.GenericCollectionAssertions<T>> { }
     public readonly struct GuidAssertions
     {
+        public string? Expression { get; }
         public System.Guid Subject { get; }
         public Vouch.AndConstraint<Vouch.GuidAssertions> Be(System.Guid expected) { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> Be(System.Guid expected, string because) { }
@@ -283,6 +293,7 @@ namespace Vouch
     }
     public readonly struct NullableBooleanAssertions
     {
+        public string? Expression { get; }
         public bool? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> Be(bool expected) { }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> Be(bool expected, string because) { }
@@ -299,6 +310,7 @@ namespace Vouch
     }
     public readonly struct NullableDateOnlyAssertions
     {
+        public string? Expression { get; }
         public System.DateOnly? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> Be(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeAfter(System.DateOnly expected) { }
@@ -313,6 +325,7 @@ namespace Vouch
     }
     public readonly struct NullableDateTimeAssertions
     {
+        public string? Expression { get; }
         public System.DateTime? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> Be(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeAfter(System.DateTime expected) { }
@@ -328,6 +341,7 @@ namespace Vouch
     }
     public readonly struct NullableDateTimeOffsetAssertions
     {
+        public string? Expression { get; }
         public System.DateTimeOffset? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> Be(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
@@ -343,6 +357,7 @@ namespace Vouch
     }
     public readonly struct NullableGuidAssertions
     {
+        public string? Expression { get; }
         public System.Guid? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid expected) { }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid? expected) { }
@@ -367,6 +382,7 @@ namespace Vouch
     public readonly struct NullableNumericAssertions<T>
         where T :  struct, System.Numerics.INumber<T>
     {
+        public string? Expression { get; }
         public T? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected) { }
@@ -389,6 +405,7 @@ namespace Vouch
     }
     public readonly struct NullableTimeOnlyAssertions
     {
+        public string? Expression { get; }
         public System.TimeOnly? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly? expected) { }
@@ -409,6 +426,7 @@ namespace Vouch
     public readonly struct NullableValueAssertions<T>
         where T :  struct
     {
+        public string? Expression { get; }
         public T? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T? expected) { }
@@ -431,6 +449,7 @@ namespace Vouch
     public readonly struct NumericAssertions<T>
         where T :  struct, System.Numerics.INumber<T>
     {
+        public string? Expression { get; }
         public T Subject { get; }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected, string because) { }
@@ -454,6 +473,7 @@ namespace Vouch
     }
     public readonly struct ObjectAssertions
     {
+        public string? Expression { get; }
         public object? Subject { get; }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected) { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected, string because) { }
@@ -535,6 +555,7 @@ namespace Vouch
     }
     public readonly struct StringAssertions
     {
+        public string? Expression { get; }
         public string? Subject { get; }
         public Vouch.AndConstraint<Vouch.StringAssertions> Be(string? expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Be(string? expected, string because) { }
@@ -579,6 +600,7 @@ namespace Vouch
     }
     public readonly struct TimeOnlyAssertions
     {
+        public string? Expression { get; }
         public System.TimeOnly Subject { get; }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected, string because) { }
@@ -605,6 +627,7 @@ namespace Vouch
     public readonly struct ValueAssertions<T>
         where T :  struct
     {
+        public string? Expression { get; }
         public T Subject { get; }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected, string because) { }
@@ -616,6 +639,7 @@ namespace Vouch
     }
     public readonly struct ValueTaskFunctionAssertions
     {
+        public string? Expression { get; }
         public System.Func<System.Threading.Tasks.ValueTask>? Subject { get; }
         public Vouch.AndConstraint<Vouch.ValueTaskFunctionAssertions> NotThrow() { }
         public Vouch.AndConstraint<Vouch.ValueTaskFunctionAssertions> NotThrow(string because) { }
@@ -632,6 +656,7 @@ namespace Vouch
     }
     public readonly struct ValueTaskFunctionAssertions<T>
     {
+        public string? Expression { get; }
         public System.Func<System.Threading.Tasks.ValueTask<T>>? Subject { get; }
         public Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T> NotThrow() { }
         public Vouch.AndWhichConstraint<Vouch.ValueTaskFunctionAssertions<T>, T> NotThrow(string because) { }
@@ -654,6 +679,12 @@ namespace Vouch
 }
 namespace Vouch.Sdk
 {
+    public static class Assertion
+    {
+        public static void Fail(string message) { }
+        public static void Fail(string message, string? because) { }
+        public static string Name(string? expression) { }
+    }
     public static class VouchConfiguration
     {
         public static System.Func<string, System.Exception> ExceptionFactory { get; set; }
