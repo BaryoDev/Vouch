@@ -1,0 +1,35 @@
+namespace Vouch;
+
+public static class TimeSpanAssertionsExtensions
+{
+    public static AndConstraint<ValueAssertions<TimeSpan>> BeCloseTo(this ValueAssertions<TimeSpan> assertions, TimeSpan expected, TimeSpan precision)
+    {
+        var difference = (assertions.Subject - expected).Duration();
+        if (difference > precision)
+        {
+            Fail.With($"Expected {assertions.Name} to be within {Formatter.Format(precision)} of {Formatter.Format(expected)}, but found {Formatter.Format(assertions.Subject)} (off by {Formatter.Format(difference)}).");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<ValueAssertions<TimeSpan>> BePositive(this ValueAssertions<TimeSpan> assertions)
+    {
+        if (assertions.Subject <= TimeSpan.Zero)
+        {
+            Fail.With($"Expected {assertions.Name} to be positive, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<ValueAssertions<TimeSpan>> BeNegative(this ValueAssertions<TimeSpan> assertions)
+    {
+        if (assertions.Subject >= TimeSpan.Zero)
+        {
+            Fail.With($"Expected {assertions.Name} to be negative, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+}
