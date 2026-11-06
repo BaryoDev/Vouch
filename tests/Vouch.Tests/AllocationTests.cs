@@ -16,6 +16,8 @@ public class AllocationTests
 
     [Fact] public void Int_Be() { var n = 5; AssertNoAllocation(() => n.Should().Be(5)); }
 
+    [Fact] public void Passing_assertion_inside_scope() { var n = 5; using var scope = new AssertionScope(); AssertNoAllocation(() => n.Should().Be(5)); }
+
     [Fact] public void Guid_Be() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().Be(id)); }
 
     [Fact] public void Enum_Be() { var s = Status.Active; AssertNoAllocation(() => s.Should().Be(Status.Active)); }
@@ -73,28 +75,17 @@ public class AllocationTests
         Assert.True(large / Calls <= 128);
     }
 
-    private static long BytesForAllSatisfy(int size)
-    {
-        var items = new int[size];
-        Action<int> check = static _ => { };
-        items.Should().AllSatisfy(check);
-
-        // Lowest of three runs, so a one-off runtime allocation during the loop does not count.
-        var lowest = long.MaxValue;
-        for (var run = 0; run < 3; run++)
-        {
-            var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < Calls; i++) items.Should().AllSatisfy(check);
-            lowest = Math.Min(lowest, GC.GetAllocatedBytesForCurrentThread() - before);
-        }
-
-        return lowest;
-    }
-
     [Fact]
     public void Passing_AllSatisfy_has_no_per_item_allocation()
     {
-        Assert.Equal(BytesForAllSatisfy(10), BytesForAllSatisfy(1000));
+        // One call over many items: a per-item allocation would cost megabytes here,
+        // while runtime noise during a long loop of calls stays far below the bound.
+        var items = new int[100_000];
+        Action<int> check = static _ => { };
+        for (var i = 0; i < 10; i++) items.Should().AllSatisfy(check);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        items.Should().AllSatisfy(check);
+        Assert.True(GC.GetAllocatedBytesForCurrentThread() - before <= 1024);
     }
 
     private static long Bytes(Action call)
