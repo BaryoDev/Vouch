@@ -85,25 +85,27 @@ public readonly struct NullableValueAssertions<T> where T : struct
 
     public AndConstraint<NullableValueAssertions<T>> Be(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableValueAssertions<T>> NotBe(T unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -124,13 +126,14 @@ public readonly struct NullableValueAssertions<T> where T : struct
 
     public AndConstraint<NullableValueAssertions<T>> Be(T? expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }

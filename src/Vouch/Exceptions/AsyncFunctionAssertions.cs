@@ -12,36 +12,82 @@ public readonly struct AsyncFunctionAssertions
 
     public Func<Task>? Subject { get; }
 
-    public async Task<ExceptionAssertions<TException>> ThrowAsync<TException>() where TException : Exception
+    public Task<ExceptionAssertions<TException>> ThrowAsync<TException>() where TException : Exception
+        => ThrowCoreAsync<TException>(null);
+
+    public Task NotThrowAsync()
+        => NotThrowCoreAsync(null);
+
+    public Task<ExceptionAssertions<TException>> ThrowAsync<TException>(string because) where TException : Exception
+        => ThrowCoreAsync<TException>(because);
+
+    public Task NotThrowAsync(string because)
+        => NotThrowCoreAsync(because);
+
+    // The reason is a thread-local, so it is applied only around each synchronous
+    // reporting step and never held across an await.
+    private async Task<ExceptionAssertions<TException>> ThrowCoreAsync<TException>(string? because) where TException : Exception
     {
         var name = Fail.Name(_expression);
         var expectation = $"to throw {Formatter.Format(typeof(TException))}";
-        var thrown = await RunAsync(name, expectation).ConfigureAwait(false);
-        return ExceptionMessages.Check<TException>(name, thrown);
-    }
-
-    public async Task NotThrowAsync()
-    {
-        var name = Fail.Name(_expression);
-        var thrown = await RunAsync(name, "not to throw").ConfigureAwait(false);
-        if (thrown is not null)
+        var (ran, thrown) = await RunAsync(name, expectation, because).ConfigureAwait(false);
+        if (!ran)
         {
-            ExceptionMessages.Threw(name, thrown);
+            return ExceptionMessages.Empty<TException>(name);
+        }
+
+        Reason.Set(because);
+        try
+        {
+            return ExceptionMessages.Check<TException>(name, thrown);
+        }
+        finally
+        {
+            Reason.Clear();
         }
     }
 
-    private async Task<Exception?> RunAsync(string name, string expectation)
+    private async Task NotThrowCoreAsync(string? because)
     {
-        if (Subject is null)
+        var name = Fail.Name(_expression);
+        var (ran, thrown) = await RunAsync(name, "not to throw", because).ConfigureAwait(false);
+        if (ran && thrown is not null)
         {
-            ExceptionMessages.NullDelegate(name, expectation);
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.Threw(name, thrown);
+            }
+            finally
+            {
+                Reason.Clear();
+            }
+        }
+    }
+
+    private async Task<(bool Ran, Exception? Thrown)> RunAsync(string name, string expectation, string? because)
+    {
+        var subject = Subject;
+        if (subject is null)
+        {
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.NullDelegate(name, expectation);
+            }
+            finally
+            {
+                Reason.Clear();
+            }
+
+            return (false, null);
         }
 
         Task? task = null;
         Exception? thrown = null;
         try
         {
-            task = Subject!();
+            task = subject();
         }
         catch (Exception ex)
         {
@@ -52,12 +98,22 @@ public readonly struct AsyncFunctionAssertions
         {
             if (task is null)
             {
-                ExceptionMessages.NullTask(name, expectation);
+                Reason.Set(because);
+                try
+                {
+                    ExceptionMessages.NullTask(name, expectation);
+                }
+                finally
+                {
+                    Reason.Clear();
+                }
+
+                return (false, null);
             }
 
             try
             {
-                await task!.ConfigureAwait(false);
+                await task.ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -65,30 +121,6 @@ public readonly struct AsyncFunctionAssertions
             }
         }
 
-        return thrown;
-    }
-
-    public async Task<ExceptionAssertions<TException>> ThrowAsync<TException>(string because) where TException : Exception
-    {
-        try
-        {
-            return await ThrowAsync<TException>().ConfigureAwait(false);
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
-    }
-
-    public async Task NotThrowAsync(string because)
-    {
-        try
-        {
-            await NotThrowAsync().ConfigureAwait(false);
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
+        return (true, thrown);
     }
 }

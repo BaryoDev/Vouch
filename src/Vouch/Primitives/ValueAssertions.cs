@@ -63,25 +63,27 @@ public readonly struct ValueAssertions<T> where T : struct
 
     public AndConstraint<ValueAssertions<T>> Be(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<ValueAssertions<T>> NotBe(T unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }

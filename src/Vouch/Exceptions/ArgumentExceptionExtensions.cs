@@ -7,9 +7,15 @@ public static class ArgumentExceptionExtensions
     {
         ArgumentNullException.ThrowIfNull(assertions);
         ArgumentNullException.ThrowIfNull(paramName);
-        if (!string.Equals(assertions.Which.ParamName, paramName, StringComparison.Ordinal))
+        var which = assertions.Which;
+        if (which is null)
         {
-            Fail.With($"Expected {assertions.Name}'s exception parameter name to be {Formatter.Format(paramName)}, but found {Formatter.Format(assertions.Which.ParamName)}.");
+            return assertions;
+        }
+
+        if (!string.Equals(which.ParamName, paramName, StringComparison.Ordinal))
+        {
+            Fail.With($"Expected {assertions.Name}'s exception parameter name to be {Formatter.Format(paramName)}, but found {Formatter.Format(which.ParamName)}.");
         }
 
         return assertions;

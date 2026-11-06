@@ -59,6 +59,7 @@ public readonly struct ObjectAssertions
         if (Subject is null || Subject.GetType() != typeof(T))
         {
             Fail.With($"Expected {Fail.Name(_expression)} to be of type {Formatter.Format(typeof(T))}, but found {TypeOrNull()}.");
+            return default;
         }
 
         return new(this, (T)Subject);
@@ -71,6 +72,7 @@ public readonly struct ObjectAssertions
             if (Subject is null)
             {
                 Fail.With($"Expected {Fail.Name(_expression)} to be assignable to {Formatter.Format(typeof(T))}, but found null.");
+                return default;
             }
 
             Fail.With($"Expected {Fail.Name(_expression)} to be assignable to {Formatter.Format(typeof(T))}, but {Formatter.Format(Subject.GetType())} is not.");
@@ -85,6 +87,7 @@ public readonly struct ObjectAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be of type {Formatter.Format(typeof(T))}, but found null.");
+            return new(this);
         }
 
         if (Subject.GetType() == typeof(T))
@@ -100,6 +103,7 @@ public readonly struct ObjectAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be assignable to {Formatter.Format(typeof(T))}, but found null.");
+            return new(this);
         }
 
         if (Subject is T)
@@ -160,73 +164,79 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> Be(object? expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<ObjectAssertions> NotBe(object? unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<ObjectAssertions> BeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<ObjectAssertions> NotBeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<ObjectAssertions, T> BeOfType<T>(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeOfType<T>();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<ObjectAssertions, T> BeAssignableTo<T>(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeAssignableTo<T>();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -243,13 +253,14 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> BeOfType(Type expectedType, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeOfType(expectedType);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -259,6 +270,7 @@ public readonly struct ObjectAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Fail.Name(_expression)} to match {predicate.Body}, but found null.");
+            return default;
         }
 
         if (Subject is not T typed)
@@ -277,13 +289,14 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> Match<T>(Expression<Func<T, bool>> predicate, string because)
     {
+        Reason.Set(because);
         try
         {
             return Match(predicate);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }
