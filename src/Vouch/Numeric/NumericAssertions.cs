@@ -89,6 +89,36 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
         return new(this);
     }
 
+    public AndConstraint<NumericAssertions<T>> BeNegative()
+    {
+        if (!(Subject < T.Zero))
+        {
+            Fail.With($"Expected {Name} to be negative, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeCloseTo(T expected, T delta)
+    {
+        if (!NumericDifference.IsWithin(Subject, expected, delta, out var detail))
+        {
+            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(Subject)} {detail}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NumericAssertions<T>> NotBeCloseTo(T unexpected, T delta)
+    {
+        if (NumericDifference.IsWithin(Subject, unexpected, delta, out _))
+        {
+            Fail.With($"Expected {Name} not to be within {Formatter.Format(delta)} of {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndConstraint<NumericAssertions<T>> BeInRange(T min, T max)
     {
         if (!(Subject >= min && Subject <= max))
@@ -216,6 +246,45 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
         }
     }
 
+    public AndConstraint<NumericAssertions<T>> BeNegative(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return BeNegative();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeCloseTo(T expected, T delta, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return BeCloseTo(expected, delta);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> NotBeCloseTo(T unexpected, T delta, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBeCloseTo(unexpected, delta);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
     public AndConstraint<NumericAssertions<T>> BeInRange(T min, T max, string because)
     {
         Reason.Set(because);
@@ -253,6 +322,89 @@ public static class NumericApproximationExtensions
     }
 }
 
+public static class NumericFloatingPointExtensions
+{
+    public static AndConstraint<NumericAssertions<double>> BeNaN(this NumericAssertions<double> assertions)
+    {
+        if (!double.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be NaN, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<double>> NotBeNaN(this NumericAssertions<double> assertions)
+    {
+        if (double.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be NaN, but it was.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<double>> BeFinite(this NumericAssertions<double> assertions)
+    {
+        if (!double.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<double>> NotBeFinite(this NumericAssertions<double> assertions)
+    {
+        if (double.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<float>> BeNaN(this NumericAssertions<float> assertions)
+    {
+        if (!float.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be NaN, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<float>> NotBeNaN(this NumericAssertions<float> assertions)
+    {
+        if (float.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be NaN, but it was.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<float>> BeFinite(this NumericAssertions<float> assertions)
+    {
+        if (!float.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<NumericAssertions<float>> NotBeFinite(this NumericAssertions<float> assertions)
+    {
+        if (float.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+}
+
 internal static class NumericDifference
 {
     public static bool IsWithin<T>(T actual, T expected, T precision, out string detail)
@@ -267,7 +419,8 @@ internal static class NumericDifference
         T difference;
         try
         {
-            difference = T.Abs(actual - expected);
+            // Subtract the smaller from the larger so unsigned types cannot wrap; checked so signed overflow throws.
+            difference = actual >= expected ? checked(actual - expected) : checked(expected - actual);
         }
         catch (OverflowException)
         {

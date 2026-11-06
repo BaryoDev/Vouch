@@ -75,6 +75,18 @@ public readonly struct DateOnlyAssertions
         return new(this);
     }
 
+    public AndConstraint<DateOnlyAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateOnlyAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateOnlyAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateOnlyAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateOnlyAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject.Day); return new(this); }
+
+    public AndConstraint<DateOnlyAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject.Day); return new(this); }
+
     public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
@@ -162,6 +174,18 @@ public readonly struct NullableDateOnlyAssertions
 
         return new(this);
     }
+
+    public AndConstraint<NullableDateOnlyAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateOnlyAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateOnlyAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateOnlyAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateOnlyAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject?.Day); return new(this); }
+
+    public AndConstraint<NullableDateOnlyAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject?.Day); return new(this); }
 
     public AndConstraint<NullableDateOnlyAssertions> BeNull()
     {

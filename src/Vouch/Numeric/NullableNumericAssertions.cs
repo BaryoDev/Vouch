@@ -89,6 +89,63 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
         return new(this);
     }
 
+    public AndConstraint<NullableNumericAssertions<T>> BeNegative()
+    {
+        if (Subject is not { } actual || !(actual < T.Zero))
+        {
+            Fail.With($"Expected {Name} to be negative, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> BeCloseTo(T expected, T delta)
+    {
+        if (Subject is not { } actual)
+        {
+            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found null.");
+            return new(this);
+        }
+
+        if (!NumericDifference.IsWithin(actual, expected, delta, out var detail))
+        {
+            Fail.With($"Expected {Name} to be within {Formatter.Format(delta)} of {Formatter.Format(expected)}, but found {Formatter.Format(actual)} {detail}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> NotBeCloseTo(T unexpected, T delta)
+    {
+        if (Subject is { } actual && NumericDifference.IsWithin(actual, unexpected, delta, out _))
+        {
+            Fail.With($"Expected {Name} not to be within {Formatter.Format(delta)} of {Formatter.Format(unexpected)}, but found {Formatter.Format(actual)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndWhichConstraint<NullableNumericAssertions<T>, T> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Name} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Name} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndConstraint<NullableNumericAssertions<T>> BeInRange(T min, T max)
     {
         if (Subject is not { } actual || !(actual >= min && actual <= max))

@@ -25,6 +25,126 @@ public class AllocationTests
 
     [Fact] public void Guid_Be() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().Be(id)); }
 
+    [Fact] public void Int_BeCloseTo() { var n = 5; AssertNoAllocation(() => n.Should().BeCloseTo(7, 2)); }
+
+    [Fact] public void Int_NotBeCloseTo() { var n = 5; AssertNoAllocation(() => n.Should().NotBeCloseTo(9, 2)); }
+
+    [Fact] public void Int_BeNegative() { var n = -5; AssertNoAllocation(() => n.Should().BeNegative()); }
+
+    [Fact] public void Double_BeNaN() { var n = double.NaN; AssertNoAllocation(() => n.Should().BeNaN()); }
+
+    [Fact] public void Double_NotBeNaN() { var n = 1.5; AssertNoAllocation(() => n.Should().NotBeNaN()); }
+
+    [Fact] public void Double_BeFinite() { var n = 1.5; AssertNoAllocation(() => n.Should().BeFinite()); }
+
+    [Fact] public void Double_NotBeFinite() { var n = double.PositiveInfinity; AssertNoAllocation(() => n.Should().NotBeFinite()); }
+
+    [Fact] public void Float_BeNaN() { var n = float.NaN; AssertNoAllocation(() => n.Should().BeNaN()); }
+
+    [Fact] public void Float_BeFinite() { var n = 1.5f; AssertNoAllocation(() => n.Should().BeFinite()); }
+
+    [Fact] public void Half_BeNaN() { var n = Half.NaN; AssertNoAllocation(() => n.Should().BeNaN()); }
+
+    [Fact] public void Half_NotBeNaN() { var n = (Half)1; AssertNoAllocation(() => n.Should().NotBeNaN()); }
+
+    [Fact] public void Half_BeFinite() { var n = (Half)1; AssertNoAllocation(() => n.Should().BeFinite()); }
+
+    [Fact] public void Half_NotBeFinite() { var n = Half.PositiveInfinity; AssertNoAllocation(() => n.Should().NotBeFinite()); }
+
+    [Fact] public void NullableInt_HaveValue() { int? n = 5; AssertNoAllocation(() => n.Should().HaveValue()); }
+
+    [Fact] public void NullableInt_NotHaveValue() { int? n = null; AssertNoAllocation(() => n.Should().NotHaveValue()); }
+
+    [Fact] public void NullableInt_BeCloseTo() { int? n = 5; AssertNoAllocation(() => n.Should().BeCloseTo(7, 2)); }
+
+    [Fact] public void NullableInt_NotBeCloseTo() { int? n = 5; AssertNoAllocation(() => n.Should().NotBeCloseTo(9, 2)); }
+
+    [Fact] public void NullableInt_BeNegative() { int? n = -5; AssertNoAllocation(() => n.Should().BeNegative()); }
+
+    [Fact] public void NullableTimeSpan_HaveValue() { TimeSpan? t = TimeSpan.Zero; AssertNoAllocation(() => t.Should().HaveValue()); }
+
+    [Fact] public void NullableTimeSpan_NotHaveValue() { TimeSpan? t = null; AssertNoAllocation(() => t.Should().NotHaveValue()); }
+
+    [Fact]
+    public void DateTime_new_assertions()
+    {
+        var at = new DateTime(2026, 10, 19, 8, 30, 15, DateTimeKind.Utc);
+        var other = at.AddHours(1);
+        AssertNoAllocation(() => at.Should().BeSameDateAs(other));
+        AssertNoAllocation(() => at.Should().NotBeSameDateAs(other.AddDays(1)));
+        AssertNoAllocation(() => at.Should().HaveYear(2026));
+        AssertNoAllocation(() => at.Should().NotHaveYear(2025));
+        AssertNoAllocation(() => at.Should().HaveMonth(10));
+        AssertNoAllocation(() => at.Should().NotHaveMonth(9));
+        AssertNoAllocation(() => at.Should().HaveDay(19));
+        AssertNoAllocation(() => at.Should().NotHaveDay(1));
+        AssertNoAllocation(() => at.Should().HaveHour(8));
+        AssertNoAllocation(() => at.Should().NotHaveHour(1));
+        AssertNoAllocation(() => at.Should().HaveMinute(30));
+        AssertNoAllocation(() => at.Should().NotHaveMinute(1));
+        AssertNoAllocation(() => at.Should().HaveSecond(15));
+        AssertNoAllocation(() => at.Should().NotHaveSecond(1));
+        AssertNoAllocation(() => at.Should().BeWithin(TimeSpan.FromMinutes(5)).Before(at.AddMinutes(3)));
+        AssertNoAllocation(() => other.Should().BeWithin(TimeSpan.FromHours(2)).After(at));
+    }
+
+    [Fact]
+    public void NullableDateTime_new_assertions()
+    {
+        DateTime? at = new DateTime(2026, 10, 19, 8, 30, 15, DateTimeKind.Utc);
+        DateTime? none = null;
+        var other = at.Value.AddHours(1);
+        AssertNoAllocation(() => at.Should().BeSameDateAs(other));
+        AssertNoAllocation(() => none.Should().NotBeSameDateAs(other));
+        AssertNoAllocation(() => at.Should().NotBeSameDateAs(other.AddDays(1)));
+        AssertNoAllocation(() => at.Should().HaveYear(2026));
+        AssertNoAllocation(() => none.Should().NotHaveYear(2026));
+        AssertNoAllocation(() => at.Should().HaveSecond(15));
+        AssertNoAllocation(() => at.Should().BeWithin(TimeSpan.FromMinutes(5)).Before(at.Value.AddMinutes(3)));
+    }
+
+    [Fact]
+    public void DateTimeOffset_new_assertions()
+    {
+        var at = new DateTimeOffset(2026, 10, 19, 8, 30, 15, TimeSpan.Zero);
+        var other = at.AddHours(1);
+        AssertNoAllocation(() => at.Should().BeSameDateAs(other));
+        AssertNoAllocation(() => at.Should().NotBeSameDateAs(other.AddDays(1)));
+        AssertNoAllocation(() => at.Should().HaveYear(2026));
+        AssertNoAllocation(() => at.Should().NotHaveMonth(9));
+        AssertNoAllocation(() => at.Should().HaveDay(19));
+        AssertNoAllocation(() => at.Should().NotHaveHour(1));
+        AssertNoAllocation(() => at.Should().HaveMinute(30));
+        AssertNoAllocation(() => at.Should().NotHaveSecond(1));
+        AssertNoAllocation(() => at.Should().BeWithin(TimeSpan.FromMinutes(5)).Before(at.AddMinutes(3)));
+        AssertNoAllocation(() => other.Should().BeWithin(TimeSpan.FromHours(2)).After(at));
+    }
+
+    [Fact]
+    public void NullableDateTimeOffset_new_assertions()
+    {
+        DateTimeOffset? at = new DateTimeOffset(2026, 10, 19, 8, 30, 15, TimeSpan.Zero);
+        DateTimeOffset? none = null;
+        var other = at.Value.AddHours(1);
+        AssertNoAllocation(() => at.Should().BeSameDateAs(other));
+        AssertNoAllocation(() => none.Should().NotBeSameDateAs(other));
+        AssertNoAllocation(() => at.Should().HaveHour(8));
+        AssertNoAllocation(() => none.Should().NotHaveHour(8));
+        AssertNoAllocation(() => at.Should().BeWithin(TimeSpan.FromMinutes(5)).Before(at.Value.AddMinutes(3)));
+    }
+
+    [Fact]
+    public void DateOnly_new_assertions()
+    {
+        var d = new DateOnly(2026, 10, 19);
+        DateOnly? n = d;
+        AssertNoAllocation(() => d.Should().HaveYear(2026));
+        AssertNoAllocation(() => d.Should().NotHaveMonth(9));
+        AssertNoAllocation(() => d.Should().HaveDay(19));
+        AssertNoAllocation(() => n.Should().HaveYear(2026));
+        AssertNoAllocation(() => n.Should().NotHaveDay(1));
+    }
+
     [Fact] public void Char_Be() { var c = 'a'; AssertNoAllocation(() => c.Should().Be('a')); }
 
     [Fact] public void TimeOnly_BeAfter() { var t = new TimeOnly(11, 0); var earlier = new TimeOnly(10, 0); AssertNoAllocation(() => t.Should().BeAfter(earlier)); }

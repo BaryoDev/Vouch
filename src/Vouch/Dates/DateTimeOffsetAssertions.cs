@@ -86,6 +86,52 @@ public readonly struct DateTimeOffsetAssertions
         return new(this);
     }
 
+    public AndConstraint<DateTimeOffsetAssertions> BeSameDateAs(DateTimeOffset expected)
+    {
+        if (Subject.Date != expected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be the same date as {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotBeSameDateAs(DateTimeOffset unexpected)
+    {
+        if (Subject.Date == unexpected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be the same date as {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject.Day); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject.Day); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveHour(int expected) { DatePart.Have(_expression, "hour", expected, Subject.Hour); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveHour(int unexpected) { DatePart.NotHave(_expression, "hour", unexpected, Subject.Hour); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveMinute(int expected) { DatePart.Have(_expression, "minute", expected, Subject.Minute); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveMinute(int unexpected) { DatePart.NotHave(_expression, "minute", unexpected, Subject.Minute); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> HaveSecond(int expected) { DatePart.Have(_expression, "second", expected, Subject.Second); return new(this); }
+
+    public AndConstraint<DateTimeOffsetAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject.Second); return new(this); }
+
+    public DateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
+
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
@@ -211,6 +257,52 @@ public readonly struct NullableDateTimeOffsetAssertions
 
         return new(this, value);
     }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> BeSameDateAs(DateTimeOffset expected)
+    {
+        if (Subject is not { } actual || actual.Date != expected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be the same date as {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotBeSameDateAs(DateTimeOffset unexpected)
+    {
+        if (Subject is { } actual && actual.Date == unexpected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be the same date as {Formatter.Format(unexpected)}, but found {Formatter.Format(actual)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject?.Day); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject?.Day); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveHour(int expected) { DatePart.Have(_expression, "hour", expected, Subject?.Hour); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveHour(int unexpected) { DatePart.NotHave(_expression, "hour", unexpected, Subject?.Hour); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveMinute(int expected) { DatePart.Have(_expression, "minute", expected, Subject?.Minute); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveMinute(int unexpected) { DatePart.NotHave(_expression, "minute", unexpected, Subject?.Minute); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> HaveSecond(int expected) { DatePart.Have(_expression, "second", expected, Subject?.Second); return new(this); }
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject?.Second); return new(this); }
+
+    public NullableDateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, timeSpan);
 
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);

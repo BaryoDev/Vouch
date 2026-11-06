@@ -74,6 +74,27 @@ public readonly struct NullableValueAssertions<T> where T : struct
         return new(this, value);
     }
 
+    public AndWhichConstraint<NullableValueAssertions<T>, T> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    public AndConstraint<NullableValueAssertions<T>> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndConstraint<NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
