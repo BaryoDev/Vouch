@@ -7,6 +7,10 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     where TSelf : CollectionAssertionsBase<T, TSelf>
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     private IReadOnlyList<T>? _list;
 
     private protected CollectionAssertionsBase(IEnumerable<T>? subject, string? expression)

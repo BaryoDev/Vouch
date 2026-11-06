@@ -72,6 +72,76 @@ Expected package to be equivalent to the expected Bundle, but:
 
 Messages are built only when an assertion fails. A passing assertion on a value type, string or bool allocates 0 bytes.
 
+## Custom assertions
+
+Assertion types are readonly structs, so you extend Vouch with extension methods, not by inheriting. Report a failure with `Assertion.Fail(message, because)` from `Vouch.Sdk`. It works like a built-in failure: inside an `AssertionScope` it is collected, otherwise it is thrown through `VouchConfiguration.ExceptionFactory`, and the `because` text is added to the message. `Assertion.Name(expression)` gives the subject name, or "value" when there is none.
+
+Every assertion type has an `Expression` property with the text captured from the call site.
+
+An extension method on an existing assertion type:
+
+```csharp
+using Vouch.Sdk;
+
+public static class MyAssertions
+{
+    public static AndConstraint<ObjectAssertions> BeEven(
+        this ObjectAssertions assertions, string? because = null)
+    {
+        if (assertions.Subject is not int n || n % 2 != 0)
+        {
+            Assertion.Fail(
+                $"Expected {Assertion.Name(assertions.Expression)} to be an even number, but found {assertions.Subject}.",
+                because);
+        }
+
+        return new(assertions);
+    }
+}
+```
+
+A type of your own needs its own `Should()` and a readonly struct. Take the expression text with `[CallerArgumentExpression]`:
+
+```csharp
+using System.Runtime.CompilerServices;
+using Vouch.Sdk;
+
+public static class MoneyExtensions
+{
+    public static MoneyAssertions Should(this Money? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+}
+
+public readonly struct MoneyAssertions
+{
+    public MoneyAssertions(Money? subject, string? expression)
+    {
+        Subject = subject;
+        Expression = expression;
+    }
+
+    public Money? Subject { get; }
+    public string? Expression { get; }
+
+    public AndConstraint<MoneyAssertions> BeIn(string currency, string? because = null)
+    {
+        if (Subject?.Currency != currency)
+        {
+            Assertion.Fail(
+                $"Expected {Assertion.Name(Expression)} to be in {currency}, but found {Subject?.Currency ?? "null"}.",
+                because);
+        }
+
+        return new(this);
+    }
+}
+```
+
+Both examples work inside `AssertionScope`. Build the message only inside the failing branch, so a passing assertion allocates nothing.
+
+Vouch reads expressions only from `[CallerArgumentExpression]` and never walks the stack, so there is no attribute to put on your methods.
+
 ## Moving from FluentAssertions
 
 1. Change the package reference from `FluentAssertions` to `Vouch`.

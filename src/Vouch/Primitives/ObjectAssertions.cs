@@ -6,6 +6,9 @@ public readonly struct ObjectAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal ObjectAssertions(object? subject, string? expression)
     {
         Subject = subject;

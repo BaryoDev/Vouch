@@ -4,6 +4,9 @@ public readonly struct DateTimeOffsetAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal DateTimeOffsetAssertions(DateTimeOffset subject, string? expression)
     {
         Subject = subject;
@@ -99,6 +102,9 @@ public readonly struct DateTimeOffsetAssertions
 public readonly struct NullableDateTimeOffsetAssertions
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal NullableDateTimeOffsetAssertions(DateTimeOffset? subject, string? expression)
     {
