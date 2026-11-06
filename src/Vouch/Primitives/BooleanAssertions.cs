@@ -4,6 +4,9 @@ public readonly struct BooleanAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal BooleanAssertions(bool subject, string? expression)
     {
         Subject = subject;
@@ -94,6 +97,9 @@ public readonly struct BooleanAssertions
 public readonly struct NullableBooleanAssertions
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal NullableBooleanAssertions(bool? subject, string? expression)
     {

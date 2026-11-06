@@ -4,6 +4,9 @@ public readonly struct TimeOnlyAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal TimeOnlyAssertions(TimeOnly subject, string? expression)
     {
         Subject = subject;
@@ -168,6 +171,9 @@ public readonly struct TimeOnlyAssertions
 public readonly struct NullableTimeOnlyAssertions
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal NullableTimeOnlyAssertions(TimeOnly? subject, string? expression)
     {

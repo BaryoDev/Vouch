@@ -4,6 +4,9 @@ public readonly struct DateTimeAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal DateTimeAssertions(DateTime subject, string? expression)
     {
         Subject = subject;
@@ -99,6 +102,9 @@ public readonly struct DateTimeAssertions
 public readonly struct NullableDateTimeAssertions
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal NullableDateTimeAssertions(DateTime? subject, string? expression)
     {

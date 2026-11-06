@@ -4,6 +4,9 @@ public readonly struct ValueTaskFunctionAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal ValueTaskFunctionAssertions(Func<ValueTask>? subject, string? expression)
     {
         Subject = subject;
@@ -58,6 +61,9 @@ public readonly struct ValueTaskFunctionAssertions
 public readonly struct ValueTaskFunctionAssertions<T>
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal ValueTaskFunctionAssertions(Func<ValueTask<T>>? subject, string? expression)
     {

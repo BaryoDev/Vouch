@@ -49,6 +49,10 @@ public class AllocationTests
 
     [Fact] public void Decimal_Be() { var m = 100m; AssertNoAllocation(() => m.Should().Be(100m)); }
 
+    [Fact] public void Custom_extension_assertion() { object n = 4; AssertNoAllocation(() => n.Should().BeEven()); }
+
+    [Fact] public void Custom_user_type_assertion() { var m = new Money(1m, "PHP"); AssertNoAllocation(() => m.Should().BeIn("PHP")); }
+
     [Fact] public void Int_BeGreaterThan() { var n = 5; AssertNoAllocation(() => n.Should().BeGreaterThan(3)); }
 
     [Fact] public void DateTime_BeAfter() { var now = DateTime.UtcNow; var past = now.AddDays(-1); AssertNoAllocation(() => now.Should().BeAfter(past)); }

@@ -6,6 +6,9 @@ public readonly struct ActionAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal ActionAssertions(Action? subject, string? expression)
     {
         Subject = subject;
@@ -106,6 +109,9 @@ public readonly struct FunctionAssertions<T>
 {
     private readonly ActionAssertions _inner;
     private readonly Box? _box;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _inner.Expression;
 
     internal FunctionAssertions(Func<T>? subject, string? expression)
     {

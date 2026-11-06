@@ -4,6 +4,9 @@ public readonly struct GuidAssertions
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal GuidAssertions(Guid subject, string? expression)
     {
         Subject = subject;
@@ -159,6 +162,9 @@ public readonly struct GuidAssertions
 public readonly struct NullableGuidAssertions
 {
     private readonly string? _expression;
+
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
 
     internal NullableGuidAssertions(Guid? subject, string? expression)
     {

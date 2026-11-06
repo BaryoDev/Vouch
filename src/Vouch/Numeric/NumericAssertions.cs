@@ -6,6 +6,9 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 {
     private readonly string? _expression;
 
+    /// <summary>The text of the expression being asserted on, or null when none was captured.</summary>
+    public string? Expression => _expression;
+
     internal NumericAssertions(T subject, string? expression)
     {
         Subject = subject;
