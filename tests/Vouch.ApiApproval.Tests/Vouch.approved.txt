@@ -938,8 +938,43 @@ namespace Vouch.Sdk
         public static void Fail(string message, string? because = null) { }
         public static string Name(string? expression) { }
     }
+    public sealed class FormattingContext
+    {
+        public int Depth { get; }
+        public string Format(object? value) { }
+    }
+    public sealed class FormattingOptions
+    {
+        public int MaxDepth { get; set; }
+        public int MaxItems { get; set; }
+        public int MaxLines { get; set; }
+        public void Reset() { }
+    }
+    public interface IValueFormatter
+    {
+        bool CanHandle(object? value);
+        string Format(object? value, Vouch.Sdk.FormattingContext context);
+    }
+    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple=false, Inherited=false)]
+    public sealed class ValueFormatterAttribute : System.Attribute
+    {
+        public ValueFormatterAttribute() { }
+    }
+    public sealed class ValueFormatterCollection
+    {
+        public int Count { get; }
+        public void Add(Vouch.Sdk.IValueFormatter formatter) { }
+        public void Clear() { }
+        public bool Contains(Vouch.Sdk.IValueFormatter formatter) { }
+        public bool Remove(Vouch.Sdk.IValueFormatter formatter) { }
+    }
     public static class VouchConfiguration
     {
         public static System.Func<string, System.Exception> ExceptionFactory { get; set; }
+        public static Vouch.Sdk.ValueFormatterCollection Formatters { get; }
+        public static Vouch.Sdk.FormattingOptions Formatting { get; }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Scanning an assembly uses reflection and can miss members in a trimmed app. Regis" +
+            "ter formatters with Formatters.Add instead.")]
+        public static int AddFormattersFrom(System.Reflection.Assembly assembly) { }
     }
 }

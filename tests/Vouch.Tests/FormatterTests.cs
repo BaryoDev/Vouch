@@ -162,3 +162,297 @@ public class FormatterTests
         Assert.Equal("[1<threw InvalidOperationException>]", Formatter.Format(Boom()));
     }
 }
+
+public record Till(int Cents);
+public record Wallet(Till Cash, List<Till> Coins);
+
+public static class TillFormatters
+{
+    [Vouch.Sdk.ValueFormatter]
+    public static string Format(Till value) => "$" + (value.Cents / 100.0).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+public sealed class TillFormatter : Vouch.Sdk.IValueFormatter
+{
+    public bool CanHandle(object? value) => value is Till;
+    public string Format(object? value, Vouch.Sdk.FormattingContext context) => "money(" + context.Format(((Till)value!).Cents) + ")";
+}
+
+public sealed class WalletFormatter : Vouch.Sdk.IValueFormatter
+{
+    public bool CanHandle(object? value) => value is Wallet;
+    public string Format(object? value, Vouch.Sdk.FormattingContext context) => "wallet " + context.Format(((Wallet)value!).Coins);
+}
+
+public sealed class MultiLine : Vouch.Sdk.IValueFormatter
+{
+    public bool CanHandle(object? value) => value is Till;
+    public string Format(object? value, Vouch.Sdk.FormattingContext context) => "a\nb\nc\nd";
+}
+
+[CollectionDefinition("Formatting", DisableParallelization = true)]
+public sealed class FormattingCollection;
+
+[Collection("Formatting")]
+public class FormatterConfigurationTests
+{
+    private static void Isolated(Action body)
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Clear();
+        Vouch.Sdk.VouchConfiguration.Formatting.Reset();
+        try { body(); }
+        finally
+        {
+            Vouch.Sdk.VouchConfiguration.Formatters.Clear();
+            Vouch.Sdk.VouchConfiguration.Formatting.Reset();
+        }
+    }
+
+    private static string Msg(Action act) => Assert.Throws<VouchException>(act).Message;
+
+    [Fact]
+    public void Registered_formatter_is_used_in_a_failing_message() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new TillFormatter());
+        var m = new Till(5);
+        Assert.Equal("Expected m to be money(6), but found money(5).", Msg(() => m.Should().Be(new Till(6))));
+    });
+
+    [Fact]
+    public void Registered_formatter_is_used_for_a_nested_member() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new TillFormatter());
+        Assert.Equal("Wallet { Cash = money(5), Coins = [money(1), money(2)] }", Formatter.Format(new Wallet(new Till(5), [new Till(1), new Till(2)])));
+    });
+
+    [Fact]
+    public void Formatter_can_format_a_collection_through_the_context() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new WalletFormatter());
+        Assert.Equal("wallet [Till { Cents = 1 }]", Formatter.Format(new Wallet(new Till(5), [new Till(1)])));
+    });
+
+    [Fact]
+    public void Most_recently_added_formatter_wins() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new TillFormatter());
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new MultiLine());
+        Assert.StartsWith("a\nb", Formatter.Format(new Till(1)));
+    });
+
+    [Fact]
+    public void Removing_a_formatter_restores_the_default_text() => Isolated(() =>
+    {
+        var formatter = new TillFormatter();
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(formatter);
+        Assert.Equal("money(5)", Formatter.Format(new Till(5)));
+        Assert.True(Vouch.Sdk.VouchConfiguration.Formatters.Remove(formatter));
+        Assert.Equal("Till { Cents = 5 }", Formatter.Format(new Till(5)));
+        Assert.False(Vouch.Sdk.VouchConfiguration.Formatters.Remove(formatter));
+    });
+
+    [Fact]
+    public void Attribute_formatter_is_found_by_assembly() => Isolated(() =>
+    {
+        static int TillFormatterCount() =>
+            Vouch.Sdk.VouchConfiguration.Formatters.Snapshot.Count(f => f.CanHandle(new Till(1)));
+
+        Vouch.Sdk.VouchConfiguration.AddFormattersFrom(typeof(TillFormatters).Assembly);
+        Assert.Equal(1, TillFormatterCount());
+        Assert.Equal("$1.25", Formatter.Format(new Till(125)));
+        Assert.Equal(0, Vouch.Sdk.VouchConfiguration.AddFormattersFrom(typeof(TillFormatters).Assembly));
+        Vouch.Sdk.VouchConfiguration.Formatters.Clear();
+        Assert.Equal("Till { Cents = 125 }", Formatter.Format(new Till(125)));
+        Vouch.Sdk.VouchConfiguration.AddFormattersFrom(typeof(TillFormatters).Assembly);
+        Assert.Equal(1, TillFormatterCount());
+    });
+
+    [Fact]
+    public void Formatter_whose_CanHandle_throws_is_skipped() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new TillFormatter());
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new ThrowingCanHandle());
+        Assert.Equal("money(5)", Formatter.Format(new Till(5)));
+        Assert.Equal("null", Formatter.Format(null));
+    });
+
+    private sealed class ThrowingCanHandle : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => throw new InvalidOperationException();
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => "never";
+    }
+
+    [Fact]
+    public void Formatter_returning_null_writes_null() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new NullReturning());
+        Assert.Equal("null", Formatter.Format(new Till(1)));
+    });
+
+    private sealed class NullReturning : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Till;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => null!;
+    }
+
+    public struct Rec { public int Level; }
+
+    private sealed class RecursiveStruct : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Rec;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => "r(" + context.Format(value) + ")";
+    }
+
+    private sealed class Twice : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Rec;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) =>
+            context.Format(value) + context.Format(value);
+    }
+
+    [Fact]
+    public void Recursive_struct_formatter_finishes_quickly() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = int.MaxValue;
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new RecursiveStruct());
+        var watch = Stopwatch.StartNew();
+        var text = Formatter.Format(new Rec());
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5));
+        Assert.StartsWith("r(", text);
+    });
+
+    [Fact]
+    public void Formatter_calling_Format_twice_finishes_quickly() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = int.MaxValue;
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new Twice());
+        var watch = Stopwatch.StartNew();
+        var text = Formatter.Format(new Rec());
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(5));
+        Assert.NotNull(text);
+    });
+
+    [Fact]
+    public void Custom_output_is_capped() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new Long());
+        Assert.EndsWith("... (800 more chars)", Formatter.Format(new Till(1)));
+    });
+
+    private sealed class Long : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Till;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => new string('x', 1000);
+    }
+
+    [Fact]
+    public void Huge_MaxDepth_on_a_deep_list_does_not_overflow() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = int.MaxValue;
+        Assert.Equal(100, Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth);
+        Node? head = null;
+        for (var i = 0; i < 10_000; i++)
+        {
+            head = new Node { Next = head };
+        }
+
+        Assert.Contains("{ ... }", Formatter.Format(head));
+    });
+
+    [Fact]
+    public void Null_formatter_arguments_throw() => Isolated(() =>
+    {
+        Assert.Throws<ArgumentNullException>(() => Vouch.Sdk.VouchConfiguration.Formatters.Remove(null!));
+        Assert.Throws<ArgumentNullException>(() => Vouch.Sdk.VouchConfiguration.Formatters.Contains(null!));
+    });
+
+    [Fact]
+    public void MaxLines_ignores_a_trailing_newline_and_counts_crlf_once() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new Lines("a\nb\n"));
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxLines = 2;
+        Assert.Equal("a\nb\n", Formatter.Format(new Till(1)));
+        Vouch.Sdk.VouchConfiguration.Formatters.Clear();
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new Lines("a\r\nb\r\nc"));
+        Assert.Equal("a\r\nb\n... (1 more lines)", Formatter.Format(new Till(1)));
+    });
+
+    private sealed class Lines(string text) : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Till;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => text;
+    }
+
+    [Fact]
+    public void Throwing_formatter_does_not_escape() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new ThrowingFormatter());
+        Assert.Equal("<threw InvalidOperationException>", Formatter.Format(new Till(1)));
+    });
+
+    private sealed class ThrowingFormatter : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => true;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => throw new InvalidOperationException();
+    }
+
+    [Fact]
+    public void Formatter_that_reformats_its_own_value_does_not_overflow() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new Reentrant());
+        Assert.Equal("<Till { Cents = 1 }>", Formatter.Format(new Till(1)));
+    });
+
+    private sealed class Reentrant : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => value is Till;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => "<" + context.Format(value) + ">";
+    }
+
+    [Fact]
+    public void MaxDepth_caps_the_output() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = 1;
+        Assert.Equal("Chain { Inner = Chain { ... } }", Formatter.Format(new Chain { Inner = new Chain { Inner = new Chain() } }));
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = 5;
+        Assert.DoesNotContain("...", Formatter.Format(new Chain { Inner = new Chain { Inner = new Chain() } }));
+    });
+
+    [Fact]
+    public void MaxItems_caps_the_output() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxItems = 2;
+        Assert.Equal("[1, 2, ... (3 more)]", Formatter.Format(new List<int> { 1, 2, 3, 4, 5 }));
+    });
+
+    [Fact]
+    public void MaxLines_caps_the_output() => Isolated(() =>
+    {
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(new MultiLine());
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxLines = 2;
+        Assert.Equal("a\nb\n... (2 more lines)", Formatter.Format(new Till(1)));
+        Vouch.Sdk.VouchConfiguration.Formatting.MaxLines = 4;
+        Assert.Equal("a\nb\nc\nd", Formatter.Format(new Till(1)));
+    });
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void Options_must_be_at_least_one(int value) => Isolated(() =>
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vouch.Sdk.VouchConfiguration.Formatting.MaxDepth = value);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vouch.Sdk.VouchConfiguration.Formatting.MaxItems = value);
+        Assert.Throws<ArgumentOutOfRangeException>(() => Vouch.Sdk.VouchConfiguration.Formatting.MaxLines = value);
+    });
+
+    [Fact]
+    public void Defaults_match_the_built_in_limits()
+    {
+        Assert.Equal(3, Vouch.Sdk.FormattingOptions.DefaultMaxDepth);
+        Assert.Equal(10, Vouch.Sdk.FormattingOptions.DefaultMaxItems);
+    }
+
+    [Fact]
+    public void Null_formatter_is_rejected() =>
+        Assert.Throws<ArgumentNullException>(() => Vouch.Sdk.VouchConfiguration.Formatters.Add(null!));
+}
