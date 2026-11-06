@@ -987,4 +987,30 @@ public class ExceptionAssertionsTests
             new InvalidOperationException("b", new ArgumentException("gb")));
         act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>().WithMessage("gb");
     }
+
+    [Fact]
+    public void WithInnerException_de_duplicates_a_shared_inner_exception_by_reference()
+    {
+        var shared = new ArgumentException("shared");
+        Action act = () => throw new AggregateException(
+            new InvalidOperationException("a", shared),
+            new InvalidOperationException("b", shared));
+        Assert.Same(shared, act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().Which);
+    }
+
+    [Fact]
+    public void WithInnerException_chained_failure_names_the_inner_exception_without_doubling()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentException("boom"));
+        Assert.Equal("Expected act's inner exception to have an inner exception of type FormatException, but found no inner exception.",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithInnerException<FormatException>()));
+    }
+
+    [Fact]
+    public void WithInnerException_on_an_AggregateException_examines_only_the_first_inner_exception()
+    {
+        Action act = () => throw new AggregateException(new FormatException("first"), new ArgumentException("second"));
+        act.Should().Throw<AggregateException>().WithInnerException<FormatException>();
+        Assert.Throws<VouchException>(() => act.Should().Throw<AggregateException>().WithInnerException<ArgumentException>());
+    }
 }

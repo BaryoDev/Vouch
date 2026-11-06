@@ -378,9 +378,10 @@ public readonly struct StringAssertions
         // Missing values are named for the positive forms, found values for the negative ones.
         var wanted = negate;
         var named = new List<string>();
+        var seenNamed = new HashSet<string>(StringComparer.Ordinal);
         for (var i = 0; i < values.Count; i++)
         {
-            if (Subject.Contains(values[i], StringComparison.Ordinal) == wanted)
+            if (Subject.Contains(values[i], StringComparison.Ordinal) == wanted && seenNamed.Add(values[i]))
             {
                 named.Add(values[i]);
             }

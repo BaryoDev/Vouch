@@ -345,8 +345,66 @@ public class CollectionAssertionsTests
     [Fact] public void ContainInConsecutiveOrder_passes_with_a_sequence() => new[] { 1, 2, 3, 4 }.Should().ContainInConsecutiveOrder(new List<int> { 3, 4 });
     [Fact] public void ContainInConsecutiveOrder_passes_for_an_empty_expectation() => new[] { 1 }.Should().ContainInConsecutiveOrder();
     [Fact] public void ContainInConsecutiveOrder_fails_when_items_are_apart() => Assert.Throws<VouchException>(() => new[] { 1, 2, 3 }.Should().ContainInConsecutiveOrder(1, 3));
-    [Fact] public void ContainInConsecutiveOrder_message() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to contain [1, 3] in consecutive order, but it did not. It has:\n  [0] 1\n  [1] 2\n  [2] 3", Message(() => xs.Should().ContainInConsecutiveOrder(1, 3))); }
+    [Fact] public void ContainInConsecutiveOrder_message() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to contain [1, 3] in consecutive order, but the longest run in order was 1 of 2, broken at 3 (item 1 of the expected items). It has:\n  [0] 1\n  [1] 2\n  [2] 3", Message(() => xs.Should().ContainInConsecutiveOrder(1, 3))); }
     [Fact] public void ContainInConsecutiveOrder_fails_on_null() { List<int>? xs = null; Assert.Equal("Expected xs to contain [1] in consecutive order, but found null.", Message(() => xs.Should().ContainInConsecutiveOrder(1))); }
-    [Fact] public void ContainInConsecutiveOrder_takes_a_reason() { var xs = new int[0]; Assert.Equal("Expected xs to contain [1] in consecutive order, but it did not. Because why.", Message(() => xs.Should().ContainInConsecutiveOrder(new List<int> { 1 }, "why"))); }
+    [Fact] public void ContainInConsecutiveOrder_takes_a_reason() { var xs = new int[0]; Assert.Equal("Expected xs to contain [1] in consecutive order, but the longest run in order was 0 of 1, broken at 1 (item 0 of the expected items). Because why.", Message(() => xs.Should().ContainInConsecutiveOrder(new List<int> { 1 }, "why"))); }
     [Fact] public void ContainInConsecutiveOrder_null_expectation_throws() { var xs = new[] { 1 }; Assert.Throws<ArgumentNullException>(() => xs.Should().ContainInConsecutiveOrder((IEnumerable<int>)null!)); }
+
+    // Fix round 1
+
+    private static int _lazyEnumerations;
+
+    private static IEnumerable<int> LazyOnce(params int[] values)
+    {
+        _lazyEnumerations++;
+        foreach (var v in values)
+        {
+            yield return v;
+        }
+    }
+
+    [Fact] public void ContainInOrder_repeated_expected_item_needs_two_occurrences() => Assert.Throws<VouchException>(() => new[] { 1 }.Should().ContainInOrder(1, 1));
+    [Fact] public void ContainInOrder_repeated_expected_item_passes_with_two_occurrences() => new[] { 1, 2, 1 }.Should().ContainInOrder(1, 1);
+    [Fact] public void ContainInOrder_handles_null_items() => new string[] { null!, "a", null! }.Should().ContainInOrder(new string[] { null!, null! });
+    [Fact] public void ContainInOrder_fails_on_missing_null_item() => Assert.Throws<VouchException>(() => new string[] { "a" }.Should().ContainInOrder(new string[] { null! }));
+    [Fact]
+    public void ContainInOrder_enumerates_a_lazy_subject_once()
+    {
+        _lazyEnumerations = 0;
+        LazyOnce(1, 2, 3).Should().ContainInOrder(1, 3);
+        Assert.Equal(1, _lazyEnumerations);
+        _lazyEnumerations = 0;
+        Assert.Throws<VouchException>(() => LazyOnce(1, 2, 3).Should().ContainInOrder(3, 1));
+        Assert.Equal(1, _lazyEnumerations);
+    }
+
+    [Fact]
+    public void ContainInConsecutiveOrder_enumerates_a_lazy_subject_once()
+    {
+        _lazyEnumerations = 0;
+        LazyOnce(1, 2, 3).Should().ContainInConsecutiveOrder(2, 3);
+        Assert.Equal(1, _lazyEnumerations);
+    }
+
+    [Fact] public void ContainInConsecutiveOrder_backtracks_after_a_partial_match() => new[] { 1, 1, 1, 2 }.Should().ContainInConsecutiveOrder(1, 1, 2);
+    [Fact] public void ContainInConsecutiveOrder_handles_null_items() => new string[] { "a", null!, "b" }.Should().ContainInConsecutiveOrder(new string[] { null!, "b" });
+    [Fact] public void ContainInConsecutiveOrder_message_reports_the_longest_run() { var xs = new[] { 1, 2, 9, 1, 2, 3 }; Assert.Equal("Expected xs to contain [1, 2, 4] in consecutive order, but the longest run in order was 2 of 3, broken at 4 (item 2 of the expected items). It has:\n  [0] 1\n  [1] 2\n  [2] 9\n  [3] 1\n  [4] 2\n  [5] 3", Message(() => xs.Should().ContainInConsecutiveOrder(1, 2, 4))); }
+    [Fact] public void ContainInConsecutiveOrder_message_when_the_expectation_is_longer_than_the_subject() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain [1, 2, 3] in consecutive order, but the longest run in order was 2 of 3, broken at 3 (item 2 of the expected items). It has:\n  [0] 1\n  [1] 2", Message(() => xs.Should().ContainInConsecutiveOrder(1, 2, 3))); }
+    [Fact] public void ContainInOrder_array_overload_takes_a_reason() { var xs = new int[0]; Assert.Contains("Because why.", Message(() => xs.Should().ContainInOrder(new[] { 1 }, "why"))); }
+    [Fact] public void ContainInConsecutiveOrder_array_overload_takes_a_reason() { var xs = new int[0]; Assert.Contains("Because why.", Message(() => xs.Should().ContainInConsecutiveOrder(new[] { 1 }, "why"))); }
+
+    [Fact]
+    public void ContainInOrder_accepts_an_expected_sequence_over_the_item_cap()
+    {
+        var xs = new[] { 0, 1, 2 };
+        var expected = Enumerable.Range(0, Equivalency.MaxItems + 1);
+        var msg = Message(() => xs.Should().ContainInOrder(expected));
+        Assert.StartsWith("Expected xs to contain [", msg);
+        Assert.Contains("(item 3 of the expected items) was not found after index 2", msg);
+    }
+
+    [Fact] public void AllBeEquivalentTo_passes_with_null_elements() => new string[] { null!, null! }.Should().AllBeEquivalentTo<string>(null!);
+    [Fact] public void AllBeEquivalentTo_fails_when_one_element_is_null() => Assert.Throws<VouchException>(() => new string[] { null!, "a" }.Should().AllBeEquivalentTo("a"));
+    [Fact] public void AllBeEquivalentTo_passes_on_an_empty_subject_with_options() => new Row[0].Should().AllBeEquivalentTo(new Row("A", 1), o => o.Excluding(r => r.Qty));
+    [Fact] public void AllBeEquivalentTo_with_options_takes_a_reason() { var rows = new[] { new Row("B", 2) }; Assert.Contains("Because why.", Message(() => rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty), "why"))); }
 }

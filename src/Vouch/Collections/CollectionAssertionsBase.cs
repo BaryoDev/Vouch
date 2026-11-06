@@ -844,12 +844,33 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>.</summary>
+    /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) =>
         AllEquivalent(expectation, EquivalencyOptions.Default);
 
+    /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with options.</summary>
+    /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
         AllEquivalent(expectation, Equivalency.Options(configure));
 
+    /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with options and a reason.</summary>
+    /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
+    public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return AllBeEquivalentTo(expectation, configure);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with a reason.</summary>
+    /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because)
     {
         Reason.Set(because);
@@ -898,6 +919,19 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return InOrderCore(expected, consecutive: false);
     }
 
+    public AndConstraint<TSelf> ContainInOrder(T[] expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainInOrder(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
     public AndConstraint<TSelf> ContainInOrder(IEnumerable<T> expected)
     {
         ArgumentNullException.ThrowIfNull(expected);
@@ -921,6 +955,19 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(expected);
         return InOrderCore(expected, consecutive: true);
+    }
+
+    public AndConstraint<TSelf> ContainInConsecutiveOrder(T[] expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainInConsecutiveOrder(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
     }
 
     public AndConstraint<TSelf> ContainInConsecutiveOrder(IEnumerable<T> expected)
@@ -957,21 +1004,32 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var comparer = EqualityComparer<T>.Default;
         if (consecutive)
         {
-            for (var start = 0; start + expected.Count <= items.Count; start++)
+            if (expected.Count == 0)
             {
-                var matches = true;
-                for (var j = 0; matches && j < expected.Count; j++)
+                return And();
+            }
+
+            var longest = 0;
+            for (var start = 0; start < items.Count; start++)
+            {
+                var run = 0;
+                while (run < expected.Count && start + run < items.Count && comparer.Equals(items[start + run], expected[run]))
                 {
-                    matches = comparer.Equals(items[start + j], expected[j]);
+                    run++;
                 }
 
-                if (matches)
+                if (run == expected.Count)
                 {
                     return And();
                 }
+
+                if (run > longest)
+                {
+                    longest = run;
+                }
             }
 
-            Fail.With($"Expected {Name} to contain {Formatter.Format(expected)} in consecutive order, but it did not.{HasTail(items)}");
+            Fail.With($"Expected {Name} to contain {Formatter.Format(expected)} in consecutive order, but the longest run in order was {longest} of {expected.Count}, broken at {Formatter.Format(expected[longest])} (item {longest} of the expected items).{HasTail(items)}");
             return And();
         }
 

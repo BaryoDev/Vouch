@@ -404,6 +404,8 @@ public class StringAssertionsTests
     [Fact] public void NotContainAll_passes_with_a_sequence() { var s = "abc"; s.Should().NotContainAll(new List<string> { "a", "x" }.Select(x => x)); }
     [Fact] public void NotContainAll_fails() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().NotContainAll("a", "b")); }
     [Fact] public void NotContainAll_message() { var s = "abc"; Assert.Equal("Expected s not to contain all of [\"a\", \"b\"], but found [\"a\", \"b\"] in \"abc\".", Message(() => s.Should().NotContainAll("a", "b"))); }
+    [Fact] public void NotContainAll_names_a_repeated_value_once() { var s = "a"; Assert.Equal("Expected s not to contain all of [\"a\", \"a\"], but found [\"a\"] in \"a\".", Message(() => s.Should().NotContainAll("a", "a"))); }
+    [Fact] public void ContainAll_names_a_repeated_missing_value_once() { var s = "abc"; Assert.Equal("Expected s to contain all of [\"x\", \"x\"], but did not find [\"x\"] in \"abc\".", Message(() => s.Should().ContainAll("x", "x"))); }
     [Fact] public void NotContainAll_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain all of [\"a\"], but found null.", Message(() => s.Should().NotContainAll("a"))); }
     [Fact] public void NotContainAll_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s not to contain all of [\"a\"], but found [\"a\"] in \"abc\". Because why.", Message(() => s.Should().NotContainAll(new[] { "a" }.AsEnumerable(), "why"))); }
 

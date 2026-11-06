@@ -368,6 +368,11 @@ public static class AwesomeCases
         ["all be equivalent to with options"] = () => new List<Person> { new("a", 1), new("a", 2) }.Should().AllBeEquivalentTo(new Person("a", 9), o => o.Excluding(p => p.Age)),
         ["contain in order wrong order"] = () => new List<int> { 1, 2, 3 }.Should().ContainInOrder(3, 1),
         ["contain in consecutive order apart"] = () => new List<int> { 1, 2, 3 }.Should().ContainInConsecutiveOrder(1, 3),
+        ["contain in order empty subject"] = () => new List<int>().Should().ContainInOrder(1),
+        ["contain in order repeated expected item missing"] = () => new List<int> { 1 }.Should().ContainInOrder(1, 1),
+        ["contain in order repeated expected item present"] = () => new List<int> { 1, 2, 1 }.Should().ContainInOrder(1, 1),
+        ["contain in consecutive order empty subject"] = () => new List<int>().Should().ContainInConsecutiveOrder(1),
+        ["contain in consecutive order backtracking"] = () => new List<int> { 1, 1, 1, 2 }.Should().ContainInConsecutiveOrder(1, 1, 2),
         ["throw with inner exception other type"] = () =>
         {
             Action act = Throws.Of(new InvalidOperationException("x", new ArgumentException("y")));
