@@ -134,6 +134,73 @@ public class NumericAssertionsTests
     [Fact] public void Equal_infinities_approximate() { double.PositiveInfinity.Should().BeApproximately(double.PositiveInfinity, 0); double? d = double.PositiveInfinity; d.Should().BeApproximately(double.PositiveInfinity, 0); }
     [Fact] public void Opposite_infinities_do_not_approximate() { double d = double.PositiveInfinity; Assert.Throws<VouchException>(() => d.Should().BeApproximately(double.NegativeInfinity, 1)); }
     [Fact] public void Float_BeApproximately_fails() { Assert.Throws<VouchException>(() => 1.75f.Should().BeApproximately(1.5f, 0.125f)); }
+    [Fact] public void BeCloseTo_passes_on_the_boundary() { 5.Should().BeCloseTo(8, 3); 8.Should().BeCloseTo(5, 3); 1.5.Should().BeCloseTo(1.6, 0.2); 1.5m.Should().BeCloseTo(1.6m, 0.1m); 1.5f.Should().BeCloseTo(1.5f, 0f); }
+    [Fact] public void BeCloseTo_message() { var n = 5; Assert.Equal("Expected n to be within 2 of 8, but found 5 (off by 3).", Message(() => n.Should().BeCloseTo(8, 2))); }
+    [Fact] public void BeCloseTo_because_message() { var n = 5; Assert.Equal("Expected n to be within 2 of 8, but found 5 (off by 3). Because it matters.", Message(() => n.Should().BeCloseTo(8, 2, "it matters"))); }
+    [Fact] public void BeCloseTo_unsigned_does_not_wrap() { uint u = 1; u.Should().BeCloseTo(5u, 4u); Assert.Throws<VouchException>(() => u.Should().BeCloseTo(5u, 3u)); }
+    [Fact] public void BeCloseTo_overflow_fails_without_throwing_OverflowException() { var n = int.MinValue; Assert.Equal("Expected n to be within 1 of 2147483647, but found -2147483648 (difference is out of range).", Message(() => n.Should().BeCloseTo(int.MaxValue, 1))); var m = decimal.MaxValue; Assert.Throws<VouchException>(() => m.Should().BeCloseTo(-1m, 1m)); }
+    [Fact] public void NotBeCloseTo_passes() { 5.Should().NotBeCloseTo(8, 2); int.MinValue.Should().NotBeCloseTo(int.MaxValue, 1); }
+    [Fact] public void NotBeCloseTo_message() { var n = 5; Assert.Equal("Expected n not to be within 2 of 6, but found 5.", Message(() => n.Should().NotBeCloseTo(6, 2))); }
+    [Fact] public void BeNegative_passes() { (-1).Should().BeNegative(); (-0.5).Should().BeNegative(); (-1m).Should().BeNegative(); }
+    [Fact] public void BeNegative_message() { var n = 5; Assert.Equal("Expected n to be negative, but found 5.", Message(() => n.Should().BeNegative())); var z = 0; Assert.Throws<VouchException>(() => z.Should().BeNegative()); }
+    [Fact]
+    public void Nullable_BeNegative_BeCloseTo_NotBeCloseTo()
+    {
+        int? n = -3;
+        n.Should().BeNegative();
+        n.Should().BeCloseTo(-4, 1);
+        n.Should().NotBeCloseTo(5, 1);
+        int? none = null;
+        Assert.Equal("Expected none to be negative, but found null.", Message(() => none.Should().BeNegative()));
+        Assert.Equal("Expected none to be within 2 of 8, but found null.", Message(() => none.Should().BeCloseTo(8, 2)));
+        none.Should().NotBeCloseTo(8, 2);
+        int? far = 5;
+        Assert.Equal("Expected far to be within 2 of 8, but found 5 (off by 3).", Message(() => far.Should().BeCloseTo(8, 2)));
+        Assert.Equal("Expected far not to be within 2 of 6, but found 5.", Message(() => far.Should().NotBeCloseTo(6, 2)));
+        Assert.Equal("Expected far to be negative, but found 5.", Message(() => far.Should().BeNegative()));
+    }
+
+    [Fact] public void Double_BeNaN_and_NotBeNaN() { double.NaN.Should().BeNaN(); 1.5.Should().NotBeNaN(); var d = 1.5; Assert.Equal("Expected d to be NaN, but found 1.5.", Message(() => d.Should().BeNaN())); var n = double.NaN; Assert.Equal("Expected n not to be NaN, but it was.", Message(() => n.Should().NotBeNaN())); }
+    [Fact] public void Double_BeFinite_and_NotBeFinite() { 1.5.Should().BeFinite(); double.PositiveInfinity.Should().NotBeFinite(); var i = double.PositiveInfinity; Assert.Equal("Expected i to be finite, but found Infinity.", Message(() => i.Should().BeFinite())); var d = 1.5; Assert.Equal("Expected d not to be finite, but found 1.5.", Message(() => d.Should().NotBeFinite())); }
+    [Fact] public void Float_BeNaN_and_NotBeNaN() { float.NaN.Should().BeNaN(); 1.5f.Should().NotBeNaN(); var f = 1.5f; Assert.Equal("Expected f to be NaN, but found 1.5f.", Message(() => f.Should().BeNaN())); var n = float.NaN; Assert.Equal("Expected n not to be NaN, but it was.", Message(() => n.Should().NotBeNaN())); }
+    [Fact] public void Float_BeFinite_and_NotBeFinite() { 1.5f.Should().BeFinite(); float.NegativeInfinity.Should().NotBeFinite(); var i = float.NegativeInfinity; Assert.Equal("Expected i to be finite, but found -Infinityf.", Message(() => i.Should().BeFinite())); var f = 1.5f; Assert.Equal("Expected f not to be finite, but found 1.5f.", Message(() => f.Should().NotBeFinite())); }
+    [Fact]
+    public void Half_BeNaN_NotBeNaN_BeFinite_NotBeFinite()
+    {
+        Half.NaN.Should().BeNaN();
+        Half.One.Should().NotBeNaN();
+        Half.One.Should().BeFinite();
+        Half.PositiveInfinity.Should().NotBeFinite();
+        var one = Half.One;
+        Assert.StartsWith("Expected one to be NaN, but found ", Message(() => one.Should().BeNaN()));
+        Assert.StartsWith("Expected one not to be finite, but found ", Message(() => one.Should().NotBeFinite()));
+        var nan = Half.NaN;
+        Assert.Equal("Expected nan not to be NaN, but it was.", Message(() => nan.Should().NotBeNaN()));
+        Assert.StartsWith("Expected nan to be finite, but found ", Message(() => nan.Should().BeFinite()));
+    }
+
+    [Fact]
+    public void HaveValue_and_NotHaveValue_on_nullable_numeric()
+    {
+        int? n = 5;
+        Assert.Equal(5, n.Should().HaveValue().Which);
+        int? none = null;
+        none.Should().NotHaveValue();
+        Assert.Equal("Expected none to have a value, but found null.", Message(() => none.Should().HaveValue()));
+        Assert.Equal("Expected n not to have a value, but found 5.", Message(() => n.Should().NotHaveValue()));
+    }
+
+    [Fact]
+    public void HaveValue_and_NotHaveValue_on_nullable_value()
+    {
+        TimeSpan? t = TimeSpan.FromSeconds(5);
+        Assert.Equal(TimeSpan.FromSeconds(5), t.Should().HaveValue().Which);
+        TimeSpan? none = null;
+        none.Should().NotHaveValue();
+        Assert.Equal("Expected none to have a value, but found null.", Message(() => none.Should().HaveValue()));
+        Assert.Equal("Expected t not to have a value, but found 00:00:05.", Message(() => t.Should().NotHaveValue()));
+    }
+
     [Fact] public void Float_BeApproximately_message() { var f = 1.75f; Assert.Equal("Expected f to approximate 1.5f +/- 0.125f, but found 1.75f (off by 0.25f).", Message(() => f.Should().BeApproximately(1.5f, 0.125f))); }
 
     [Fact]

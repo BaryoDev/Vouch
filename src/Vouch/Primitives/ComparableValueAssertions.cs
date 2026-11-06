@@ -46,6 +46,46 @@ public static class ComparableValueAssertions
         return new(assertions);
     }
 
+    public static AndConstraint<ValueAssertions<Half>> BeNaN(this ValueAssertions<Half> assertions)
+    {
+        if (!Half.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be NaN, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<ValueAssertions<Half>> NotBeNaN(this ValueAssertions<Half> assertions)
+    {
+        if (Half.IsNaN(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be NaN, but it was.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<ValueAssertions<Half>> BeFinite(this ValueAssertions<Half> assertions)
+    {
+        if (!Half.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
+    public static AndConstraint<ValueAssertions<Half>> NotBeFinite(this ValueAssertions<Half> assertions)
+    {
+        if (Half.IsFinite(assertions.Subject))
+        {
+            Fail.With($"Expected {assertions.Name} not to be finite, but found {Formatter.Format(assertions.Subject)}.");
+        }
+
+        return new(assertions);
+    }
+
     private static bool IsNaN<T>(T value) =>
         value is Half h && Half.IsNaN(h)
         || value is float f && float.IsNaN(f)

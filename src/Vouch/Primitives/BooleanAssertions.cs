@@ -143,6 +143,29 @@ public readonly struct NullableBooleanAssertions
         return new(this);
     }
 
+    /// <summary>Same as <see cref="NotBeNull"/>: the subject must have a value, which is returned as Which.</summary>
+    public AndWhichConstraint<NullableBooleanAssertions, bool> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    /// <summary>Same as <see cref="BeNull"/>: the subject must be null.</summary>
+    public AndConstraint<NullableBooleanAssertions> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndWhichConstraint<NullableBooleanAssertions, bool> NotBeNull()
     {
         if (Subject is not { } value)

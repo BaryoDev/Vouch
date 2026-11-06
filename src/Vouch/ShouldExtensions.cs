@@ -78,6 +78,14 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    public static NumericAssertions<Half> Should(this Half subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static NullableNumericAssertions<Half> Should(this Half? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
     public static NumericAssertions<float> Should(this float subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);

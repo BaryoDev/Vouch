@@ -86,6 +86,54 @@ public readonly struct DateTimeAssertions
         return new(this);
     }
 
+    /// <summary>Compares the <c>Date</c> parts only; <see cref="DateTimeKind"/> is ignored and no time zone conversion is done.</summary>
+    public AndConstraint<DateTimeAssertions> BeSameDateAs(DateTime expected)
+    {
+        if (Subject.Date != expected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be the same date as {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<DateTimeAssertions> NotBeSameDateAs(DateTime unexpected)
+    {
+        if (Subject.Date == unexpected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be the same date as {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<DateTimeAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject.Year); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject.Month); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject.Day); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject.Day); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> HaveHour(int expected) { DatePart.Have(_expression, "hour", expected, Subject.Hour); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveHour(int unexpected) { DatePart.NotHave(_expression, "hour", unexpected, Subject.Hour); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> HaveMinute(int expected) { DatePart.Have(_expression, "minute", expected, Subject.Minute); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveMinute(int unexpected) { DatePart.NotHave(_expression, "minute", unexpected, Subject.Minute); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> HaveSecond(int expected) { DatePart.Have(_expression, "second", expected, Subject.Second); return new(this); }
+
+    public AndConstraint<DateTimeAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject.Second); return new(this); }
+
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public DateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
+
     public AndConstraint<DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
@@ -201,6 +249,29 @@ public readonly struct NullableDateTimeAssertions
         return new(this);
     }
 
+    /// <summary>Same as <see cref="NotBeNull"/>: the subject must have a value, which is returned as Which.</summary>
+    public AndWhichConstraint<NullableDateTimeAssertions, DateTime> HaveValue()
+    {
+        if (Subject is not { } value)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to have a value, but found null.");
+            return new(this, default);
+        }
+
+        return new(this, value);
+    }
+
+    /// <summary>Same as <see cref="BeNull"/>: the subject must be null.</summary>
+    public AndConstraint<NullableDateTimeAssertions> NotHaveValue()
+    {
+        if (Subject.HasValue)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have a value, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndWhichConstraint<NullableDateTimeAssertions, DateTime> NotBeNull()
     {
         if (Subject is not { } value)
@@ -211,6 +282,54 @@ public readonly struct NullableDateTimeAssertions
 
         return new(this, value);
     }
+
+    /// <summary>Compares the <c>Date</c> parts only; <see cref="DateTimeKind"/> is ignored and no time zone conversion is done.</summary>
+    public AndConstraint<NullableDateTimeAssertions> BeSameDateAs(DateTime expected)
+    {
+        if (Subject is not { } actual || actual.Date != expected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be the same date as {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableDateTimeAssertions> NotBeSameDateAs(DateTime unexpected)
+    {
+        if (Subject is { } actual && actual.Date == unexpected.Date)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be the same date as {Formatter.Format(unexpected)}, but found {Formatter.Format(actual)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveYear(int expected) { DatePart.Have(_expression, "year", expected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveYear(int unexpected) { DatePart.NotHave(_expression, "year", unexpected, Subject?.Year); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveMonth(int expected) { DatePart.Have(_expression, "month", expected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveMonth(int unexpected) { DatePart.NotHave(_expression, "month", unexpected, Subject?.Month); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveDay(int expected) { DatePart.Have(_expression, "day", expected, Subject?.Day); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveDay(int unexpected) { DatePart.NotHave(_expression, "day", unexpected, Subject?.Day); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveHour(int expected) { DatePart.Have(_expression, "hour", expected, Subject?.Hour); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveHour(int unexpected) { DatePart.NotHave(_expression, "hour", unexpected, Subject?.Hour); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveMinute(int expected) { DatePart.Have(_expression, "minute", expected, Subject?.Minute); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveMinute(int unexpected) { DatePart.NotHave(_expression, "minute", unexpected, Subject?.Minute); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> HaveSecond(int expected) { DatePart.Have(_expression, "second", expected, Subject?.Second); return new(this); }
+
+    public AndConstraint<NullableDateTimeAssertions> NotHaveSecond(int unexpected) { DatePart.NotHave(_expression, "second", unexpected, Subject?.Second); return new(this); }
+
+    /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
+    public NullableDateTimeWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
     public AndConstraint<NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
