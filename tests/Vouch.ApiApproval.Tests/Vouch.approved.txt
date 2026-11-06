@@ -59,6 +59,18 @@ namespace Vouch
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
             where TException : System.Exception { }
     }
+    public static class AtLeast
+    {
+        public static Vouch.OccurrenceConstraint Once() { }
+        public static Vouch.OccurrenceConstraint Times(int times) { }
+        public static Vouch.OccurrenceConstraint Twice() { }
+    }
+    public static class AtMost
+    {
+        public static Vouch.OccurrenceConstraint Once() { }
+        public static Vouch.OccurrenceConstraint Times(int times) { }
+        public static Vouch.OccurrenceConstraint Twice() { }
+    }
     public readonly struct BooleanAssertions
     {
         public string? Expression { get; }
@@ -234,6 +246,12 @@ namespace Vouch
         public Vouch.EquivalencyOptions<TExpectation> WithStrictOrdering() { }
         public Vouch.EquivalencyOptions<TExpectation> WithoutStrictOrdering() { }
     }
+    public static class Exactly
+    {
+        public static Vouch.OccurrenceConstraint Once() { }
+        public static Vouch.OccurrenceConstraint Times(int times) { }
+        public static Vouch.OccurrenceConstraint Twice() { }
+    }
     public sealed class ExceptionAssertions<TException>
         where TException : System.Exception
     {
@@ -290,6 +308,18 @@ namespace Vouch
     {
         public static System.Action Invoking<T>(this T subject, System.Action<T> action) { }
         public static System.Func<TResult> Invoking<T, TResult>(this T subject, System.Func<T, TResult> func) { }
+    }
+    public static class LessThan
+    {
+        public static Vouch.OccurrenceConstraint Once() { }
+        public static Vouch.OccurrenceConstraint Times(int times) { }
+        public static Vouch.OccurrenceConstraint Twice() { }
+    }
+    public static class MoreThan
+    {
+        public static Vouch.OccurrenceConstraint Once() { }
+        public static Vouch.OccurrenceConstraint Times(int times) { }
+        public static Vouch.OccurrenceConstraint Twice() { }
     }
     public readonly struct NullableBooleanAssertions
     {
@@ -499,6 +529,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeOfType<T>() { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> NotBeSameAs(object? unexpected) { }
     }
+    public readonly struct OccurrenceConstraint
+    {
+        public int Times { get; }
+        public bool IsSatisfiedBy(int actual) { }
+    }
     public static class ShouldExtensions
     {
         public static Vouch.ActionAssertions Should(this System.Action? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -563,40 +598,88 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StringAssertions> BeEmpty(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeEquivalentTo(string? expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeEquivalentTo(string? expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeLowerCased() { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeLowerCased(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeNull(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeNullOrEmpty() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeNullOrEmpty(string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeNullOrWhiteSpace() { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeNullOrWhiteSpace(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeOneOf(params string?[] validValues) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> BeOneOf(System.Collections.Generic.IEnumerable<string?> validValues, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.StringAssertions, T> BeParsableInto<T>()
+            where T : System.IParsable<T> { }
+        public Vouch.AndWhichConstraint<Vouch.StringAssertions, T> BeParsableInto<T>(System.IFormatProvider? provider)
+            where T : System.IParsable<T> { }
+        public Vouch.AndWhichConstraint<Vouch.StringAssertions, T> BeParsableInto<T>(string because)
+            where T : System.IParsable<T> { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeUpperCased() { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> BeUpperCased(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, Vouch.OccurrenceConstraint occurrence) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, Vouch.OccurrenceConstraint occurrence, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> EndWith(string expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> EndWith(string expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> EndWithEquivalentOf(string expected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> EndWithEquivalentOf(string expected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> HaveLength(int expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> HaveLength(int expected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Match(string wildcardPattern) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Match(string wildcardPattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchEquivalentOf(string wildcardPattern) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchEquivalentOf(string wildcardPattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(System.Text.RegularExpressions.Regex regex) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(System.Text.RegularExpressions.Regex regex, Vouch.OccurrenceConstraint occurrence) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(System.Text.RegularExpressions.Regex regex, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern, System.Text.RegularExpressions.RegexOptions options) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern, Vouch.OccurrenceConstraint occurrence) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(System.Text.RegularExpressions.Regex regex, Vouch.OccurrenceConstraint occurrence, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern, System.Text.RegularExpressions.RegexOptions options, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> MatchRegex(string pattern, Vouch.OccurrenceConstraint occurrence, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBe(string? unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBe(string? unexpected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeEmpty() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeEmpty(string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotBeLowerCased() { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotBeLowerCased(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNull() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNull(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNullOrEmpty() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNullOrEmpty(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNullOrWhiteSpace() { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeNullOrWhiteSpace(string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotBeUpperCased() { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotBeUpperCased(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContain(string unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContain(string unexpected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContainEquivalentOf(string unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContainEquivalentOf(string unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotEndWith(string unexpected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotEndWith(string unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotEndWithEquivalentOf(string unexpected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotEndWithEquivalentOf(string unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatch(string wildcardPattern) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatch(string wildcardPattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchEquivalentOf(string wildcardPattern) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchEquivalentOf(string wildcardPattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(System.Text.RegularExpressions.Regex regex) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(string pattern) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(System.Text.RegularExpressions.Regex regex, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(string pattern, System.Text.RegularExpressions.RegexOptions options) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(string pattern, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotMatchRegex(string pattern, System.Text.RegularExpressions.RegexOptions options, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotStartWith(string unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotStartWith(string unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotStartWithEquivalentOf(string unexpected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotStartWithEquivalentOf(string unexpected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWith(string expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWith(string expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> StartWithEquivalentOf(string expected) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> StartWithEquivalentOf(string expected, string because) { }
     }
     public readonly struct TimeOnlyAssertions
     {

@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace Vouch.Tests;
@@ -189,7 +191,7 @@ public class StringAssertionsTests
             case "Contain": subject.Should().Contain(null!); break;
             case "NotContain": subject.Should().NotContain(null!); break;
             case "Match": subject.Should().Match(null!); break;
-            case "MatchRegex": subject.Should().MatchRegex(null!); break;
+            case "MatchRegex": subject.Should().MatchRegex((string)null!); break;
             case "BeOneOf": subject.Should().BeOneOf(null!); break;
         }
     }
@@ -226,4 +228,152 @@ public class StringAssertionsTests
     [Fact] public void NotContainEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain \"x\" (ignoring case), but found null.", Message(() => s.Should().NotContainEquivalentOf("x"))); }
     [Fact] public void NotContainEquivalentOf_null_argument_throws_ArgumentNullException() { var s = "a"; Assert.Throws<ArgumentNullException>(() => s.Should().NotContainEquivalentOf(null!)); }
     [Fact] public void NotContainEquivalentOf_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s not to contain \"B\" (ignoring case), but found \"abc\". Because it must not.", Message(() => s.Should().NotContainEquivalentOf("B", "it must not"))); }
+
+    [Fact] public void Contain_occurrence_passes() { var s = "banana"; s.Should().Contain("an", Exactly.Twice()).And.Contain("a", AtLeast.Times(3)).And.Contain("b", AtMost.Once()).And.Contain("n", MoreThan.Once()).And.Contain("x", LessThan.Once()); }
+    [Fact] public void Contain_occurrence_fails() { var s = "banana"; Assert.Equal("Expected s to contain \"an\" exactly 1 time, but found it 2 times in \"banana\".", Message(() => s.Should().Contain("an", Exactly.Once()))); }
+    [Fact]
+    public void Contain_occurrence_message_for_each_kind()
+    {
+        var s = "banana";
+        Assert.Equal("Expected s to contain \"a\" more than 3 times, but found it 3 times in \"banana\".", Message(() => s.Should().Contain("a", MoreThan.Times(3))));
+        Assert.Equal("Expected s to contain \"a\" less than 3 times, but found it 3 times in \"banana\".", Message(() => s.Should().Contain("a", LessThan.Times(3))));
+        Assert.Equal("Expected s to contain \"a\" at least 4 times, but found it 3 times in \"banana\".", Message(() => s.Should().Contain("a", AtLeast.Times(4))));
+        Assert.Equal("Expected s to contain \"a\" at most 2 times, but found it 3 times in \"banana\".", Message(() => s.Should().Contain("a", AtMost.Twice())));
+    }
+    [Fact] public void Contain_occurrence_counts_without_overlap() { var s = "aaaa"; s.Should().Contain("aa", Exactly.Twice()); }
+    [Fact] public void Contain_occurrence_fails_on_null() { string? s = null; Assert.Equal("Expected s to contain \"x\" exactly 1 time, but found null.", Message(() => s.Should().Contain("x", Exactly.Once()))); }
+    [Fact] public void Contain_occurrence_null_argument_throws() { var s = "a"; Assert.Throws<ArgumentNullException>(() => s.Should().Contain(null!, Exactly.Once())); }
+    [Fact] public void Contain_occurrence_empty_argument_throws() { var s = "a"; Assert.Throws<ArgumentException>(() => s.Should().Contain("", Exactly.Once())); }
+    [Fact] public void Contain_occurrence_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s to contain \"a\" exactly 2 times, but found it 1 time in \"abc\". Because twice.", Message(() => s.Should().Contain("a", Exactly.Twice(), "twice"))); }
+    [Fact] public void Occurrence_negative_count_throws() { Assert.Throws<ArgumentOutOfRangeException>(() => Exactly.Times(-1)); }
+
+    [Fact] public void StartWithEquivalentOf_passes() { var s = "abc"; s.Should().StartWithEquivalentOf("AB"); }
+    [Fact] public void StartWithEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s to start with \"X\" (ignoring case), but found \"abc\".", Message(() => s.Should().StartWithEquivalentOf("X"))); }
+    [Fact] public void StartWithEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s to start with \"X\" (ignoring case), but found null.", Message(() => s.Should().StartWithEquivalentOf("X"))); }
+    [Fact] public void NotStartWithEquivalentOf_passes() { var s = "abc"; s.Should().NotStartWithEquivalentOf("X"); }
+    [Fact] public void NotStartWithEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s not to start with \"AB\" (ignoring case), but found \"abc\".", Message(() => s.Should().NotStartWithEquivalentOf("AB"))); }
+    [Fact] public void NotStartWithEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s not to start with \"X\" (ignoring case), but found null.", Message(() => s.Should().NotStartWithEquivalentOf("X"))); }
+    [Fact] public void EndWithEquivalentOf_passes() { var s = "abc"; s.Should().EndWithEquivalentOf("BC"); }
+    [Fact] public void EndWithEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s to end with \"X\" (ignoring case), but found \"abc\".", Message(() => s.Should().EndWithEquivalentOf("X"))); }
+    [Fact] public void EndWithEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s to end with \"X\" (ignoring case), but found null.", Message(() => s.Should().EndWithEquivalentOf("X"))); }
+    [Fact] public void NotEndWithEquivalentOf_passes() { var s = "abc"; s.Should().NotEndWithEquivalentOf("X"); }
+    [Fact] public void NotEndWithEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s not to end with \"BC\" (ignoring case), but found \"abc\".", Message(() => s.Should().NotEndWithEquivalentOf("BC"))); }
+    [Fact] public void NotEndWithEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s not to end with \"X\" (ignoring case), but found null.", Message(() => s.Should().NotEndWithEquivalentOf("X"))); }
+    [Fact] public void MatchEquivalentOf_passes() { var s = "abc"; s.Should().MatchEquivalentOf("A?C").And.MatchEquivalentOf("*B*"); }
+    [Fact] public void MatchEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s to match \"x*\" (ignoring case), but found \"abc\".", Message(() => s.Should().MatchEquivalentOf("x*"))); }
+    [Fact] public void MatchEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s to match \"x*\" (ignoring case), but found null.", Message(() => s.Should().MatchEquivalentOf("x*"))); }
+    [Fact] public void MatchEquivalentOf_null_argument_throws() { var s = "a"; Assert.Equal("wildcardPattern", Assert.Throws<ArgumentNullException>(() => s.Should().MatchEquivalentOf(null!)).ParamName); }
+    [Fact] public void NotMatchEquivalentOf_passes() { var s = "abc"; s.Should().NotMatchEquivalentOf("x*"); }
+    [Fact] public void NotMatchEquivalentOf_fails() { var s = "abc"; Assert.Equal("Expected s not to match \"A*\" (ignoring case), but found \"abc\".", Message(() => s.Should().NotMatchEquivalentOf("A*"))); }
+    [Fact] public void NotMatchEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s not to match \"x*\" (ignoring case), but found null.", Message(() => s.Should().NotMatchEquivalentOf("x*"))); }
+    [Fact] public void NotMatch_passes() { var s = "abc"; s.Should().NotMatch("x*"); }
+    [Fact] public void NotMatch_is_case_sensitive() { var s = "abc"; s.Should().NotMatch("A*"); }
+    [Fact] public void NotMatch_fails() { var s = "abc"; Assert.Equal("Expected s not to match \"a*\", but found \"abc\".", Message(() => s.Should().NotMatch("a*"))); }
+    [Fact] public void NotMatch_fails_on_null() { string? s = null; Assert.Equal("Expected s not to match \"x*\", but found null.", Message(() => s.Should().NotMatch("x*"))); }
+    [Fact] public void NotMatch_null_argument_throws() { var s = "a"; Assert.Equal("wildcardPattern", Assert.Throws<ArgumentNullException>(() => s.Should().NotMatch(null!)).ParamName); }
+
+    [Fact] public void BeUpperCased_passes() { var s = "ABC 1"; s.Should().BeUpperCased(); }
+    [Fact] public void BeUpperCased_fails() { var s = "Abc"; Assert.Equal("Expected s to be upper-cased, but found \"Abc\".", Message(() => s.Should().BeUpperCased())); }
+    [Fact] public void BeUpperCased_fails_on_null() { string? s = null; Assert.Equal("Expected s to be upper-cased, but found null.", Message(() => s.Should().BeUpperCased())); }
+    [Fact] public void NotBeUpperCased_passes() { var s = "Abc"; s.Should().NotBeUpperCased(); }
+    [Fact] public void NotBeUpperCased_fails() { var s = "ABC"; Assert.Equal("Expected s not to be upper-cased, but found \"ABC\".", Message(() => s.Should().NotBeUpperCased())); }
+    [Fact] public void NotBeUpperCased_fails_on_null() { string? s = null; Assert.Equal("Expected s not to be upper-cased, but found null.", Message(() => s.Should().NotBeUpperCased())); }
+    [Fact] public void BeLowerCased_passes() { var s = "abc 1"; s.Should().BeLowerCased(); }
+    [Fact] public void BeLowerCased_fails() { var s = "aBc"; Assert.Equal("Expected s to be lower-cased, but found \"aBc\".", Message(() => s.Should().BeLowerCased())); }
+    [Fact] public void BeLowerCased_fails_on_null() { string? s = null; Assert.Equal("Expected s to be lower-cased, but found null.", Message(() => s.Should().BeLowerCased())); }
+    [Fact] public void NotBeLowerCased_passes() { var s = "aBc"; s.Should().NotBeLowerCased(); }
+    [Fact] public void NotBeLowerCased_fails() { var s = "abc"; Assert.Equal("Expected s not to be lower-cased, but found \"abc\".", Message(() => s.Should().NotBeLowerCased())); }
+    [Fact] public void NotBeLowerCased_fails_on_null() { string? s = null; Assert.Equal("Expected s not to be lower-cased, but found null.", Message(() => s.Should().NotBeLowerCased())); }
+
+    [Fact] public void BeNullOrWhiteSpace_passes() { string? n = null; n.Should().BeNullOrWhiteSpace(); var s = " \t"; s.Should().BeNullOrWhiteSpace(); }
+    [Fact] public void BeNullOrWhiteSpace_fails() { var s = "a"; Assert.Equal("Expected s to be null or white space, but found \"a\".", Message(() => s.Should().BeNullOrWhiteSpace())); }
+
+    [Fact] public void MatchRegex_regex_passes() { var s = "abc"; s.Should().MatchRegex(new Regex("^a")); }
+    [Fact] public void MatchRegex_regex_fails() { var s = "abc"; Assert.Equal("Expected s to match regex \"^b\", but found \"abc\".", Message(() => s.Should().MatchRegex(new Regex("^b")))); }
+    [Fact] public void MatchRegex_regex_fails_on_null() { string? s = null; Assert.Equal("Expected s to match regex \"a\", but found null.", Message(() => s.Should().MatchRegex(new Regex("a")))); }
+    [Fact] public void MatchRegex_regex_null_argument_throws() { var s = "a"; Assert.Equal("regex", Assert.Throws<ArgumentNullException>(() => s.Should().MatchRegex((Regex)null!)).ParamName); }
+    [Fact] public void MatchRegex_options_passes() { var s = "abc"; s.Should().MatchRegex("^ABC$", RegexOptions.IgnoreCase); }
+    [Fact] public void MatchRegex_options_fails() { var s = "abc"; Assert.Equal("Expected s to match regex \"^ABC$\", but found \"abc\".", Message(() => s.Should().MatchRegex("^ABC$", RegexOptions.None))); }
+    [Fact] public void MatchRegex_options_fails_on_null() { string? s = null; Assert.Equal("Expected s to match regex \"a\", but found null.", Message(() => s.Should().MatchRegex("a", RegexOptions.IgnoreCase))); }
+    [Fact] public void MatchRegex_occurrence_passes() { var s = "a1b2"; s.Should().MatchRegex("[0-9]", Exactly.Twice()); s.Should().MatchRegex(new Regex("[a-z]"), AtLeast.Twice()); }
+    [Fact] public void MatchRegex_occurrence_fails() { var s = "a1b2"; Assert.Equal("Expected s to match regex \"[0-9]\" exactly 1 time, but it matched 2 times in \"a1b2\".", Message(() => s.Should().MatchRegex("[0-9]", Exactly.Once()))); }
+    [Fact] public void MatchRegex_regex_occurrence_fails() { var s = "a1b2"; Assert.Equal("Expected s to match regex \"[a-z]\" more than 2 times, but it matched 2 times in \"a1b2\".", Message(() => s.Should().MatchRegex(new Regex("[a-z]"), MoreThan.Twice()))); }
+    [Fact] public void MatchRegex_occurrence_fails_on_null() { string? s = null; Assert.Equal("Expected s to match regex \"a\" exactly 1 time, but found null.", Message(() => s.Should().MatchRegex("a", Exactly.Once()))); }
+    [Fact] public void MatchRegex_occurrence_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s to match regex \"a\" exactly 2 times, but it matched 1 time in \"abc\". Because twice.", Message(() => s.Should().MatchRegex("a", Exactly.Twice(), "twice"))); }
+    [Fact]
+    public void MatchRegex_regex_without_a_timeout_still_times_out_on_a_hostile_pattern()
+    {
+        var s = new string('a', 60) + "!";
+        var text = Message(() => s.Should().MatchRegex(new Regex("^(a+)+$")));
+        Assert.Contains("the match timed out after 1 second.", text);
+    }
+    [Fact] public void MatchRegex_options_invalid_pattern_fails_with_a_message() { var s = "abc"; Assert.StartsWith("Expected s to match regex \"(\", but the pattern is not a valid regular expression: ", Message(() => s.Should().MatchRegex("(", RegexOptions.None))); }
+
+    [Fact] public void NotMatchRegex_passes() { var s = "abc"; s.Should().NotMatchRegex("^b"); }
+    [Fact] public void NotMatchRegex_fails() { var s = "abc"; Assert.Equal("Expected s not to match regex \"^a\", but found \"abc\".", Message(() => s.Should().NotMatchRegex("^a"))); }
+    [Fact] public void NotMatchRegex_fails_on_null() { string? s = null; Assert.Equal("Expected s not to match regex \"a\", but found null.", Message(() => s.Should().NotMatchRegex("a"))); }
+    [Fact] public void NotMatchRegex_null_argument_throws() { var s = "a"; Assert.Equal("pattern", Assert.Throws<ArgumentNullException>(() => s.Should().NotMatchRegex((string)null!)).ParamName); }
+    [Fact] public void NotMatchRegex_options_passes() { var s = "abc"; s.Should().NotMatchRegex("^B", RegexOptions.None); }
+    [Fact] public void NotMatchRegex_options_fails() { var s = "abc"; Assert.Equal("Expected s not to match regex \"^A\", but found \"abc\".", Message(() => s.Should().NotMatchRegex("^A", RegexOptions.IgnoreCase))); }
+    [Fact] public void NotMatchRegex_options_fails_on_null() { string? s = null; Assert.Equal("Expected s not to match regex \"a\", but found null.", Message(() => s.Should().NotMatchRegex("a", RegexOptions.None))); }
+    [Fact] public void NotMatchRegex_regex_passes() { var s = "abc"; s.Should().NotMatchRegex(new Regex("^b")); }
+    [Fact] public void NotMatchRegex_regex_fails() { var s = "abc"; Assert.Equal("Expected s not to match regex \"^a\", but found \"abc\".", Message(() => s.Should().NotMatchRegex(new Regex("^a")))); }
+    [Fact] public void NotMatchRegex_regex_fails_on_null() { string? s = null; Assert.Equal("Expected s not to match regex \"a\", but found null.", Message(() => s.Should().NotMatchRegex(new Regex("a")))); }
+
+    [Fact] public void BeParsableInto_returns_the_parsed_value() { var s = "42"; Assert.Equal(42, s.Should().BeParsableInto<int>().Which); }
+    [Fact]
+    public void BeParsableInto_uses_the_invariant_culture()
+    {
+        var s = "1.5";
+        var old = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+        try { Assert.Equal(1.5, s.Should().BeParsableInto<double>().Which); }
+        finally { CultureInfo.CurrentCulture = old; }
+    }
+    [Fact] public void BeParsableInto_fails() { var s = "x"; Assert.Equal("Expected s to be parsable into Int32, but found \"x\".", Message(() => s.Should().BeParsableInto<int>())); }
+    [Fact] public void BeParsableInto_fails_on_null() { string? s = null; Assert.Equal("Expected s to be parsable into Int32, but found null.", Message(() => s.Should().BeParsableInto<int>())); }
+    [Fact] public void BeParsableInto_takes_a_reason() { var s = "x"; Assert.Equal("Expected s to be parsable into Int32, but found \"x\". Because number.", Message(() => s.Should().BeParsableInto<int>("number"))); }
+    [Fact]
+    public void BeParsableInto_inside_a_scope_returns_the_real_assertion()
+    {
+        var s = "x";
+        Assert.ThrowsAny<Exception>(() =>
+        {
+            using var scope = new AssertionScope();
+            Assert.Equal(0, s.Should().BeParsableInto<int>().Which);
+        });
+    }
+
+    [Fact] public void BeParsableInto_provider_uses_the_provider() { var s = "1,5"; Assert.Equal(1.5, s.Should().BeParsableInto<double>(new CultureInfo("de-DE")).Which); }
+
+    [Fact] public void NotEndWith_passes() { var s = "ABC"; s.Should().NotEndWith("X"); }
+    [Fact] public void NotEndWith_fails() { var s = "ABC"; Assert.Throws<VouchException>(() => s.Should().NotEndWith("BC")); }
+    [Fact] public void NotEndWith_message() { var s = "ABC"; Assert.Equal("Expected s not to end with \"BC\", but found \"ABC\".", Message(() => s.Should().NotEndWith("BC"))); }
+    [Fact] public void NotEndWith_fails_on_null() { string? s = null; Assert.Equal("Expected s not to end with \"C\", but found null.", Message(() => s.Should().NotEndWith("C"))); }
+    [Fact] public void NotEndWith_takes_a_reason() { var s = "ABC"; Assert.Equal("Expected s not to end with \"BC\", but found \"ABC\". Because why.", Message(() => s.Should().NotEndWith("BC", "why"))); }
+
+    [Fact] public void BeLowerCased_passes_for_a_surrogate_pair_lower_letter() { var s = "\U00010428"; s.Should().BeLowerCased(); }
+    [Fact] public void BeUpperCased_fails_for_a_surrogate_pair_lower_letter() { var s = "\U00010428"; Assert.Throws<VouchException>(() => s.Should().BeUpperCased()); }
+    [Fact] public void BeUpperCased_passes_for_a_surrogate_pair_upper_letter() { var s = "\U00010400"; s.Should().BeUpperCased(); }
+    [Fact] public void BeLowerCased_fails_for_a_surrogate_pair_upper_letter() { var s = "\U00010400"; Assert.Throws<VouchException>(() => s.Should().BeLowerCased()); }
+
+    [Fact]
+    public void BeUpperCased_uses_the_invariant_culture_under_a_Turkish_culture()
+    {
+        var s = "I";
+        var old = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("tr-TR");
+        try { s.Should().BeUpperCased(); }
+        finally { CultureInfo.CurrentCulture = old; }
+    }
+
+    [Fact]
+    public void NotMatchRegex_reports_a_timeout()
+    {
+        var s = new string('a', 60) + "!";
+        var r = new Regex("^(a+)+$", RegexOptions.None, TimeSpan.FromMilliseconds(50));
+        Assert.Equal("Expected s not to match regex \"^(a+)+$\", but the match timed out after 0.05 seconds.", Message(() => s.Should().NotMatchRegex(r)));
+    }
+
+    [Fact] public void MatchRegex_invalid_options_propagate() { var s = "a"; Assert.Throws<ArgumentOutOfRangeException>(() => s.Should().MatchRegex("a", (RegexOptions)(-1))); }
 }

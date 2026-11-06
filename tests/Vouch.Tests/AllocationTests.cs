@@ -63,6 +63,57 @@ public class AllocationTests
 
     [Fact] public void String_Contain() { var s = "abc"; AssertNoAllocation(() => s.Should().Contain("b")); }
 
+    [Fact] public void String_Contain_occurrence() { var s = "banana"; AssertNoAllocation(() => s.Should().Contain("an", Exactly.Twice())); }
+
+    [Fact] public void String_StartWithEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().StartWithEquivalentOf("AB")); }
+
+    [Fact] public void String_NotStartWithEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().NotStartWithEquivalentOf("X")); }
+
+    [Fact] public void String_EndWithEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().EndWithEquivalentOf("BC")); }
+
+    [Fact] public void String_NotEndWithEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().NotEndWithEquivalentOf("X")); }
+
+    [Fact] public void String_MatchEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().MatchEquivalentOf("A*C")); }
+
+    [Fact] public void String_NotMatchEquivalentOf() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatchEquivalentOf("X*")); }
+
+    [Fact] public void String_NotMatch() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatch("x*")); }
+
+    [Fact] public void String_BeUpperCased() { var s = "ABC"; AssertNoAllocation(() => s.Should().BeUpperCased()); }
+
+    [Fact] public void String_NotBeUpperCased() { var s = "Abc"; AssertNoAllocation(() => s.Should().NotBeUpperCased()); }
+
+    [Fact] public void String_BeLowerCased() { var s = "abc"; AssertNoAllocation(() => s.Should().BeLowerCased()); }
+
+    [Fact] public void String_NotBeLowerCased() { var s = "aBc"; AssertNoAllocation(() => s.Should().NotBeLowerCased()); }
+
+    [Fact] public void String_BeNullOrWhiteSpace() { var s = "  "; AssertNoAllocation(() => s.Should().BeNullOrWhiteSpace()); }
+
+    [Fact] public void String_MatchRegex_options() { var s = "abc"; AssertNoAllocation(() => s.Should().MatchRegex("^ABC$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)); }
+
+    [Fact] public void String_MatchRegex_regex() { var s = "abc"; var r = new System.Text.RegularExpressions.Regex("^a", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)); AssertNoAllocation(() => s.Should().MatchRegex(r)); }
+
+    [Fact] public void String_NotMatchRegex() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatchRegex("^b")); }
+
+    [Fact] public void String_NotMatchRegex_options() { var s = "abc"; AssertNoAllocation(() => s.Should().NotMatchRegex("^B", System.Text.RegularExpressions.RegexOptions.None)); }
+
+    [Fact] public void String_NotMatchRegex_regex() { var s = "abc"; var r = new System.Text.RegularExpressions.Regex("^b", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)); AssertNoAllocation(() => s.Should().NotMatchRegex(r)); }
+
+    [Fact]
+    public void String_MatchRegex_regex_without_timeout()
+    {
+        var s = "abc";
+        var r = new System.Text.RegularExpressions.Regex("a");
+        s.Should().MatchRegex(r);
+        AssertNoAllocation(() => s.Should().MatchRegex(r));
+    }
+
+    [Fact] public void String_BeLowerCased_surrogate_pair() { var s = "\U00010428"; AssertNoAllocation(() => s.Should().BeLowerCased()); }
+
+    [Fact] public void String_NotEndWith() { var s = "abc"; AssertNoAllocation(() => s.Should().NotEndWith("x")); }
+
+    [Fact] public void String_BeParsableInto() { var s = "42"; AssertNoAllocation(() => s.Should().BeParsableInto<int>()); }
+
     [Fact] public void String_NotBeNullOrEmpty() { var s = "abc"; AssertNoAllocation(() => s.Should().NotBeNullOrEmpty()); }
 
     [Fact] public void Int_BeEquivalentTo() { var n = 5; AssertNoAllocation(() => n.Should().BeEquivalentTo(5)); }
