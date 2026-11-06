@@ -21,6 +21,18 @@ public readonly struct AsyncFunctionAssertions<T>
     public Task<ExceptionAssertions<TException>> ThrowAsync<TException>(string because) where TException : Exception
         => Untyped(out _).ThrowAsync<TException>(because);
 
+    public Task<ExceptionAssertions<TException>> ThrowExactlyAsync<TException>() where TException : Exception
+        => Untyped(out _).ThrowExactlyAsync<TException>();
+
+    public Task<ExceptionAssertions<TException>> ThrowExactlyAsync<TException>(string because) where TException : Exception
+        => Untyped(out _).ThrowExactlyAsync<TException>(because);
+
+    public Task<ExceptionAssertions<TException>> ThrowWithinAsync<TException>(TimeSpan timeout) where TException : Exception
+        => Untyped(out _).ThrowWithinAsync<TException>(timeout);
+
+    public Task<ExceptionAssertions<TException>> ThrowWithinAsync<TException>(TimeSpan timeout, string because) where TException : Exception
+        => Untyped(out _).ThrowWithinAsync<TException>(timeout, because);
+
     public async Task<AndWhichConstraint<AsyncFunctionAssertions<T>, T>> NotThrowAsync()
     {
         await Untyped(out var result).NotThrowAsync().ConfigureAwait(false);

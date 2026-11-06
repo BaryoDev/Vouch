@@ -71,3 +71,31 @@ public static class Throws
 
     public static Action Nothing() => () => { };
 }
+
+public static class Streams
+{
+    // Three bytes, position 0, readable, writable and seekable.
+    public static Stream Live() => new MemoryStream(new byte[3]);
+
+    public static Stream ReadOnly() => new MemoryStream(new byte[3], writable: false);
+
+    // A disposed stream is not readable, writable or seekable.
+    public static Stream Disposed()
+    {
+        var stream = new MemoryStream(new byte[3]);
+        stream.Dispose();
+        return stream;
+    }
+}
+
+public static class Tasks
+{
+    // Never finishes.
+    public static Task Pending() => new TaskCompletionSource().Task;
+
+    public static Task<int> PendingInt() => new TaskCompletionSource<int>().Task;
+
+    public static readonly TimeSpan Short = TimeSpan.FromMilliseconds(20);
+
+    public static readonly TimeSpan Long = TimeSpan.FromMinutes(1);
+}

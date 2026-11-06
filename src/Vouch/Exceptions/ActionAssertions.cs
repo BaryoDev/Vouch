@@ -23,7 +23,81 @@ public readonly struct ActionAssertions
     public AndConstraint<ActionAssertions> NotThrow()
         => NotThrowCore(null);
 
-    private ExceptionAssertions<TException> ThrowCore<TException>(string? because) where TException : Exception
+    public ExceptionAssertions<TException> ThrowExactly<TException>() where TException : Exception
+        => ThrowCore<TException>(null, true);
+
+    public ExceptionAssertions<TException> ThrowExactly<TException>(string because) where TException : Exception
+        => ThrowCore<TException>(because, true);
+
+    /// <summary>
+    /// Runs the action, and again after each poll interval while it throws, until it stops throwing or the
+    /// wait time is used up. Fails if it still throws at the end.
+    /// </summary>
+    public AndConstraint<ActionAssertions> NotThrowAfter(TimeSpan waitTime, TimeSpan pollInterval)
+        => NotThrowAfterCore(waitTime, pollInterval, null);
+
+    public AndConstraint<ActionAssertions> NotThrowAfter(TimeSpan waitTime, TimeSpan pollInterval, string because)
+        => NotThrowAfterCore(waitTime, pollInterval, because);
+
+    private AndConstraint<ActionAssertions> NotThrowAfterCore(TimeSpan waitTime, TimeSpan pollInterval, string? because)
+    {
+        if (waitTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(waitTime), "The wait time must not be negative.");
+        }
+
+        if (pollInterval <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pollInterval), "The poll interval must be greater than zero.");
+        }
+
+        if (Subject is null)
+        {
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.NullDelegate(Fail.Name(_expression), $"not to throw after {Formatter.Format(waitTime)}");
+            }
+            finally
+            {
+                Reason.Clear();
+            }
+
+            return new(this);
+        }
+
+        RejectAsyncVoid(Subject);
+        var clock = Clock.Current;
+        var start = clock.Now;
+        while (true)
+        {
+            var thrown = Capture.Run(Subject);
+            if (thrown is null)
+            {
+                return new(this);
+            }
+
+            var remaining = waitTime - (clock.Now - start);
+            if (remaining <= TimeSpan.Zero)
+            {
+                Reason.Set(because);
+                try
+                {
+                    ExceptionMessages.Threw(Fail.Name(_expression), thrown, $" after {Formatter.Format(waitTime)}");
+                }
+                finally
+                {
+                    Reason.Clear();
+                }
+
+                return new(this);
+            }
+
+            clock.Delay(remaining < pollInterval ? remaining : pollInterval, CancellationToken.None).GetAwaiter().GetResult();
+        }
+    }
+
+    private ExceptionAssertions<TException> ThrowCore<TException>(string? because, bool exact = false) where TException : Exception
     {
         var name = Fail.Name(_expression);
         if (Subject is null)
@@ -31,7 +105,7 @@ public readonly struct ActionAssertions
             Reason.Set(because);
             try
             {
-                ExceptionMessages.NullDelegate(name, $"to throw {Formatter.Format(typeof(TException))}");
+                ExceptionMessages.NullDelegate(name, $"{(exact ? "to throw exactly" : "to throw")} {Formatter.Format(typeof(TException))}");
             }
             finally
             {
@@ -46,7 +120,7 @@ public readonly struct ActionAssertions
         Reason.Set(because);
         try
         {
-            return ExceptionMessages.Check<TException>(name, thrown);
+            return ExceptionMessages.Check<TException>(name, thrown, exact);
         }
         finally
         {
@@ -149,6 +223,24 @@ public readonly struct FunctionAssertions<T>
     public AndWhichConstraint<FunctionAssertions<T>, T> NotThrow(string because)
     {
         _inner.NotThrow(because);
+        return new(this, _box is null ? default! : _box.Value);
+    }
+
+    public ExceptionAssertions<TException> ThrowExactly<TException>() where TException : Exception
+        => _inner.ThrowExactly<TException>();
+
+    public ExceptionAssertions<TException> ThrowExactly<TException>(string because) where TException : Exception
+        => _inner.ThrowExactly<TException>(because);
+
+    public AndWhichConstraint<FunctionAssertions<T>, T> NotThrowAfter(TimeSpan waitTime, TimeSpan pollInterval)
+    {
+        _inner.NotThrowAfter(waitTime, pollInterval);
+        return new(this, _box is null ? default! : _box.Value);
+    }
+
+    public AndWhichConstraint<FunctionAssertions<T>, T> NotThrowAfter(TimeSpan waitTime, TimeSpan pollInterval, string because)
+    {
+        _inner.NotThrowAfter(waitTime, pollInterval, because);
         return new(this, _box is null ? default! : _box.Value);
     }
 

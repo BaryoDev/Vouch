@@ -36,6 +36,40 @@ public class AllocationTests
 
     [Fact] public void Int_Be() { var n = 5; AssertNoAllocation(() => n.Should().Be(5)); }
 
+    [Fact] public void ExecutionTime_BeLessThan() { var t = new ExecutionTime(TimeSpan.FromSeconds(1), "act"); var limit = TimeSpan.FromSeconds(2); AssertNoAllocation(() => t.Should().BeLessThan(limit)); }
+
+    [Fact] public void ExecutionTime_BeLessThanOrEqualTo() { var t = new ExecutionTime(TimeSpan.FromSeconds(1), "act"); var limit = TimeSpan.FromSeconds(1); AssertNoAllocation(() => t.Should().BeLessThanOrEqualTo(limit)); }
+
+    [Fact] public void ExecutionTime_BeGreaterThan() { var t = new ExecutionTime(TimeSpan.FromSeconds(2), "act"); var limit = TimeSpan.FromSeconds(1); AssertNoAllocation(() => t.Should().BeGreaterThan(limit)); }
+
+    [Fact] public void ExecutionTime_BeGreaterThanOrEqualTo() { var t = new ExecutionTime(TimeSpan.FromSeconds(2), "act"); var limit = TimeSpan.FromSeconds(2); AssertNoAllocation(() => t.Should().BeGreaterThanOrEqualTo(limit)); }
+
+    [Fact] public void ExecutionTime_BeCloseTo() { var t = new ExecutionTime(TimeSpan.FromSeconds(2), "act"); var expected = TimeSpan.FromSeconds(2); var precision = TimeSpan.FromMilliseconds(10); AssertNoAllocation(() => t.Should().BeCloseTo(expected, precision)); }
+
+    [Fact] public void ExecutionTime_of_a_cached_action() { Action act = static () => { }; var limit = TimeSpan.FromMinutes(1); AssertNoAllocation(() => act.ExecutionTime().Should().BeLessThan(limit)); }
+
+    [Fact] public void Action_NotThrowAfter() { Action act = static () => { }; var wait = TimeSpan.FromSeconds(1); var poll = TimeSpan.FromMilliseconds(10); AssertNoAllocation(() => act.Should().NotThrowAfter(wait, poll)); }
+
+    [Fact] public void Stream_BeReadable() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().BeReadable()); }
+
+    [Fact] public void Stream_NotBeReadable() { var s = new MemoryStream(new byte[3]); s.Dispose(); AssertNoAllocation(() => s.Should().NotBeReadable()); }
+
+    [Fact] public void Stream_BeWritable() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().BeWritable()); }
+
+    [Fact] public void Stream_NotBeWritable() { using var s = new MemoryStream(new byte[3], false); AssertNoAllocation(() => s.Should().NotBeWritable()); }
+
+    [Fact] public void Stream_BeSeekable() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().BeSeekable()); }
+
+    [Fact] public void Stream_NotBeSeekable() { var s = new MemoryStream(new byte[3]); s.Dispose(); AssertNoAllocation(() => s.Should().NotBeSeekable()); }
+
+    [Fact] public void Stream_HaveLength() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().HaveLength(3)); }
+
+    [Fact] public void Stream_NotHaveLength() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().NotHaveLength(4)); }
+
+    [Fact] public void Stream_HavePosition() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().HavePosition(0)); }
+
+    [Fact] public void Stream_NotHavePosition() { using var s = new MemoryStream(new byte[3]); AssertNoAllocation(() => s.Should().NotHavePosition(1)); }
+
     [Fact] public void Passing_assertion_inside_scope() { var n = 5; using var scope = new AssertionScope(); AssertNoAllocation(() => n.Should().Be(5)); }
 
     [Fact] public void Guid_Be() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().Be(id)); }
