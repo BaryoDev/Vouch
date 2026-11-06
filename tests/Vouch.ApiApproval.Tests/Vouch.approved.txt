@@ -253,11 +253,37 @@ namespace Vouch
     public sealed class DictionaryAssertions<TKey, TValue> : Vouch.CollectionAssertionsBase<System.Collections.Generic.KeyValuePair<TKey, TValue>, Vouch.DictionaryAssertions<TKey, TValue>>
         where TKey :  notnull
     {
+        public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, System.Collections.Generic.KeyValuePair<TKey, TValue>> Contain(System.Collections.Generic.KeyValuePair<TKey, TValue> expected) { }
+        public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, System.Collections.Generic.KeyValuePair<TKey, TValue>> Contain(System.Collections.Generic.KeyValuePair<TKey, TValue> expected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> Contain(TKey key, TValue value) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> Contain(TKey key, TValue value, string because) { }
         public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected) { }
         public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected, string because) { }
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> ContainKeys(params TKey[] expected) { }
+        public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, TValue> ContainValue(TValue expected) { }
+        public Vouch.AndWhichConstraint<Vouch.DictionaryAssertions<TKey, TValue>, TValue> ContainValue(TValue expected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> ContainValues(System.Collections.Generic.IEnumerable<TValue> expected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> ContainValues(params TValue[] expected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> ContainValues(System.Collections.Generic.IEnumerable<TValue> expected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> ContainValues(TValue[] expected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> Equal(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> expected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> Equal(params System.Collections.Generic.KeyValuePair<TKey, TValue>[] expected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> Equal(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> expected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContain(System.Collections.Generic.KeyValuePair<TKey, TValue> unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContain(System.Collections.Generic.KeyValuePair<TKey, TValue> unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContain(TKey key, TValue value) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContain(TKey key, TValue value, string because) { }
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected) { }
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKeys(params TKey[] unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKeys(TKey[] unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainValue(TValue unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainValue(TValue unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainValues(System.Collections.Generic.IEnumerable<TValue> unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainValues(params TValue[] unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainValues(System.Collections.Generic.IEnumerable<TValue> unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotEqual(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> unexpected) { }
+        public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotEqual(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>> unexpected, string because) { }
     }
     public static class EnumAssertionsExtensions
     {
