@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Vouch;
@@ -6,6 +8,7 @@ namespace Vouch;
 public readonly struct StringAssertions
 {
     private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
+    private static readonly ConditionalWeakTable<Regex, Regex> TimedRegexes = new();
 
     private readonly string? _expression;
 
@@ -160,6 +163,18 @@ public readonly struct StringAssertions
         return new(this);
     }
 
+    public AndConstraint<StringAssertions> NotEndWith(string unexpected)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+
+        if (Subject is null || Subject.EndsWith(unexpected, StringComparison.Ordinal))
+        {
+            Fail.With($"Expected {Name} not to end with {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
     public AndConstraint<StringAssertions> Contain(string expected)
     {
         ArgumentNullException.ThrowIfNull(expected);
@@ -266,7 +281,7 @@ public readonly struct StringAssertions
         {
             if (regex is not null && regex.MatchTimeout == Regex.InfiniteMatchTimeout)
             {
-                regex = new Regex(regex.ToString(), regex.Options, RegexTimeout);
+                regex = TimedRegexes.GetValue(regex, static r => new Regex(r.ToString(), r.Options, RegexTimeout));
             }
 
             if (occurrence is null)
@@ -278,9 +293,14 @@ public readonly struct StringAssertions
             }
             else
             {
-                count = regex is not null
-                    ? regex.Count(Subject)
-                    : Regex.Count(Subject, pattern!, options, RegexTimeout);
+                // EnumerateMatches yields ValueMatch structs, so counting does not allocate.
+                var enumerator = regex is not null
+                    ? regex.EnumerateMatches(Subject)
+                    : Regex.EnumerateMatches(Subject, pattern!, options, RegexTimeout);
+                foreach (var _ in enumerator)
+                {
+                    count++;
+                }
             }
         }
         catch (RegexMatchTimeoutException ex)
@@ -288,7 +308,7 @@ public readonly struct StringAssertions
             Fail.With($"Expected {Name} {(negate ? "not to match" : "to match")} regex {Formatter.Format(pattern ?? regex!.ToString())}{Suffix(occurrence)}, but the match timed out after {Seconds(ex.MatchTimeout)}.");
             return new(this);
         }
-        catch (ArgumentException ex)
+        catch (RegexParseException ex)
         {
             Fail.With($"Expected {Name} {(negate ? "not to match" : "to match")} regex {Formatter.Format(pattern ?? regex!.ToString())}{Suffix(occurrence)}, but the pattern is not a valid regular expression: {ex.Message.TrimEnd('.')}.");
             return new(this);
@@ -435,6 +455,7 @@ public readonly struct StringAssertions
     }
 
     // Upper and lower case are judged character by character, so a string with no letters is both.
+    /// <summary>Asserts every letter is upper case, judged with the invariant culture, whatever the current culture is.</summary>
     public AndConstraint<StringAssertions> BeUpperCased()
     {
         if (Subject is null || !IsCased(Subject, upper: true))
@@ -455,6 +476,7 @@ public readonly struct StringAssertions
         return new(this);
     }
 
+    /// <summary>Asserts every letter is lower case, judged with the invariant culture, whatever the current culture is.</summary>
     public AndConstraint<StringAssertions> BeLowerCased()
     {
         if (Subject is null || !IsCased(Subject, upper: false))
@@ -477,9 +499,9 @@ public readonly struct StringAssertions
 
     private static bool IsCased(string value, bool upper)
     {
-        foreach (var c in value)
+        foreach (var r in value.EnumerateRunes())
         {
-            if ((upper ? char.ToUpperInvariant(c) : char.ToLowerInvariant(c)) != c)
+            if (upper ? (Rune.IsLower(r) || Rune.ToUpperInvariant(r) != r) : (Rune.IsUpper(r) || Rune.ToLowerInvariant(r) != r))
             {
                 return false;
             }
@@ -498,9 +520,14 @@ public readonly struct StringAssertions
         return new(this);
     }
 
+    /// <summary>Asserts the string parses into <typeparamref name="T"/> using the invariant culture, whatever the current culture is.</summary>
     public AndWhichConstraint<StringAssertions, T> BeParsableInto<T>() where T : IParsable<T>
+        => BeParsableInto<T>(CultureInfo.InvariantCulture);
+
+    /// <summary>Asserts the string parses into <typeparamref name="T"/> using <paramref name="provider"/>.</summary>
+    public AndWhichConstraint<StringAssertions, T> BeParsableInto<T>(IFormatProvider? provider) where T : IParsable<T>
     {
-        if (!T.TryParse(Subject, CultureInfo.InvariantCulture, out var value))
+        if (!T.TryParse(Subject, provider, out var value))
         {
             Fail.With($"Expected {Name} to be parsable into {Formatter.TypeName(typeof(T))}, but found {Formatter.Format(Subject)}.");
             return new(this, default!);
@@ -674,6 +701,19 @@ public readonly struct StringAssertions
         try
         {
             return StartWith(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotEndWith(string unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotEndWith(unexpected);
         }
         finally
         {
@@ -1020,6 +1060,7 @@ public readonly struct StringAssertions
         }
     }
 
+    /// <summary>Asserts every letter is upper case, judged with the invariant culture, whatever the current culture is.</summary>
     public AndConstraint<StringAssertions> BeUpperCased(string because)
     {
         Reason.Set(because);
@@ -1046,6 +1087,7 @@ public readonly struct StringAssertions
         }
     }
 
+    /// <summary>Asserts every letter is lower case, judged with the invariant culture, whatever the current culture is.</summary>
     public AndConstraint<StringAssertions> BeLowerCased(string because)
     {
         Reason.Set(because);
@@ -1085,6 +1127,7 @@ public readonly struct StringAssertions
         }
     }
 
+    /// <summary>Asserts the string parses into <typeparamref name="T"/> using the invariant culture, whatever the current culture is.</summary>
     public AndWhichConstraint<StringAssertions, T> BeParsableInto<T>(string because) where T : IParsable<T>
     {
         Reason.Set(because);

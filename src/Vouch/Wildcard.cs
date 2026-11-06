@@ -14,7 +14,7 @@ internal static class Wildcard
     }
 
     public static bool MatchesString(string text, string pattern, bool ignoreCase = false)
-        => IsMatch(text, pattern, ignoreCase) || (text.EndsWith('\n') && IsMatch(text[..^1], pattern, ignoreCase));
+        => IsMatch(text, pattern, ignoreCase) || (text.EndsWith('\n') && IsMatch(text.AsSpan(0, text.Length - 1), pattern, ignoreCase));
 
     public static bool MatchesMessage(string message, string pattern)
         => IsMatch(WithoutNewlines(message), WithoutNewlines(pattern), ignoreCase: true);
@@ -23,6 +23,9 @@ internal static class Wildcard
         => value.AsSpan().IndexOfAny('\r', '\n') < 0 ? value : value.Replace("\r", string.Empty).Replace("\n", string.Empty);
 
     public static bool IsMatch(string text, string pattern, bool ignoreCase = false)
+        => IsMatch(text.AsSpan(), pattern, ignoreCase);
+
+    public static bool IsMatch(ReadOnlySpan<char> text, string pattern, bool ignoreCase = false)
     {
         var t = 0;
         var p = 0;

@@ -333,5 +333,47 @@ public class StringAssertionsTests
     [Fact] public void BeParsableInto_fails() { var s = "x"; Assert.Equal("Expected s to be parsable into Int32, but found \"x\".", Message(() => s.Should().BeParsableInto<int>())); }
     [Fact] public void BeParsableInto_fails_on_null() { string? s = null; Assert.Equal("Expected s to be parsable into Int32, but found null.", Message(() => s.Should().BeParsableInto<int>())); }
     [Fact] public void BeParsableInto_takes_a_reason() { var s = "x"; Assert.Equal("Expected s to be parsable into Int32, but found \"x\". Because number.", Message(() => s.Should().BeParsableInto<int>("number"))); }
-    [Fact] public void BeParsableInto_inside_a_scope_returns_the_real_assertion() { var s = "x"; using var scope = new AssertionScope(); Assert.Equal(0, s.Should().BeParsableInto<int>().Which); }
+    [Fact]
+    public void BeParsableInto_inside_a_scope_returns_the_real_assertion()
+    {
+        var s = "x";
+        Assert.ThrowsAny<Exception>(() =>
+        {
+            using var scope = new AssertionScope();
+            Assert.Equal(0, s.Should().BeParsableInto<int>().Which);
+        });
+    }
+
+    [Fact] public void BeParsableInto_provider_uses_the_provider() { var s = "1,5"; Assert.Equal(1.5, s.Should().BeParsableInto<double>(new CultureInfo("de-DE")).Which); }
+
+    [Fact] public void NotEndWith_passes() { var s = "ABC"; s.Should().NotEndWith("X"); }
+    [Fact] public void NotEndWith_fails() { var s = "ABC"; Assert.Throws<VouchException>(() => s.Should().NotEndWith("BC")); }
+    [Fact] public void NotEndWith_message() { var s = "ABC"; Assert.Equal("Expected s not to end with \"BC\", but found \"ABC\".", Message(() => s.Should().NotEndWith("BC"))); }
+    [Fact] public void NotEndWith_fails_on_null() { string? s = null; Assert.Equal("Expected s not to end with \"C\", but found null.", Message(() => s.Should().NotEndWith("C"))); }
+    [Fact] public void NotEndWith_takes_a_reason() { var s = "ABC"; Assert.Equal("Expected s not to end with \"BC\", but found \"ABC\". Because why.", Message(() => s.Should().NotEndWith("BC", "why"))); }
+
+    [Fact] public void BeLowerCased_passes_for_a_surrogate_pair_lower_letter() { var s = "\U00010428"; s.Should().BeLowerCased(); }
+    [Fact] public void BeUpperCased_fails_for_a_surrogate_pair_lower_letter() { var s = "\U00010428"; Assert.Throws<VouchException>(() => s.Should().BeUpperCased()); }
+    [Fact] public void BeUpperCased_passes_for_a_surrogate_pair_upper_letter() { var s = "\U00010400"; s.Should().BeUpperCased(); }
+    [Fact] public void BeLowerCased_fails_for_a_surrogate_pair_upper_letter() { var s = "\U00010400"; Assert.Throws<VouchException>(() => s.Should().BeLowerCased()); }
+
+    [Fact]
+    public void BeUpperCased_uses_the_invariant_culture_under_a_Turkish_culture()
+    {
+        var s = "I";
+        var old = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("tr-TR");
+        try { s.Should().BeUpperCased(); }
+        finally { CultureInfo.CurrentCulture = old; }
+    }
+
+    [Fact]
+    public void NotMatchRegex_reports_a_timeout()
+    {
+        var s = new string('a', 60) + "!";
+        var r = new Regex("^(a+)+$", RegexOptions.None, TimeSpan.FromMilliseconds(50));
+        Assert.Equal("Expected s not to match regex \"^(a+)+$\", but the match timed out after 0.05 seconds.", Message(() => s.Should().NotMatchRegex(r)));
+    }
+
+    [Fact] public void MatchRegex_invalid_options_propagate() { var s = "a"; Assert.Throws<ArgumentOutOfRangeException>(() => s.Should().MatchRegex("a", (RegexOptions)(-1))); }
 }

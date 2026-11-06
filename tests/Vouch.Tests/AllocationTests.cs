@@ -103,6 +103,19 @@ public class AllocationTests
 
     [Fact] public void String_NotMatchRegex_regex() { var s = "abc"; var r = new System.Text.RegularExpressions.Regex("^b", System.Text.RegularExpressions.RegexOptions.None, TimeSpan.FromSeconds(1)); AssertNoAllocation(() => s.Should().NotMatchRegex(r)); }
 
+    [Fact]
+    public void String_MatchRegex_regex_without_timeout()
+    {
+        var s = "abc";
+        var r = new System.Text.RegularExpressions.Regex("a");
+        s.Should().MatchRegex(r);
+        AssertNoAllocation(() => s.Should().MatchRegex(r));
+    }
+
+    [Fact] public void String_BeLowerCased_surrogate_pair() { var s = "\U00010428"; AssertNoAllocation(() => s.Should().BeLowerCased()); }
+
+    [Fact] public void String_NotEndWith() { var s = "abc"; AssertNoAllocation(() => s.Should().NotEndWith("x")); }
+
     [Fact] public void String_BeParsableInto() { var s = "42"; AssertNoAllocation(() => s.Should().BeParsableInto<int>()); }
 
     [Fact] public void String_NotBeNullOrEmpty() { var s = "abc"; AssertNoAllocation(() => s.Should().NotBeNullOrEmpty()); }
