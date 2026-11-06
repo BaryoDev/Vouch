@@ -200,6 +200,17 @@ public class EquivalencyTests
         Assert.Throws<ArgumentNullException>(() => new[] { 1 }.Should().BeEquivalentTo((int[])null!));
     }
 
+    [Fact]
+    public void Configure_returning_null_throws_with_a_clear_message()
+    {
+        var ex = Assert.Throws<InvalidOperationException>(() => 1.Should().BeEquivalentTo(1, o => null!));
+        Assert.Equal("The configure callback returned null.", ex.Message);
+
+        var list = new List<int> { 1 };
+        var listEx = Assert.Throws<InvalidOperationException>(() => list.Should().BeEquivalentTo(new List<int> { 1 }, o => null!));
+        Assert.Equal("The configure callback returned null.", listEx.Message);
+    }
+
     // type mismatch
 
     [Fact] public void Root_type_mismatch_is_reported() => Assert.Equal("Expected value to be equivalent to the expected String, but:\n  was 1, expected \"1\".", Message(() => new ObjectAssertions(1, null).BeEquivalentTo("1")));
