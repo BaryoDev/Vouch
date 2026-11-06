@@ -167,5 +167,79 @@ public class DictionaryAssertionsTests
         Assert.Equal(2, readOnly.Should().ContainKey("b").WhoseValue);
     }
 
-    [Fact] public void Pair_sequence_subject_works_by_scan() { IEnumerable<KeyValuePair<string, int>> pairs = Sample().ToList(); pairs.Should().ContainValue(2).And.Contain("a", 1).And.Equal(Pairs(("b", 2), ("a", 1))); }
+    private static IEnumerable<KeyValuePair<string, int>> Lazy(params (string Key, int Value)[] items)
+    {
+        foreach (var (key, value) in items)
+        {
+            yield return new KeyValuePair<string, int>(key, value);
+        }
+    }
+
+    [Fact] public void Pair_sequence_subject_works_by_scan() => Lazy(("a", 1), ("b", 2)).Should().ContainValue(2).And.Contain("a", 1).And.Equal(Pairs(("b", 2), ("a", 1)));
+
+    [Fact]
+    public void Lazy_pair_sequence_Contain_matches_the_whole_pair_across_entries()
+    {
+        Lazy(("a", 1), ("a", 2)).Should().Contain("a", 2).And.Contain(new KeyValuePair<string, int>("a", 1));
+        Assert.Throws<VouchException>(() => Lazy(("a", 1), ("a", 2)).Should().NotContain("a", 2));
+        Lazy(("a", 1), ("a", 2)).Should().NotContain("a", 3);
+    }
+
+    [Fact]
+    public void Equal_works_with_a_case_insensitive_SortedDictionary()
+    {
+        var subject = new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase) { ["a"] = 1, ["b"] = 2 };
+        subject.Should().Equal(Pairs(("A", 1), ("B", 2)));
+        Assert.Throws<VouchException>(() => subject.Should().NotEqual(Pairs(("A", 1), ("B", 2))));
+        Assert.Throws<VouchException>(() => subject.Should().Equal(Pairs(("A", 1))));
+        Assert.Throws<VouchException>(() => subject.Should().Equal(Pairs(("A", 1), ("B", 3))));
+    }
+
+    [Fact]
+    public void Equal_works_with_a_case_insensitive_ImmutableDictionary()
+    {
+        var subject = new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.ToImmutableDictionary(StringComparer.OrdinalIgnoreCase);
+        subject.Should().Equal(Pairs(("A", 1), ("B", 2)));
+    }
+
+    [Fact]
+    public void Equal_reports_a_null_key_as_missing()
+    {
+        var subject = new Dictionary<string, int> { ["a"] = 1 };
+        var message = Message(() => subject.Should().Equal(new KeyValuePair<string, int>[] { new(null!, 1), new("a", 1) }));
+        Assert.Contains("missing key null with value 1", message);
+    }
+
+    [Fact]
+    public void Contain_and_NotContain_pair_with_a_null_key()
+    {
+        var subject = Sample();
+        var pair = new KeyValuePair<string, int>(null!, 1);
+        Assert.Throws<VouchException>(() => subject.Should().Contain(pair));
+        subject.Should().NotContain(pair);
+    }
+
+    [Fact]
+    public void Equal_with_a_duplicate_expected_key_throws()
+    {
+        var ex = Assert.Throws<ArgumentException>(() => Sample().Should().Equal(Pairs(("a", 1), ("b", 2), ("a", 1))));
+        Assert.Contains("\"a\"", ex.Message);
+    }
+
+    [Fact]
+    public void NotContainKeys_reports_each_found_key_once()
+    {
+        var message = Message(() => Sample().Should().NotContainKeys("a", "a", "z"));
+        Assert.Contains("but found [\"a\"].", message);
+    }
+
+    [Fact]
+    public void NotContainKeys_and_ContainValues_with_because()
+    {
+        var keys = new[] { "z" };
+        var values = new[] { 1 };
+        Sample().Should().NotContainKeys(keys, "why").And.ContainValues(values, "why");
+        Assert.Contains("because why", Message(() => Sample().Should().NotContainKeys(new[] { "a" }, "why")));
+        Assert.Contains("because why", Message(() => Sample().Should().ContainValues(new[] { 9 }, "why")));
+    }
 }
