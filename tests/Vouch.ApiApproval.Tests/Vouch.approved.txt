@@ -111,6 +111,8 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> HaveCount(int expected, string because) { }
         public Vouch.AndConstraint<TSelf> HaveCountGreaterThan(int expected) { }
         public Vouch.AndConstraint<TSelf> HaveCountGreaterThanOrEqualTo(int expected) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element) { }
+        public Vouch.AndWhichConstraint<TSelf, T> HaveElementAt(int index, T element, string because) { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty() { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty(string because) { }
         public Vouch.AndConstraint<TSelf> NotBeNull() { }
@@ -187,6 +189,25 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected) { }
         public Vouch.AndConstraint<Vouch.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because) { }
     }
+    public static class EnumAssertionsExtensions
+    {
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeDefined<T>(this Vouch.ValueAssertions<T> assertions)
+            where T :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveFlag<T>(this Vouch.ValueAssertions<T> assertions, T flag)
+            where T :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveSameNameAs<T, TOther>(this Vouch.ValueAssertions<T> assertions, TOther other)
+            where T :  struct, System.Enum
+            where TOther :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveSameValueAs<T, TOther>(this Vouch.ValueAssertions<T> assertions, TOther other)
+            where T :  struct, System.Enum
+            where TOther :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveValue<T>(this Vouch.ValueAssertions<T> assertions, long value)
+            where T :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBeDefined<T>(this Vouch.ValueAssertions<T> assertions)
+            where T :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotHaveFlag<T>(this Vouch.ValueAssertions<T> assertions, T flag)
+            where T :  struct, System.Enum { }
+    }
     public sealed class EquivalencyOptions<TExpectation>
     {
         public Vouch.EquivalencyOptions<TExpectation> WithStrictOrdering() { }
@@ -214,14 +235,33 @@ namespace Vouch
     public readonly struct FunctionAssertions<T>
     {
         public System.Func<T>? Subject { get; }
-        public Vouch.AndConstraint<Vouch.FunctionAssertions<T>> NotThrow() { }
-        public Vouch.AndConstraint<Vouch.FunctionAssertions<T>> NotThrow(string because) { }
+        public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow() { }
+        public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow(string because) { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>()
             where TException : System.Exception { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>(string because)
             where TException : System.Exception { }
     }
     public sealed class GenericCollectionAssertions<T> : Vouch.CollectionAssertionsBase<T, Vouch.GenericCollectionAssertions<T>> { }
+    public readonly struct GuidAssertions
+    {
+        public System.Guid Subject { get; }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> Be(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> Be(System.Guid expected, string because) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeEmpty() { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeEmpty(string because) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeGreaterThan(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeGreaterThanOrEqualTo(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeLessThan(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeLessThanOrEqualTo(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> BeOneOf(params System.Guid[] validValues) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> NotBe(System.Guid unexpected) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> NotBe(System.Guid unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> NotBeEmpty() { }
+        public Vouch.AndConstraint<Vouch.GuidAssertions> NotBeEmpty(string because) { }
+    }
     public static class InvokingExtensions
     {
         public static System.Action Invoking<T>(this T subject, System.Action<T> action) { }
@@ -287,6 +327,23 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
         public Vouch.AndWhichConstraint<Vouch.NullableDateTimeOffsetAssertions, System.DateTimeOffset> NotBeNull() { }
     }
+    public readonly struct NullableGuidAssertions
+    {
+        public System.Guid? Subject { get; }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid expected) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid? expected) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid? expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEmpty() { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeOneOf(params System.Guid[] validValues) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> NotBe(System.Guid unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> NotBe(System.Guid unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableGuidAssertions> NotBeEmpty() { }
+        public Vouch.AndWhichConstraint<Vouch.NullableGuidAssertions, System.Guid> NotBeNull() { }
+    }
     public static class NullableNumericApproximationExtensions
     {
         public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<decimal>> BeApproximately(this Vouch.NullableNumericAssertions<decimal> assertions, decimal expected, decimal precision) { }
@@ -312,6 +369,18 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BePositive() { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndWhichConstraint<Vouch.NullableNumericAssertions<T>, T> NotBeNull() { }
+    }
+    public readonly struct NullableTimeOnlyAssertions
+    {
+        public System.TimeOnly? Subject { get; }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotBe(System.TimeOnly unexpected) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableTimeOnlyAssertions, System.TimeOnly> NotBeNull() { }
     }
     public readonly struct NullableValueAssertions<T>
         where T :  struct
@@ -397,10 +466,16 @@ namespace Vouch
         public static Vouch.NullableDateTimeOffsetAssertions Should(this System.DateTimeOffset? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.AsyncFunctionAssertions Should(this System.Func<System.Threading.Tasks.Task>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueTaskFunctionAssertions Should(this System.Func<System.Threading.Tasks.ValueTask>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.GuidAssertions Should(this System.Guid subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableGuidAssertions Should(this System.Guid? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.TimeOnlyAssertions Should(this System.TimeOnly subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableTimeOnlyAssertions Should(this System.TimeOnly? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.BooleanAssertions Should(this bool subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableBooleanAssertions Should(this bool? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<byte> Should(this byte subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<byte> Should(this byte? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<char> Should(this char subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<char> Should(this char? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<decimal> Should(this decimal subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<decimal> Should(this decimal? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<double> Should(this double subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -412,9 +487,17 @@ namespace Vouch
         public static Vouch.NumericAssertions<long> Should(this long subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<long> Should(this long? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ObjectAssertions Should(this object? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<sbyte> Should(this sbyte subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<sbyte> Should(this sbyte? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<short> Should(this short subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<short> Should(this short? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.StringAssertions Should(this string? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<uint> Should(this uint subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<uint> Should(this uint? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<ulong> Should(this ulong subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<ulong> Should(this ulong? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<ushort> Should(this ushort subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<ushort> Should(this ushort? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.GenericCollectionAssertions<T> Should<T>(this System.Collections.Generic.IEnumerable<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.AsyncFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.Task<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueTaskFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.ValueTask<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -469,6 +552,22 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StringAssertions> NotStartWith(string unexpected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWith(string expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWith(string expected, string because) { }
+    }
+    public readonly struct TimeOnlyAssertions
+    {
+        public System.TimeOnly Subject { get; }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeOnOrBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> NotBe(System.TimeOnly unexpected) { }
+    }
+    public static class TimeSpanAssertionsExtensions
+    {
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.TimeSpan>> BeCloseTo(this Vouch.ValueAssertions<System.TimeSpan> assertions, System.TimeSpan expected, System.TimeSpan precision) { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.TimeSpan>> BeNegative(this Vouch.ValueAssertions<System.TimeSpan> assertions) { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.TimeSpan>> BePositive(this Vouch.ValueAssertions<System.TimeSpan> assertions) { }
     }
     public readonly struct ValueAssertions<T>
         where T :  struct
