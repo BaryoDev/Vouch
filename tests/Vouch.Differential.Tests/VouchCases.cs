@@ -187,6 +187,17 @@ public static class VouchCases
             .Should().BeEquivalentTo(new Dictionary<string, int> { ["b"] = 2, ["a"] = 1 }),
         ["equivalent dictionary different value"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }
             .Should().BeEquivalentTo(new Dictionary<string, int> { ["b"] = 3, ["a"] = 1 }),
+        ["dictionary contain value absent"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().ContainValue(3),
+        ["dictionary contain values one absent"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().ContainValues(1, 3),
+        ["dictionary not contain value present"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotContainValue(2),
+        ["dictionary not contain values one present"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotContainValues(3, 2),
+        ["dictionary contain pair other value"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().Contain(new KeyValuePair<string, int>("a", 5)),
+        ["dictionary contain key and value other value"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().Contain("a", 5),
+        ["dictionary not contain pair present"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotContain(new KeyValuePair<string, int>("a", 1)),
+        ["dictionary not contain key and value present"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotContain("b", 2),
+        ["dictionary equal other value"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().Equal(new Dictionary<string, int> { ["b"] = 3, ["a"] = 1 }),
+        ["dictionary not equal other key order"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotEqual(new Dictionary<string, int> { ["b"] = 2, ["a"] = 1 }),
+        ["dictionary not contain keys one present"] = () => new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }.Should().NotContainKeys("z", "a"),
         ["equivalent date time offset other offset"] = () => ((object)new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero))
             .Should().BeEquivalentTo(new DateTimeOffset(2020, 1, 1, 2, 0, 0, TimeSpan.FromHours(2))),
         ["equivalent null member against missing member"] = () => new Node("a", null).Should().BeEquivalentTo(new { Name = "a" }),

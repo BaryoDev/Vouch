@@ -339,4 +339,54 @@ public class AllocationTests
         Assert.Equal(baseline, Bytes(() => d.Should().HaveCount(size)));
         Assert.Equal(baseline, Bytes(() => d.Should().NotBeEmpty()));
     }
+
+    private static Dictionary<string, int> Dict() => new() { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
+
+    [Fact] public void Dictionary_ContainValue() { var d = Dict(); AssertNoAllocation(() => d.Should().ContainValue(3)); }
+
+    [Fact]
+    public void Dictionary_ContainValues()
+    {
+        var d = Dict();
+        var wanted = new[] { 1, 3 };
+        AssertNoAllocation(() => d.Should().ContainValues(wanted));
+    }
+
+    [Fact] public void Dictionary_NotContainValue() { var d = Dict(); AssertNoAllocation(() => d.Should().NotContainValue(9)); }
+
+    [Fact]
+    public void Dictionary_NotContainValues()
+    {
+        var d = Dict();
+        var unwanted = new[] { 8, 9 };
+        AssertNoAllocation(() => d.Should().NotContainValues(unwanted));
+    }
+
+    [Fact]
+    public void Dictionary_Contain_pair()
+    {
+        var d = Dict();
+        var pair = new KeyValuePair<string, int>("b", 2);
+        AssertNoAllocation(() => d.Should().Contain(pair));
+    }
+
+    [Fact] public void Dictionary_Contain_key_and_value() { var d = Dict(); AssertNoAllocation(() => d.Should().Contain("b", 2)); }
+
+    [Fact]
+    public void Dictionary_NotContain_pair()
+    {
+        var d = Dict();
+        var pair = new KeyValuePair<string, int>("b", 9);
+        AssertNoAllocation(() => d.Should().NotContain(pair));
+    }
+
+    [Fact] public void Dictionary_NotContain_key_and_value() { var d = Dict(); AssertNoAllocation(() => d.Should().NotContain("b", 9)); }
+
+    [Fact]
+    public void Dictionary_NotContainKeys()
+    {
+        var d = Dict();
+        var keys = new[] { "x", "y" };
+        AssertNoAllocation(() => d.Should().NotContainKeys(keys));
+    }
 }
