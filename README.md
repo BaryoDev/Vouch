@@ -118,6 +118,8 @@ The interpolated string is built before the call, so it costs an allocation even
 
 A failing assertion throws `VouchException`. The class is not sealed. Adapter code can change what is thrown by setting `Vouch.Sdk.VouchConfiguration.ExceptionFactory`, a `Func<string, Exception>` that receives the final failure message. Setting it to null restores the default. The setting is global, and it is read only when an assertion fails.
 
+The factory must be thread-safe and should return a new exception for each call. It receives the final message. If it throws or returns null, Vouch throws `VouchException`. With a custom factory, `Throw<VouchException>()` around code that runs a failing Vouch assertion no longer matches, because the failure is the custom type.
+
 ### Where Vouch differs on purpose
 
 Vouch was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAssertions 8) with a differential test project that runs edge inputs through both libraries and compares pass and fail. It was also tried on a large existing FluentAssertions test suite, switched over by changing the package and the `using`. Where Vouch differs from FluentAssertions:
