@@ -183,14 +183,17 @@ public static class ShouldExtensions
     /// <see cref="IEnumerable{T}"/> overload without boxing. This reads the backing array instead; a default
     /// (uninitialised) array is treated as null.
     /// </summary>
-    public static GenericCollectionAssertions<T> Should<T>(this System.Collections.Immutable.ImmutableArray<T> subject,
+    public static ImmutableArrayAssertions<T> Should<T>(this System.Collections.Immutable.ImmutableArray<T> subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
-        => new(System.Runtime.InteropServices.ImmutableCollectionsMarshal.AsArray(subject), expression);
+        => new(subject, expression);
 
-    /// <summary>A non-generic sequence (for example an ArrayList) gets the collection assertions over <see cref="object"/>.</summary>
-    public static GenericCollectionAssertions<object> Should(this System.Collections.IEnumerable? subject,
+    /// <summary>
+    /// A non-generic sequence (for example an ArrayList) gets the collection assertions over <see cref="object"/>, plus every
+    /// <see cref="ObjectAssertions"/> member, forwarded to the original object.
+    /// </summary>
+    public static NonGenericCollectionAssertions Should(this System.Collections.IEnumerable? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
-        => new(subject switch
+        => new(subject, subject switch
         {
             null => null,
             IEnumerable<object> already => already,

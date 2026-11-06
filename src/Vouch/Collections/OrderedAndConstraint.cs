@@ -29,6 +29,10 @@ public readonly struct OrderedAndConstraint<TAssertions, T, TKey>
 
     public TAssertions And { get; }
 
+    /// <summary>Lets the result of a keyed ordering be assigned to the <see cref="AndConstraint{T}"/> it returned before ThenBe existed.</summary>
+    public static implicit operator AndConstraint<TAssertions>(OrderedAndConstraint<TAssertions, T, TKey> constraint) =>
+        new(constraint.And);
+
     public OrderedAndConstraint<TAssertions, T, TNext> ThenBeInAscendingOrder<TNext>(Func<T, TNext> keySelector) =>
         Then(keySelector, "ascending", false);
 
@@ -81,16 +85,27 @@ internal static class OrderCheck
             return;
         }
 
-        var previous = key(items[0]);
+        // A key is read only for an item that takes part in a comparison, so a ThenBe selector never sees items
+        // that an earlier key already separated.
+        TKey previous = default!;
+        var havePrevious = false;
         for (var i = 1; i < items.Count; i++)
         {
-            var current = key(items[i]);
-            if (tied is null || tied(i - 1, i))
+            if (tied is not null && !tied(i - 1, i))
             {
+                havePrevious = false;
+                continue;
+            }
+
+            {
+                var before = havePrevious ? previous : key(items[i - 1]);
+                var current = key(items[i]);
+                previous = current;
+                havePrevious = true;
                 int order;
                 try
                 {
-                    order = comparer.Compare(previous, current);
+                    order = comparer.Compare(before, current);
                 }
                 catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
                 {
@@ -105,8 +120,6 @@ internal static class OrderCheck
                     return;
                 }
             }
-
-            previous = current;
         }
     }
 }

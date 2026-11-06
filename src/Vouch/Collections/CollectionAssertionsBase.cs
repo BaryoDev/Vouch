@@ -48,6 +48,58 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return true;
     }
 
+    // Counts items for a check that only needs the count. A source that knows its size, or one already read, gives its exact
+    // count. A lazy sequence is read once and kept (for the failure listing) up to the item cap; past the cap it is counted
+    // without storing, up to limit, so a long sequence is judged on its real length instead of being rejected for it.
+    private int CountUpTo(int limit)
+    {
+        switch (Source)
+        {
+            case IReadOnlyCollection<T> c:
+                return c.Count;
+            case ICollection<T> c:
+                return c.Count;
+            case System.Collections.ICollection c:
+                return c.Count;
+        }
+
+        if (_list is not null)
+        {
+            return _list.Count;
+        }
+
+        var kept = new List<T>();
+        var storing = true;
+        var count = 0;
+        foreach (var item in Source!)
+        {
+            if (storing)
+            {
+                if (kept.Count == Equivalency.MaxItems)
+                {
+                    storing = false;
+                }
+                else
+                {
+                    kept.Add(item);
+                }
+            }
+
+            count++;
+            if (!storing && count >= limit)
+            {
+                break;
+            }
+        }
+
+        if (storing)
+        {
+            _list = kept;
+        }
+
+        return count;
+    }
+
     private List<T>? Materialise()
     {
         if (Source is ICollection<T>)
@@ -1044,10 +1096,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> NotIntersectWith(IEnumerable<T> other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        var expected = Materialise(other);
         if (IsNull)
         {
-            return FailNull($"not to intersect with {Formatter.Format(expected)}");
+            return FailNull($"not to intersect with {Formatter.Format(Materialise(other))}");
         }
 
         if (!TryItems(out var items))
@@ -1055,6 +1106,46 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return And();
         }
 
+        // The pass path scans in place: a list or ICollection<T> other is never copied, and no set is built unless they share an item.
+        IReadOnlyList<T>? expected = null;
+        bool intersects;
+        switch (other)
+        {
+            case IReadOnlyList<T> list:
+                intersects = Intersects(items, list);
+                break;
+            case ICollection<T> collection:
+                intersects = false;
+                for (var i = 0; !intersects && i < items.Count; i++)
+                {
+                    intersects = collection.Contains(items[i]);
+                }
+
+                break;
+            case IReadOnlyCollection<T> sized:
+                intersects = false;
+                foreach (var candidate in sized)
+                {
+                    if (IndexOf(items, candidate) >= 0)
+                    {
+                        intersects = true;
+                        break;
+                    }
+                }
+
+                break;
+            default:
+                expected = Materialise(other);
+                intersects = Intersects(items, expected);
+                break;
+        }
+
+        if (!intersects)
+        {
+            return And();
+        }
+
+        expected ??= Materialise(other);
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? common = null;
@@ -1724,6 +1815,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return And();
         }
 
+        if (predicates.Length > MaxSatisfy || items.Count > MaxSatisfy)
+        {
+            Fail.With($"Expected {Name} to satisfy the predicates, but {items.Count} items and {predicates.Length} predicates are more than the {MaxSatisfy} that Satisfy matches.");
+            return And();
+        }
+
         var n = predicates.Length;
         if (items.Count != n)
         {
@@ -1749,11 +1846,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var owner = new int[n];
         Array.Fill(owner, -1);
         var seen = new bool[n];
+        var path = new int[n];
+        var next = new int[n];
+        var via = new int[n];
         List<int>? unmatched = null;
         for (var p = 0; p < n; p++)
         {
             Array.Clear(seen);
-            if (!Assign(p, n, matches, seen, owner))
+            if (!Assign(p, n, matches, seen, owner, path, next, via))
             {
                 (unmatched ??= []).Add(p);
             }
@@ -1776,21 +1876,49 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
-    // Augmenting-path matching, so a predicate that fits several items never starves a stricter one.
-    private static bool Assign(int predicate, int n, bool[] matches, bool[] seen, int[] owner)
+    private const int MaxSatisfy = 10_000;
+
+    // Augmenting-path matching, so a predicate that fits several items never starves a stricter one. The search keeps
+    // its own stack (at most one frame per item), so a long chain of re-assignments cannot overflow the call stack.
+    private static bool Assign(int start, int n, bool[] matches, bool[] seen, int[] owner, int[] path, int[] next, int[] via)
     {
-        for (var j = 0; j < n; j++)
+        var depth = 0;
+        path[0] = start;
+        next[0] = 0;
+        while (depth >= 0)
         {
-            if (!matches[predicate * n + j] || seen[j])
+            var predicate = path[depth];
+            var descended = false;
+            for (var j = next[depth]; j < n; j++)
             {
-                continue;
+                if (!matches[predicate * n + j] || seen[j])
+                {
+                    continue;
+                }
+
+                seen[j] = true;
+                next[depth] = j + 1;
+                via[depth] = j;
+                if (owner[j] < 0)
+                {
+                    for (var d = depth; d >= 0; d--)
+                    {
+                        owner[via[d]] = path[d];
+                    }
+
+                    return true;
+                }
+
+                depth++;
+                path[depth] = owner[j];
+                next[depth] = 0;
+                descended = true;
+                break;
             }
 
-            seen[j] = true;
-            if (owner[j] < 0 || Assign(owner[j], n, matches, seen, owner))
+            if (!descended)
             {
-                owner[j] = predicate;
-                return true;
+                depth--;
             }
         }
 
@@ -1799,7 +1927,13 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> AllBe(T expected)
     {
-        if (!TryRequire($"to have all items be {Formatter.Format(expected)}", out var items))
+        // The expectation text is built only on a failing path, so a pass allocates nothing.
+        if (IsNull)
+        {
+            return FailNull($"to have all items be {Formatter.Format(expected)}");
+        }
+
+        if (!TryItems(out var items))
         {
             return And();
         }
@@ -1836,6 +1970,10 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     }
 
     /// <summary>Every item is exactly of type <typeparamref name="TExpected"/>. Which is the items cast to it.</summary>
+    /// <remarks>
+    /// Unlike the other assertions this allocates when it passes (the array behind <c>Which</c>), so it is exempt from the 0 B rule.
+    /// After a failure inside an <see cref="AssertionScope"/>, <c>Which</c> is empty. A nullable <typeparamref name="TExpected"/> matches its underlying type.
+    /// </remarks>
     public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeOfType<TExpected>() => AllOfType<TExpected>(exact: true);
 
     public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeOfType<TExpected>(string because)
@@ -1852,6 +1990,10 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     }
 
     /// <summary>Every item is assignable to <typeparamref name="TExpected"/>. Which is the items cast to it.</summary>
+    /// <remarks>
+    /// Unlike the other assertions this allocates when it passes (the array behind <c>Which</c>), so it is exempt from the 0 B rule.
+    /// After a failure inside an <see cref="AssertionScope"/>, <c>Which</c> is empty.
+    /// </remarks>
     public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>() => AllOfType<TExpected>(exact: false);
 
     public AndWhichConstraint<TSelf, IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>(string because)
@@ -1880,25 +2022,32 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return new((TSelf)this, []);
         }
 
-        var cast = new TExpected[items.Count];
+        // A nullable target is matched by its underlying type, because a boxed int? is a boxed int.
+        var exactType = Nullable.GetUnderlyingType(typeof(TExpected)) ?? typeof(TExpected);
         List<int>? wrong = null;
         for (var i = 0; i < items.Count; i++)
         {
-            object? item = items[i];
-            if (item is TExpected typed && (!exact || item.GetType() == typeof(TExpected)))
+            // Tested on the item itself, so a value-type item is not boxed for the check.
+            var item = items[i];
+            if (item is TExpected && (!exact || item.GetType() == exactType))
             {
-                cast[i] = typed;
+                continue;
             }
-            else
-            {
-                (wrong ??= []).Add(i);
-            }
+
+            (wrong ??= []).Add(i);
         }
 
         if (wrong is not null)
         {
             Fail.With($"Expected {Name} to have all items {TypeWording<TExpected>(exact)}, but found {wrong.Count} that are not{Listing(items, wrong)}");
             return new((TSelf)this, []);
+        }
+
+        // Only a passing check builds the array behind Which.
+        var cast = new TExpected[items.Count];
+        for (var i = 0; i < cast.Length; i++)
+        {
+            cast[i] = (TExpected)(object)items[i]!;
         }
 
         return new((TSelf)this, cast);
@@ -1914,19 +2063,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return FailNull($"not to contain {Plural(unexpected)}");
         }
 
-        if (!TryCount(out var count))
-        {
-            return And();
-        }
-
+        // Counts without storing past the item cap, so a long lazy sequence is judged on its real length.
+        var count = CountUpTo(unexpected == int.MaxValue ? unexpected : unexpected + 1);
         if (count == unexpected)
         {
-            if (!TryItems(out var items))
-            {
-                return And();
-            }
-
-            Fail.With($"Expected {Name} not to contain {Plural(unexpected)}, but it did{Listing(items)}");
+            Fail.With($"Expected {Name} not to contain {Plural(unexpected)}, but it did{ListingIfStored()}");
         }
 
         return And();
@@ -1952,19 +2093,10 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return FailNull($"to contain fewer than {Plural(expected)}");
         }
 
-        if (!TryCount(out var count))
-        {
-            return And();
-        }
-
+        var count = CountUpTo(expected);
         if (count >= expected)
         {
-            if (!TryItems(out var items))
-            {
-                return And();
-            }
-
-            Fail.With($"Expected {Name} to contain fewer than {Plural(expected)}, but found {items.Count}{Listing(items)}");
+            Fail.With($"Expected {Name} to contain fewer than {Plural(expected)}, but found {FoundCount(count)}");
         }
 
         return And();
@@ -1990,19 +2122,10 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             return FailNull($"to contain at most {Plural(expected)}");
         }
 
-        if (!TryCount(out var count))
-        {
-            return And();
-        }
-
+        var count = CountUpTo(expected == int.MaxValue ? expected : expected + 1);
         if (count > expected)
         {
-            if (!TryItems(out var items))
-            {
-                return And();
-            }
-
-            Fail.With($"Expected {Name} to contain at most {Plural(expected)}, but found {items.Count}{Listing(items)}");
+            Fail.With($"Expected {Name} to contain at most {Plural(expected)}, but found {FoundCount(count)}");
         }
 
         return And();
@@ -2024,10 +2147,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> HaveSameCount<TOther>(IEnumerable<TOther> other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        var expected = CountOf(other);
         if (IsNull)
         {
-            return FailNull($"to contain the same number of items as the other collection ({Plural(expected)})");
+            return FailNull("to contain the same number of items as the other collection");
+        }
+
+        if (!TryCountOf(other, out var expected))
+        {
+            return And();
         }
 
         if (!TryCount(out var count))
@@ -2061,27 +2188,44 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
-    // Counts without copying when the other collection already knows its size.
-    private static int CountOf<TOther>(IEnumerable<TOther> other)
+    // Counts without copying when the other collection already knows its size. A sequence is counted up to the same
+    // item cap as the subject, and a longer one is reported as a failure.
+    private static bool TryCountOf<TOther>(IEnumerable<TOther> other, out int count)
     {
         switch (other)
         {
             case IReadOnlyCollection<TOther> c:
-                return c.Count;
+                count = c.Count;
+                return true;
             case ICollection<TOther> c:
-                return c.Count;
+                count = c.Count;
+                return true;
             case System.Collections.ICollection c:
-                return c.Count;
+                count = c.Count;
+                return true;
         }
 
-        var count = 0;
+        count = 0;
         foreach (var _ in other)
         {
+            if (count == Equivalency.MaxItems)
+            {
+                Fail.With($"The other collection has more than {Equivalency.MaxItems} items, not compared.");
+                return false;
+            }
+
             count++;
         }
 
-        return count;
+        return true;
     }
+
+    // The count and listing when the items were kept; otherwise the count reached (a lazy sequence past the cap).
+    private string FoundCount(int count) =>
+        _list is not null ? $"{_list.Count}{Listing(_list)}" : $"at least {count}.";
+
+    private string ListingIfStored() =>
+        _list is not null ? Listing(_list) : ".";
 
     public AndConstraint<TSelf> NotBeEquivalentTo(params T[] unexpected)
     {
