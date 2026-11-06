@@ -482,7 +482,7 @@ public class ExceptionAssertionsTests
     public async Task ThrowAsync_neither_blocks_nor_captures_a_single_threaded_context()
     {
         var context = new PumpContext();
-        Func<Task> act = async () => { await Task.Delay(50).ConfigureAwait(false); throw new InvalidOperationException(); };
+        Func<Task> act = async () => { await Task.Yield(); throw new InvalidOperationException(); };
         var task = context.RunOnPumpThread(() => act.Should().ThrowAsync<InvalidOperationException>(), TimeSpan.FromSeconds(5));
         await task;
         Assert.Equal(0, context.Posts);
@@ -492,7 +492,7 @@ public class ExceptionAssertionsTests
     public async Task NotThrowAsync_neither_blocks_nor_captures_a_single_threaded_context()
     {
         var context = new PumpContext();
-        Func<Task> act = async () => await Task.Delay(50).ConfigureAwait(false);
+        Func<Task> act = async () => await Task.Yield();
         await context.RunOnPumpThread(() => act.Should().NotThrowAsync(), TimeSpan.FromSeconds(5));
         Assert.Equal(0, context.Posts);
     }
@@ -501,7 +501,7 @@ public class ExceptionAssertionsTests
     public async Task ThrowAsync_does_not_block_when_the_subject_resumes_on_the_single_threaded_context()
     {
         var context = new PumpContext();
-        Func<Task> act = async () => { await Task.Delay(50); throw new InvalidOperationException(); };
+        Func<Task> act = async () => { await Task.Yield(); throw new InvalidOperationException(); };
         await context.RunOnPumpThread(() => act.Should().ThrowAsync<InvalidOperationException>(), TimeSpan.FromSeconds(5));
     }
 
@@ -509,7 +509,7 @@ public class ExceptionAssertionsTests
     public async Task NotThrowAsync_does_not_block_when_the_subject_resumes_on_the_single_threaded_context()
     {
         var context = new PumpContext();
-        Func<Task> act = async () => await Task.Delay(50);
+        Func<Task> act = async () => await Task.Yield();
         await context.RunOnPumpThread(() => act.Should().NotThrowAsync(), TimeSpan.FromSeconds(5));
     }
 

@@ -174,7 +174,7 @@ public class FailurePathTests
     [Fact]
     public async Task Async_reason_survives_the_await()
     {
-        var recorded = await RecordAsync(async () => await ((Func<Task>)(async () => await Task.Delay(5))).Should().ThrowAsync<InvalidOperationException>("it must fail"));
+        var recorded = await RecordAsync(async () => await ((Func<Task>)(async () => await Task.Yield())).Should().ThrowAsync<InvalidOperationException>("it must fail"));
         Assert.Single(recorded);
         Assert.EndsWith("Because it must fail.", recorded[0]);
     }

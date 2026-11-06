@@ -31,7 +31,9 @@ public readonly struct ActionAssertions
 
     /// <summary>
     /// Runs the action, and again after each poll interval while it throws, until it stops throwing or the
-    /// wait time is used up. Fails if it still throws at the end.
+    /// wait time is used up. Fails if it still throws at the end. A poll interval above the Task.Delay
+    /// maximum (uint.MaxValue - 1 milliseconds) is rejected up front. Time comes from the clock in use, so a
+    /// manual fake clock that never advances blocks this call while the action keeps throwing.
     /// </summary>
     public AndConstraint<ActionAssertions> NotThrowAfter(TimeSpan waitTime, TimeSpan pollInterval)
         => NotThrowAfterCore(waitTime, pollInterval, null);
@@ -50,6 +52,8 @@ public readonly struct ActionAssertions
         {
             throw new ArgumentOutOfRangeException(nameof(pollInterval), "The poll interval must be greater than zero.");
         }
+
+        TimeoutGuard.RequireDelayable(pollInterval, nameof(pollInterval));
 
         if (Subject is null)
         {

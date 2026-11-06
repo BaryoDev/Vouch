@@ -105,23 +105,28 @@ public readonly struct StreamAssertions
         return new(this);
     }
 
+    // Every message below is built only on a failure path, so a passing call allocates nothing.
     public AndConstraint<StreamAssertions> HaveLength(long expected)
     {
-        var expectation = $"to have length {expected}";
         if (Subject is null)
         {
-            return NullSubject(expectation);
+            return NullSubject($"to have length {expected}");
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable(expectation, "length");
+            return Unavailable($"to have length {expected}", "length");
         }
 
-        var actual = Subject.Length;
+        var error = TryRead(false, out var actual);
+        if (error is not null)
+        {
+            return ReadFailed($"to have length {expected}", "length", error);
+        }
+
         if (actual != expected)
         {
-            Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but it has length {actual}.");
+            Fail.With($"Expected {Fail.Name(_expression)} to have length {expected}, but it has length {actual}.");
         }
 
         return new(this);
@@ -129,20 +134,25 @@ public readonly struct StreamAssertions
 
     public AndConstraint<StreamAssertions> NotHaveLength(long unexpected)
     {
-        var expectation = $"not to have length {unexpected}";
         if (Subject is null)
         {
-            return NullSubject(expectation);
+            return NullSubject($"not to have length {unexpected}");
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable(expectation, "length");
+            return Unavailable($"not to have length {unexpected}", "length");
         }
 
-        if (Subject.Length == unexpected)
+        var error = TryRead(false, out var actual);
+        if (error is not null)
         {
-            Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but it does.");
+            return ReadFailed($"not to have length {unexpected}", "length", error);
+        }
+
+        if (actual == unexpected)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have length {unexpected}, but it does.");
         }
 
         return new(this);
@@ -150,21 +160,25 @@ public readonly struct StreamAssertions
 
     public AndConstraint<StreamAssertions> HavePosition(long expected)
     {
-        var expectation = $"to have position {expected}";
         if (Subject is null)
         {
-            return NullSubject(expectation);
+            return NullSubject($"to have position {expected}");
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable(expectation, "position");
+            return Unavailable($"to have position {expected}", "position");
         }
 
-        var actual = Subject.Position;
+        var error = TryRead(true, out var actual);
+        if (error is not null)
+        {
+            return ReadFailed($"to have position {expected}", "position", error);
+        }
+
         if (actual != expected)
         {
-            Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but it is at position {actual}.");
+            Fail.With($"Expected {Fail.Name(_expression)} to have position {expected}, but it is at position {actual}.");
         }
 
         return new(this);
@@ -172,20 +186,25 @@ public readonly struct StreamAssertions
 
     public AndConstraint<StreamAssertions> NotHavePosition(long unexpected)
     {
-        var expectation = $"not to have position {unexpected}";
         if (Subject is null)
         {
-            return NullSubject(expectation);
+            return NullSubject($"not to have position {unexpected}");
         }
 
         if (!Subject.CanSeek)
         {
-            return Unavailable(expectation, "position");
+            return Unavailable($"not to have position {unexpected}", "position");
         }
 
-        if (Subject.Position == unexpected)
+        var error = TryRead(true, out var actual);
+        if (error is not null)
         {
-            Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but it does.");
+            return ReadFailed($"not to have position {unexpected}", "position", error);
+        }
+
+        if (actual == unexpected)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to have position {unexpected}, but it does.");
         }
 
         return new(this);
@@ -203,40 +222,230 @@ public readonly struct StreamAssertions
         return new(this);
     }
 
-    public AndConstraint<StreamAssertions> BeReadable(string because) => Reasoned(because, static a => a.BeReadable());
+    // A stream can still throw when read (disposed, or closed under us). That is a failure, not a crash.
+    private Exception? TryRead(bool position, out long value)
+    {
+        try
+        {
+            value = position ? Subject!.Position : Subject!.Length;
+            return null;
+        }
+        catch (Exception ex) when (ex is NotSupportedException or ObjectDisposedException or IOException)
+        {
+            value = 0;
+            return ex;
+        }
+    }
 
-    public AndConstraint<StreamAssertions> NotBeReadable(string because) => Reasoned(because, static a => a.NotBeReadable());
+    private AndConstraint<StreamAssertions> ReadFailed(string expectation, string what, Exception error)
+    {
+        Fail.With($"Expected {Fail.Name(_expression)} {expectation}, but reading its {what} threw {Formatter.Format(error.GetType())}: {error.Message}");
+        return new(this);
+    }
 
-    public AndConstraint<StreamAssertions> BeWritable(string because) => Reasoned(because, static a => a.BeWritable());
-
-    public AndConstraint<StreamAssertions> NotBeWritable(string because) => Reasoned(because, static a => a.NotBeWritable());
-
-    public AndConstraint<StreamAssertions> BeSeekable(string because) => Reasoned(because, static a => a.BeSeekable());
-
-    public AndConstraint<StreamAssertions> NotBeSeekable(string because) => Reasoned(because, static a => a.NotBeSeekable());
-
-    public AndConstraint<StreamAssertions> HaveLength(long expected, string because)
-        => Reasoned(because, a => a.HaveLength(expected));
-
-    public AndConstraint<StreamAssertions> NotHaveLength(long unexpected, string because)
-        => Reasoned(because, a => a.NotHaveLength(unexpected));
-
-    public AndConstraint<StreamAssertions> HavePosition(long expected, string because)
-        => Reasoned(because, a => a.HavePosition(expected));
-
-    public AndConstraint<StreamAssertions> NotHavePosition(long unexpected, string because)
-        => Reasoned(because, a => a.NotHavePosition(unexpected));
-
-    private AndConstraint<StreamAssertions> Reasoned(string because, Func<StreamAssertions, AndConstraint<StreamAssertions>> run)
+    public AndConstraint<StreamAssertions> BeReadable(string because)
     {
         Reason.Set(because);
         try
         {
-            return run(this);
+            return BeReadable();
         }
         finally
         {
             Reason.Clear();
         }
     }
+
+    public AndConstraint<StreamAssertions> NotBeReadable(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBeReadable();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> BeWritable(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return BeWritable();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> NotBeWritable(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBeWritable();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> BeSeekable(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return BeSeekable();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> NotBeSeekable(string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBeSeekable();
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> HaveLength(long expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HaveLength(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> NotHaveLength(long unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotHaveLength(unexpected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> HavePosition(long expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return HavePosition(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StreamAssertions> NotHavePosition(long unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotHavePosition(unexpected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    // Forwards to ObjectAssertions so calls that compiled against Should(object?) still compile.
+    private ObjectAssertions AsObject => new(Subject, _expression);
+
+    private AndConstraint<StreamAssertions> Self(AndConstraint<ObjectAssertions> _) => new(this);
+
+    private AndWhichConstraint<StreamAssertions, T> Which<T>(AndWhichConstraint<ObjectAssertions, T> result) => new(this, result.Which);
+
+    public AndConstraint<StreamAssertions> Be(object? expected)
+        => Self(AsObject.Be(expected));
+
+    public AndConstraint<StreamAssertions> Be(object? expected, string because)
+        => Self(AsObject.Be(expected, because));
+
+    public AndConstraint<StreamAssertions> NotBe(object? unexpected)
+        => Self(AsObject.NotBe(unexpected));
+
+    public AndConstraint<StreamAssertions> NotBe(object? unexpected, string because)
+        => Self(AsObject.NotBe(unexpected, because));
+
+    public AndConstraint<StreamAssertions> BeNull()
+        => Self(AsObject.BeNull());
+
+    public AndConstraint<StreamAssertions> BeNull(string because)
+        => Self(AsObject.BeNull(because));
+
+    public AndConstraint<StreamAssertions> NotBeNull()
+        => Self(AsObject.NotBeNull());
+
+    public AndConstraint<StreamAssertions> NotBeNull(string because)
+        => Self(AsObject.NotBeNull(because));
+
+    public AndWhichConstraint<StreamAssertions, T> BeOfType<T>()
+        => Which(AsObject.BeOfType<T>());
+
+    public AndWhichConstraint<StreamAssertions, T> BeOfType<T>(string because)
+        => Which(AsObject.BeOfType<T>(because));
+
+    public AndConstraint<StreamAssertions> BeOfType(Type expectedType)
+        => Self(AsObject.BeOfType(expectedType));
+
+    public AndConstraint<StreamAssertions> BeOfType(Type expectedType, string because)
+        => Self(AsObject.BeOfType(expectedType, because));
+
+    public AndWhichConstraint<StreamAssertions, T> BeAssignableTo<T>()
+        => Which(AsObject.BeAssignableTo<T>());
+
+    public AndWhichConstraint<StreamAssertions, T> BeAssignableTo<T>(string because)
+        => Which(AsObject.BeAssignableTo<T>(because));
+
+    public AndConstraint<StreamAssertions> NotBeOfType<T>()
+        => Self(AsObject.NotBeOfType<T>());
+
+    public AndConstraint<StreamAssertions> NotBeAssignableTo<T>()
+        => Self(AsObject.NotBeAssignableTo<T>());
+
+    public AndConstraint<StreamAssertions> BeSameAs(object? expected)
+        => Self(AsObject.BeSameAs(expected));
+
+    public AndConstraint<StreamAssertions> NotBeSameAs(object? unexpected)
+        => Self(AsObject.NotBeSameAs(unexpected));
+
+    public AndConstraint<StreamAssertions> BeOneOf(params object?[] validValues)
+        => Self(AsObject.BeOneOf(validValues));
+
+    public AndConstraint<StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
+        => Self(AsObject.BeEquivalentTo(expectation));
+
+    public AndConstraint<StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
+        => Self(AsObject.BeEquivalentTo(expectation, configure));
+
+    public AndConstraint<StreamAssertions> Match<T>(System.Linq.Expressions.Expression<Func<T, bool>> predicate)
+        => Self(AsObject.Match(predicate));
+
+    public AndConstraint<StreamAssertions> Match<T>(System.Linq.Expressions.Expression<Func<T, bool>> predicate, string because)
+        => Self(AsObject.Match(predicate, because));
 }

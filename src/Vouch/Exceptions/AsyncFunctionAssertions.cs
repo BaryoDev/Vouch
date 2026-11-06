@@ -47,7 +47,7 @@ public readonly struct AsyncFunctionAssertions
     {
         if (within is { } limit)
         {
-            TimeoutGuard.Require(limit, nameof(within));
+            TimeoutGuard.Require(limit, "timeout");
         }
 
         var name = Fail.Name(_expression);
@@ -166,6 +166,17 @@ internal static class TimeoutGuard
         if (timeout < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(parameter, "The time limit must not be negative.");
+        }
+
+        RequireDelayable(timeout, parameter);
+    }
+
+    /// <summary>Task.Delay accepts at most uint.MaxValue - 1 milliseconds.</summary>
+    public static void RequireDelayable(TimeSpan value, string parameter)
+    {
+        if (value.TotalMilliseconds > uint.MaxValue - 1)
+        {
+            throw new ArgumentOutOfRangeException(parameter, "The time limit must not exceed the Task.Delay maximum of uint.MaxValue - 1 milliseconds.");
         }
     }
 

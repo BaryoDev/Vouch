@@ -65,7 +65,18 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
         var compiled = predicate.Compile();
         foreach (var match in _matches)
         {
-            if (compiled(match))
+            bool matched;
+            try
+            {
+                matched = compiled(match);
+            }
+            catch (Exception ex)
+            {
+                Fail.With($"Expected {_name}'s exception to match {predicate}, but the predicate threw {Formatter.Format(ex.GetType())}: {ex.Message}");
+                return this;
+            }
+
+            if (matched)
             {
                 return this;
             }

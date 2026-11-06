@@ -24,11 +24,28 @@ public readonly struct ExecutionTime
         action();
         return new ExecutionTime(clock.Now - start, expression);
     }
+
+    // Runs off the caller's synchronization context so the wait cannot deadlock. The clock starts inside
+    // the delegate, so the hop to the thread pool is not measured.
+    internal static ExecutionTime Measure(Func<Task> action, string? expression)
+    {
+        var clock = Clock.Current;
+        var elapsed = Blocking.Run(async () =>
+        {
+            var start = clock.Now;
+            await action().ConfigureAwait(false);
+            return clock.Now - start;
+        });
+        return new ExecutionTime(elapsed, expression);
+    }
 }
 
 public static class ExecutionTimeExtensions
 {
-    /// <summary>Runs the action once and measures it. An exception from the action propagates.</summary>
+    /// <summary>
+    /// Runs the action once and measures it. An exception from the action propagates to the caller
+    /// and no time is recorded.
+    /// </summary>
     public static ExecutionTime ExecutionTime(this Action action,
         [CallerArgumentExpression(nameof(action))] string? expression = null)
     {
@@ -36,14 +53,18 @@ public static class ExecutionTimeExtensions
         return Vouch.ExecutionTime.Measure(action, expression);
     }
 
-    /// <summary>Runs the function once and waits for its task, measuring until the task finishes.</summary>
+    /// <summary>
+    /// Runs the function once, off the caller's synchronization context, and waits for its task, measuring
+    /// until the task finishes. An exception from the function or its task propagates and no time is recorded.
+    /// </summary>
     public static ExecutionTime ExecutionTime(this Func<Task> action,
         [CallerArgumentExpression(nameof(action))] string? expression = null)
     {
         ArgumentNullException.ThrowIfNull(action);
-        return Vouch.ExecutionTime.Measure(() => action().GetAwaiter().GetResult(), expression);
+        return Vouch.ExecutionTime.Measure(action, expression);
     }
 
+    /// <summary>Measures the call. An exception from the action propagates and no time is recorded.</summary>
     public static ExecutionTime ExecutionTimeOf<T>(this T subject, Expression<Action<T>> action)
     {
         ArgumentNullException.ThrowIfNull(action);
@@ -51,11 +72,12 @@ public static class ExecutionTimeExtensions
         return Vouch.ExecutionTime.Measure(() => compiled(subject), action.Body.ToString());
     }
 
+    /// <summary>Measures the call and its task, off the caller's context. An exception propagates and no time is recorded.</summary>
     public static ExecutionTime ExecutionTimeOf<T>(this T subject, Expression<Func<T, Task>> action)
     {
         ArgumentNullException.ThrowIfNull(action);
         var compiled = action.Compile();
-        return Vouch.ExecutionTime.Measure(() => compiled(subject).GetAwaiter().GetResult(), action.Body.ToString());
+        return Vouch.ExecutionTime.Measure(() => compiled(subject), action.Body.ToString());
     }
 
     public static ExecutionTimeAssertions Should(this ExecutionTime subject)

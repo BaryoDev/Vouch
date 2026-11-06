@@ -58,11 +58,126 @@ public class TaskTimingStreamTests
     }
 
     [Fact]
-    public async Task Task_CompleteWithinAsync_rethrows_the_exception_of_a_failed_task()
+    public async Task Task_CompleteWithinAsync_reports_a_faulted_task_with_exact_message()
     {
         using var _ = Clock.Use(new FakeTime());
         var task = Task.FromException(new InvalidOperationException("boom"));
-        await Assert.ThrowsAsync<InvalidOperationException>(() => task.Should().CompleteWithinAsync(Second));
+        Assert.Equal("Expected task to complete within 00:00:01, but it faulted with InvalidOperationException: boom",
+            await MsgAsync(() => task.Should().CompleteWithinAsync(Second)));
+    }
+
+    [Fact]
+    public async Task Task_CompleteWithinAsync_reports_a_cancelled_task_with_exact_message()
+    {
+        using var _ = Clock.Use(new FakeTime());
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var task = Task.FromCanceled(cts.Token);
+        Assert.Equal("Expected task to complete within 00:00:01, but it was cancelled.",
+            await MsgAsync(() => task.Should().CompleteWithinAsync(Second)));
+    }
+
+    [Fact]
+    public async Task TaskOfT_CompleteWithinAsync_reports_a_faulted_task_with_exact_message()
+    {
+        using var _ = Clock.Use(new FakeTime());
+        var number = Task.FromException<int>(new InvalidOperationException("boom"));
+        Assert.Equal("Expected number to complete within 00:00:01, but it faulted with InvalidOperationException: boom",
+            await MsgAsync(() => number.Should().CompleteWithinAsync(Second)));
+    }
+
+    [Fact]
+    public async Task TaskOfT_CompleteWithinAsync_reports_a_cancelled_task_with_exact_message()
+    {
+        using var _ = Clock.Use(new FakeTime());
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var number = Task.FromCanceled<int>(cts.Token);
+        Assert.Equal("Expected number to complete within 00:00:01, but it was cancelled.",
+            await MsgAsync(() => number.Should().CompleteWithinAsync(Second)));
+    }
+
+    [Fact]
+    public async Task Task_CompleteWithinAsync_records_a_faulted_or_cancelled_task_inside_a_scope()
+    {
+        using var _ = Clock.Use(new FakeTime());
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var faulted = Task.FromException(new InvalidOperationException("boom"));
+        var cancelled = Task.FromCanceled(cts.Token);
+        var scope = new AssertionScope();
+        await faulted.Should().CompleteWithinAsync(Second);
+        await cancelled.Should().CompleteWithinAsync(Second);
+        var error = Assert.Throws<VouchException>(scope.Dispose);
+        Assert.Contains("but it faulted with InvalidOperationException: boom", error.Message);
+        Assert.Contains("but it was cancelled.", error.Message);
+    }
+
+    [Fact]
+    public async Task Task_CompleteWithinAsync_with_a_zero_timeout_passes_a_finished_task_and_fails_a_pending_one()
+    {
+        var fake = new FakeTime();
+        using var _ = Clock.Use(fake);
+        await Task.CompletedTask.Should().CompleteWithinAsync(TimeSpan.Zero);
+        var task = new TaskCompletionSource().Task;
+        var pending = MsgAsync(() => task.Should().CompleteWithinAsync(TimeSpan.Zero));
+        fake.Advance(TimeSpan.Zero);
+        Assert.Equal("Expected task to complete within 00:00:00, but it did not.", await pending);
+    }
+
+    [Fact]
+    public async Task Task_CompleteWithinAsync_rejects_a_timeout_above_the_Task_Delay_maximum()
+    {
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => Task.CompletedTask.Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(uint.MaxValue)));
+    }
+
+    [Fact]
+    public async Task ThrowWithinAsync_rejects_a_timeout_above_the_Task_Delay_maximum_with_the_timeout_parameter()
+    {
+        Func<Task> act = () => Task.FromException(new InvalidOperationException());
+        var error = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => act.Should().ThrowWithinAsync<InvalidOperationException>(TimeSpan.FromMilliseconds(uint.MaxValue)));
+        Assert.Equal("timeout", error.ParamName);
+    }
+
+    [Fact]
+    public void NotThrowAfter_rejects_a_poll_interval_above_the_Task_Delay_maximum()
+    {
+        Action act = () => { };
+        var error = Assert.Throws<ArgumentOutOfRangeException>(
+            () => act.Should().NotThrowAfter(Second, TimeSpan.FromMilliseconds(uint.MaxValue)));
+        Assert.Equal("pollInterval", error.ParamName);
+    }
+
+    [Fact]
+    public void Where_reports_a_predicate_that_throws_as_a_failure_naming_the_exception_type()
+    {
+        Action act = () => throw new InvalidOperationException("x");
+        var message = Msg(() => act.Should().Throw<InvalidOperationException>()
+            .Where(e => ((string)null!).Length == 0));
+        Assert.Contains("the predicate threw NullReferenceException", message);
+    }
+
+    [Fact]
+    public void Stream_HaveLength_reports_a_disposed_stream_as_a_failure()
+    {
+        var stream = new MemoryStream();
+        stream.Dispose();
+        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().HaveLength(0)));
+        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().NotHaveLength(0)));
+        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().HavePosition(0)));
+        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().NotHavePosition(0)));
+    }
+
+    [Fact]
+    public void ThrowExactly_Exception_on_an_aggregate_wrapping_a_plain_exception_matches_Throw()
+    {
+        Action act = () => throw new AggregateException(new Exception("inner"));
+        act.Should().Throw<Exception>();
+        var viaThrow = act.Should().Throw<Exception>();
+        var viaExactly = act.Should().ThrowExactly<Exception>();
+        Assert.Equal(viaThrow.Which.Message, viaExactly.Which.Message);
     }
 
     [Fact]
@@ -178,11 +293,32 @@ public class TaskTimingStreamTests
     }
 
     [Fact]
-    public async Task Task_NotCompleteWithinAsync_does_not_leave_a_failed_task_unobserved()
+    public async Task Task_NotCompleteWithinAsync_observes_a_pending_task_that_faults_later()
     {
-        using var _ = Clock.Use(new FakeTime());
-        var task = Task.FromException(new InvalidOperationException("boom"));
-        await Assert.ThrowsAsync<VouchException>(() => task.Should().NotCompleteWithinAsync(Second));
+        var fake = new FakeTime();
+        using var _ = Clock.Use(fake);
+        var unobserved = 0;
+        void Handler(object? sender, UnobservedTaskExceptionEventArgs e) => Interlocked.Increment(ref unobserved);
+        TaskScheduler.UnobservedTaskException += Handler;
+        try
+        {
+            var source = new TaskCompletionSource();
+            var pending = source.Task.Should().NotCompleteWithinAsync(Second);
+            fake.Advance(Second);
+            await pending;
+            source.SetException(new InvalidOperationException("late boom"));
+            source = null;
+            pending = default!;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Assert.Equal(0, unobserved);
+        }
+        finally
+        {
+            TaskScheduler.UnobservedTaskException -= Handler;
+        }
     }
 
     // ---- Task<T>.NotCompleteWithinAsync ----
@@ -558,11 +694,16 @@ public class TaskTimingStreamTests
     public void ExecutionTime_waits_for_an_async_function()
     {
         var fake = new FakeTime();
-        using var _ = Clock.Use(fake);
+        using var clock = Clock.Use(fake);
         Func<Task> act = () =>
         {
-            fake.Advance(Second);
-            return Task.CompletedTask;
+            var source = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _ = Task.Run(() =>
+            {
+                fake.Advance(Second);
+                source.SetResult();
+            });
+            return source.Task;
         };
         Assert.Equal(Second, act.ExecutionTime().Elapsed);
     }
