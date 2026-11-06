@@ -42,7 +42,7 @@ jobs:
       - name: Read version from source
         id: version
         run: |
-          VERSION=$(grep -oP '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
+          VERSION=$(grep -m1 -oP '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Version from Directory.Build.props: $VERSION"
 
@@ -62,10 +62,10 @@ jobs:
 
           if [ "$IS_TAG" = "true" ]; then
             if [ "$TAG" != "v$VERSION" ]; then
-              echo "::error::Tag $TAG does not match csproj version $VERSION"
+              echo "::error::Tag $TAG does not match Directory.Build.props version $VERSION"
               exit 1
             fi
-            echo "Tag $TAG matches csproj version $VERSION."
+            echo "Tag $TAG matches Directory.Build.props version $VERSION."
             # A tag can point at any commit, so also require that it is on main.
             git fetch --quiet --no-tags origin main
             if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
