@@ -4,18 +4,25 @@ namespace Vouch;
 /// Collects assertion failures instead of throwing on the first one. Disposing the
 /// outermost scope throws one <see cref="VouchException"/> that lists every failure.
 /// </summary>
+/// <remarks>
+/// Scopes must be disposed in reverse order of creation, which is what a <c>using</c>
+/// statement does. Work started under a scope must finish before the scope is disposed;
+/// a failure recorded after disposal is thrown directly. If user code throws inside a
+/// scope that has collected failures, the exception from Dispose replaces it, as with
+/// any exception thrown from Dispose.
+/// </remarks>
 public sealed class AssertionScope : IDisposable
 {
     private static readonly AsyncLocal<AssertionScope?> Current = new();
 
-    private readonly AssertionScope? _parent;
+    private readonly AssertionScope? _previousScope;
     private readonly Action<VouchException>? _previousRecorder;
     private readonly List<string> _failures = new();
-    private bool _disposed;
+    private int _disposed;
 
     public AssertionScope()
     {
-        _parent = Current.Value;
+        _previousScope = Current.Value;
         _previousRecorder = Fail.Recorder;
         Current.Value = this;
         Fail.Recorder = Record;
@@ -25,8 +32,14 @@ public sealed class AssertionScope : IDisposable
     {
         lock (_failures)
         {
-            _failures.Add(failure.Message);
+            if (Volatile.Read(ref _disposed) == 0)
+            {
+                _failures.Add(failure.Message);
+                return;
+            }
         }
+
+        throw failure;
     }
 
     /// <summary>Returns the collected failure messages and clears them.</summary>
@@ -42,14 +55,16 @@ public sealed class AssertionScope : IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
             return;
         }
 
-        _disposed = true;
-        Current.Value = _parent;
-        Fail.Recorder = _previousRecorder;
+        if (Current.Value == this)
+        {
+            Current.Value = _previousScope;
+            Fail.Recorder = _previousRecorder;
+        }
 
         var messages = Discard();
         if (messages.Length == 0)
@@ -57,11 +72,11 @@ public sealed class AssertionScope : IDisposable
             return;
         }
 
-        if (_parent is not null)
+        if (_previousRecorder is not null)
         {
             foreach (var message in messages)
             {
-                _parent.Record(new VouchException(message));
+                _previousRecorder(new VouchException(message));
             }
 
             return;

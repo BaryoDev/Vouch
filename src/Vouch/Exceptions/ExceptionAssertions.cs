@@ -33,8 +33,8 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
             {
                 if (!_reported)
                 {
-                    _reported = true;
                     Fail.With("More than one exception was thrown. Vouch cannot tell which one was meant.");
+                    _reported = true;
                 }
 
                 return default!;
