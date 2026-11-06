@@ -172,7 +172,7 @@ public readonly struct NullableDateOnlyAssertions
         if (Subject is not { } value)
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be null, but it was.");
-            return default;
+            return new(this, default);
         }
 
         return new(this, value);

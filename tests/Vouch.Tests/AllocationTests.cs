@@ -73,6 +73,22 @@ public class AllocationTests
         Assert.True(large / Calls <= 128);
     }
 
+    private static long BytesForAllSatisfy(int size)
+    {
+        var items = new int[size];
+        Action<int> check = static _ => { };
+        items.Should().AllSatisfy(check);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < Calls; i++) items.Should().AllSatisfy(check);
+        return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+
+    [Fact]
+    public void Passing_AllSatisfy_has_no_per_item_allocation()
+    {
+        Assert.Equal(BytesForAllSatisfy(10), BytesForAllSatisfy(1000));
+    }
+
     private static long Bytes(Action call)
     {
         call();

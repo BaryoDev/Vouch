@@ -15,13 +15,17 @@ public sealed class DictionaryAssertions<TKey, TValue>
         if (IsNull)
         {
             Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, but found null.");
-            return default;
+            return new(this, default!);
         }
 
         if (!TryGetValue(expected, out var value))
         {
-            Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, {NotFound(Items)}");
-            return default;
+            if (TryItems(out var items))
+            {
+                Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, {NotFound(items)}");
+            }
+
+            return new(this, default!);
         }
 
         return new(this, value);

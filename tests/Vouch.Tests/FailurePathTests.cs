@@ -219,6 +219,80 @@ public class FailurePathTests
     public void Nested_failure_in_all_satisfy_records_once_and_matches_throwing_path()
         => Same(() => new[] { 1, 2 }.Should().AllSatisfy(x => x.Should().Be(0)));
 
+    // After a recorded failure the returned constraint must be usable: chaining another
+    // failing assertion records a second failure that names the original subject.
+    private static void Chains(string subjectName, Action act)
+    {
+        var recorded = Record(act);
+        Assert.Equal(2, recorded.Count);
+        Assert.Contains(subjectName, recorded[1]);
+    }
+
+    [Fact] public void Chain_object_be_of_type() { object? subjectObject = null; Chains("subjectObject", () => subjectObject.Should().BeOfType<string>().And.NotBeNull()); }
+    [Fact] public void Chain_object_be_assignable_null() { object? subjectObject = null; Chains("subjectObject", () => subjectObject.Should().BeAssignableTo<string>().And.NotBeNull()); }
+    [Fact] public void Chain_object_be_assignable_wrong_type() { object? subjectObject = 1; Chains("subjectObject", () => subjectObject.Should().BeAssignableTo<string>().And.BeNull()); }
+    [Fact] public void Chain_object_match_null() { object? subjectObject = null; Chains("subjectObject", () => subjectObject.Should().Match<string>(s => s.Length == 1).And.NotBeNull()); }
+    [Fact] public void Chain_object_match_wrong_type() { object? subjectObject = 1; Chains("subjectObject", () => subjectObject.Should().Match<string>(s => s.Length == 1).And.BeNull()); }
+
+    [Fact] public void Chain_collection_contain_null() { IEnumerable<int>? subjectItems = null; Chains("subjectItems", () => subjectItems.Should().Contain(1).And.NotBeNull()); }
+    [Fact] public void Chain_collection_contain_missing() { var subjectItems = new[] { 1, 2 }; Chains("subjectItems", () => subjectItems.Should().Contain(5).And.BeEmpty()); }
+    [Fact] public void Chain_collection_contain_predicate_null() { IEnumerable<int>? subjectItems = null; Chains("subjectItems", () => subjectItems.Should().Contain(x => x > 1).And.NotBeNull()); }
+    [Fact] public void Chain_collection_contain_predicate_missing() { var subjectItems = new[] { 1, 2 }; Chains("subjectItems", () => subjectItems.Should().Contain(x => x > 5).And.BeEmpty()); }
+    [Fact] public void Chain_collection_contain_single_null() { IEnumerable<int>? subjectItems = null; Chains("subjectItems", () => subjectItems.Should().ContainSingle().And.NotBeNull()); }
+    [Fact] public void Chain_collection_contain_single_many() { var subjectItems = new[] { 1, 2 }; Chains("subjectItems", () => subjectItems.Should().ContainSingle().And.BeEmpty()); }
+    [Fact] public void Chain_collection_contain_single_predicate_null() { IEnumerable<int>? subjectItems = null; Chains("subjectItems", () => subjectItems.Should().ContainSingle(x => x > 1).And.NotBeNull()); }
+    [Fact] public void Chain_collection_contain_single_predicate_none() { var subjectItems = new[] { 1, 2 }; Chains("subjectItems", () => subjectItems.Should().ContainSingle(x => x > 5).And.BeEmpty()); }
+    [Fact] public void Chain_collection_contain_single_predicate_many() { var subjectItems = new[] { 1, 2 }; Chains("subjectItems", () => subjectItems.Should().ContainSingle(x => x > 0).And.BeEmpty()); }
+
+    [Fact] public void Chain_dictionary_contain_key_null() { Dictionary<string, int>? subjectMap = null; Chains("subjectMap", () => subjectMap.Should().ContainKey("a").And.NotBeNull()); }
+    [Fact] public void Chain_dictionary_contain_key_missing() { var subjectMap = new Dictionary<string, int> { ["a"] = 1 }; Chains("subjectMap", () => subjectMap.Should().ContainKey("b").And.BeEmpty()); }
+
+    [Fact] public void Chain_nullable_int_not_be_null() { int? subjectNumber = null; Chains("subjectNumber", () => subjectNumber.Should().NotBeNull().And.NotBeNull()); }
+    [Fact] public void Chain_nullable_date_time_not_be_null() { DateTime? subjectDate = null; Chains("subjectDate", () => subjectDate.Should().NotBeNull().And.NotBeNull()); }
+    [Fact] public void Chain_nullable_date_time_offset_not_be_null() { DateTimeOffset? subjectDate = null; Chains("subjectDate", () => subjectDate.Should().NotBeNull().And.NotBeNull()); }
+    [Fact] public void Chain_nullable_date_only_not_be_null() { DateOnly? subjectDate = null; Chains("subjectDate", () => subjectDate.Should().NotBeNull().And.NotBeNull()); }
+    [Fact] public void Chain_nullable_bool_not_be_null() { bool? subjectFlag = null; Chains("subjectFlag", () => subjectFlag.Should().NotBeNull().And.NotBeNull()); }
+    [Fact] public void Chain_nullable_value_not_be_null() { Guid? subjectId = null; Chains("subjectId", () => subjectId.Should().NotBeNull().And.NotBeNull()); }
+
+    [Fact]
+    public void All_satisfy_callback_that_chains_after_a_failure_throws_the_assertion_message()
+    {
+        var items = new string?[] { null };
+        var ex = Assert.Throws<VouchException>(() => items.Should().AllSatisfy(s => { s.Should().NotBeNull(); s!.Length.Should().Be(1); }));
+        Assert.Contains("to have all items satisfy the assertion, but 1 did not:", ex.Message);
+        Assert.Contains("[0] Expected s not to be null, but it was.", ex.Message);
+    }
+
+    [Fact]
+    public void All_satisfy_callback_that_chains_after_a_failure_records_once()
+    {
+        var items = new string?[] { null };
+        var recorded = Record(() => items.Should().AllSatisfy(s => { s.Should().NotBeNull(); s!.Length.Should().Be(1); }));
+        Assert.Single(recorded);
+        Assert.Contains("[0] Expected s not to be null, but it was.", recorded[0]);
+    }
+
+    private static IEnumerable<int> Lazy(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            yield return i;
+        }
+    }
+
+    [Fact]
+    public void Over_cap_collection_records_exactly_one_failure()
+    {
+        var over = Equivalency.MaxItems + 1;
+        Assert.Single(Record(() => Lazy(over).Should().HaveCount(1)));
+        Assert.Single(Record(() => Lazy(over).Should().BeEmpty()));
+        Assert.Single(Record(() => Lazy(over).Should().Contain(1)));
+        Assert.Single(Record(() => Lazy(over).Should().ContainSingle()));
+        Assert.Single(Record(() => Lazy(over).Should().Equal(1, 2)));
+        Assert.Single(Record(() => Lazy(over).Should().NotContain(1)));
+        Assert.Throws<VouchException>(() => Lazy(over).Should().HaveCount(1));
+    }
+
     [Fact] public void Equivalency_failure() => Same(() => new Person { Name = "A" }.Should().BeEquivalentTo(new { Name = "B" }));
     [Fact] public void Equivalency_null_subject() => Same(() => ((Person?)null).Should().BeEquivalentTo(new Person { Name = "B" }));
     [Fact] public void Equivalency_collection() => Same(() => new[] { 1, 2 }.Should().BeEquivalentTo(new[] { 1, 3 }));

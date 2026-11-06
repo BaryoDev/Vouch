@@ -59,7 +59,7 @@ public readonly struct ObjectAssertions
         if (Subject is null || Subject.GetType() != typeof(T))
         {
             Fail.With($"Expected {Fail.Name(_expression)} to be of type {Formatter.Format(typeof(T))}, but found {TypeOrNull()}.");
-            return default;
+            return new(this, default!);
         }
 
         return new(this, (T)Subject);
@@ -72,11 +72,11 @@ public readonly struct ObjectAssertions
             if (Subject is null)
             {
                 Fail.With($"Expected {Fail.Name(_expression)} to be assignable to {Formatter.Format(typeof(T))}, but found null.");
-                return default;
+                return new(this, default!);
             }
 
             Fail.With($"Expected {Fail.Name(_expression)} to be assignable to {Formatter.Format(typeof(T))}, but {Formatter.Format(Subject.GetType())} is not.");
-            return default;
+            return new(this, default!);
         }
 
         return new(this, typed);
@@ -270,13 +270,13 @@ public readonly struct ObjectAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Fail.Name(_expression)} to match {predicate.Body}, but found null.");
-            return default;
+            return new(this);
         }
 
         if (Subject is not T typed)
         {
             Fail.With($"Expected {Fail.Name(_expression)} to be of type {Formatter.Format(typeof(T))} matching {predicate.Body}, but found {TypeOrNull()}.");
-            return default;
+            return new(this);
         }
 
         if (!predicate.Compile()(typed))
