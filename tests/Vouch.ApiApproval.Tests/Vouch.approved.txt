@@ -149,6 +149,7 @@ namespace Vouch
     }
     public static class ComparableValueAssertions
     {
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.Half>> BeFinite(this Vouch.ValueAssertions<System.Half> assertions) { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeGreaterThan<T>(this Vouch.ValueAssertions<T> assertions, T expected)
             where T :  struct, System.IComparable<T> { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeGreaterThanOrEqualTo<T>(this Vouch.ValueAssertions<T> assertions, T expected)
@@ -157,7 +158,10 @@ namespace Vouch
             where T :  struct, System.IComparable<T> { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeLessThanOrEqualTo<T>(this Vouch.ValueAssertions<T> assertions, T expected)
             where T :  struct, System.IComparable<T> { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.Half>> BeNaN(this Vouch.ValueAssertions<System.Half> assertions) { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<System.Guid>> NotBeEmpty(this Vouch.ValueAssertions<System.Guid> assertions) { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.Half>> NotBeFinite(this Vouch.ValueAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<System.Half>> NotBeNaN(this Vouch.ValueAssertions<System.Half> assertions) { }
     }
     public readonly struct DateOnlyAssertions
     {
@@ -170,7 +174,13 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> HaveMonth(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> NotBe(System.DateOnly unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateOnlyAssertions> NotHaveYear(int unexpected) { }
     }
     public readonly struct DateTimeAssertions
     {
@@ -184,7 +194,22 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeSameDateAs(System.DateTime expected) { }
+        public Vouch.DateTimeWithin BeWithin(System.TimeSpan timeSpan) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveHour(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveMinute(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveMonth(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveSecond(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotBe(System.DateTime unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotBeSameDateAs(System.DateTime unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveHour(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveMinute(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveSecond(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> NotHaveYear(int unexpected) { }
     }
     public readonly struct DateTimeOffsetAssertions
     {
@@ -198,7 +223,32 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeSameDateAs(System.DateTimeOffset expected) { }
+        public Vouch.DateTimeOffsetWithin BeWithin(System.TimeSpan timeSpan) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveHour(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveMinute(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveMonth(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveSecond(int expected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotBeSameDateAs(System.DateTimeOffset unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveHour(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveMinute(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveSecond(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> NotHaveYear(int unexpected) { }
+    }
+    public readonly struct DateTimeOffsetWithin
+    {
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> After(System.DateTimeOffset target) { }
+        public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> Before(System.DateTimeOffset target) { }
+    }
+    public readonly struct DateTimeWithin
+    {
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> After(System.DateTime target) { }
+        public Vouch.AndConstraint<Vouch.DateTimeAssertions> Before(System.DateTime target) { }
     }
     public sealed class DictionaryAssertions<TKey, TValue> : Vouch.CollectionAssertionsBase<System.Collections.Generic.KeyValuePair<TKey, TValue>, Vouch.DictionaryAssertions<TKey, TValue>>
         where TKey :  notnull
@@ -333,10 +383,12 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> BeNull(string because) { }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> BeTrue() { }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> BeTrue(string because) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableBooleanAssertions, bool> HaveValue() { }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> NotBe(bool unexpected) { }
         public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> NotBe(bool unexpected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.NullableBooleanAssertions, bool> NotBeNull() { }
         public Vouch.AndWhichConstraint<Vouch.NullableBooleanAssertions, bool> NotBeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.NullableBooleanAssertions> NotHaveValue() { }
     }
     public readonly struct NullableDateOnlyAssertions
     {
@@ -350,8 +402,16 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> HaveMonth(int expected) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableDateOnlyAssertions, System.DateOnly> HaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> NotBe(System.DateOnly unexpected) { }
         public Vouch.AndWhichConstraint<Vouch.NullableDateOnlyAssertions, System.DateOnly> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> NotHaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> NotHaveYear(int unexpected) { }
     }
     public readonly struct NullableDateTimeAssertions
     {
@@ -366,8 +426,25 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeSameDateAs(System.DateTime expected) { }
+        public Vouch.NullableDateTimeWithin BeWithin(System.TimeSpan timeSpan) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveHour(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveMinute(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveMonth(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveSecond(int expected) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableDateTimeAssertions, System.DateTime> HaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotBe(System.DateTime unexpected) { }
         public Vouch.AndWhichConstraint<Vouch.NullableDateTimeAssertions, System.DateTime> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotBeSameDateAs(System.DateTime unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveHour(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveMinute(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveSecond(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> NotHaveYear(int unexpected) { }
     }
     public readonly struct NullableDateTimeOffsetAssertions
     {
@@ -382,8 +459,35 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeSameDateAs(System.DateTimeOffset expected) { }
+        public Vouch.NullableDateTimeOffsetWithin BeWithin(System.TimeSpan timeSpan) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveDay(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveHour(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveMinute(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveMonth(int expected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveSecond(int expected) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableDateTimeOffsetAssertions, System.DateTimeOffset> HaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> HaveYear(int expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
         public Vouch.AndWhichConstraint<Vouch.NullableDateTimeOffsetAssertions, System.DateTimeOffset> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotBeSameDateAs(System.DateTimeOffset unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveDay(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveHour(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveMinute(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveMonth(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveSecond(int unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveValue() { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> NotHaveYear(int unexpected) { }
+    }
+    public readonly struct NullableDateTimeOffsetWithin
+    {
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> After(System.DateTimeOffset target) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> Before(System.DateTimeOffset target) { }
+    }
+    public readonly struct NullableDateTimeWithin
+    {
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> After(System.DateTime target) { }
+        public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> Before(System.DateTime target) { }
     }
     public readonly struct NullableGuidAssertions
     {
@@ -418,6 +522,7 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeCloseTo(T expected, T delta) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected) { }
@@ -426,12 +531,25 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeInRange(T min, T max) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeLessThan(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeLessThanOrEqualTo(T expected) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeNegative() { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BePositive() { }
+        public Vouch.AndWhichConstraint<Vouch.NullableNumericAssertions<T>, T> HaveValue() { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBe(T unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBeCloseTo(T unexpected, T delta) { }
         public Vouch.AndWhichConstraint<Vouch.NullableNumericAssertions<T>, T> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotHaveValue() { }
+    }
+    public static class NullableNumericFloatingPointExtensions
+    {
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<System.Half>> BeFinite(this Vouch.NullableNumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<double>> BeFinite(this Vouch.NullableNumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<float>> BeFinite(this Vouch.NullableNumericAssertions<float> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<System.Half>> BeNaN(this Vouch.NullableNumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<double>> BeNaN(this Vouch.NullableNumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NullableNumericAssertions<float>> BeNaN(this Vouch.NullableNumericAssertions<float> assertions) { }
     }
     public readonly struct NullableTimeOnlyAssertions
     {
@@ -449,9 +567,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrBefore(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOneOf(params System.TimeOnly[] validValues) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableTimeOnlyAssertions, System.TimeOnly> HaveValue() { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotBe(System.TimeOnly unexpected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotBe(System.TimeOnly unexpected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.NullableTimeOnlyAssertions, System.TimeOnly> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotHaveValue() { }
     }
     public readonly struct NullableValueAssertions<T>
         where T :  struct
@@ -466,9 +586,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeOneOf(params T[] validValues) { }
+        public Vouch.AndWhichConstraint<Vouch.NullableValueAssertions<T>, T> HaveValue() { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> NotBe(T unexpected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.NullableValueAssertions<T>, T> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> NotHaveValue() { }
     }
     public static class NumericApproximationExtensions
     {
@@ -483,6 +605,8 @@ namespace Vouch
         public T Subject { get; }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeCloseTo(T expected, T delta) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeCloseTo(T expected, T delta, string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThan(T expected) { }
@@ -495,11 +619,30 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeLessThan(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeLessThanOrEqualTo(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeLessThanOrEqualTo(T expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeNegative() { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeNegative(string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BePositive() { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BePositive(string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> NotBe(T unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> NotBeCloseTo(T unexpected, T delta) { }
+        public Vouch.AndConstraint<Vouch.NumericAssertions<T>> NotBeCloseTo(T unexpected, T delta, string because) { }
+    }
+    public static class NumericFloatingPointExtensions
+    {
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<System.Half>> BeFinite(this Vouch.NumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<double>> BeFinite(this Vouch.NumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<float>> BeFinite(this Vouch.NumericAssertions<float> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<System.Half>> BeNaN(this Vouch.NumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<double>> BeNaN(this Vouch.NumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<float>> BeNaN(this Vouch.NumericAssertions<float> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<System.Half>> NotBeFinite(this Vouch.NumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<double>> NotBeFinite(this Vouch.NumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<float>> NotBeFinite(this Vouch.NumericAssertions<float> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<System.Half>> NotBeNaN(this Vouch.NumericAssertions<System.Half> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<double>> NotBeNaN(this Vouch.NumericAssertions<double> assertions) { }
+        public static Vouch.AndConstraint<Vouch.NumericAssertions<float>> NotBeNaN(this Vouch.NumericAssertions<float> assertions) { }
     }
     public readonly struct ObjectAssertions
     {
@@ -547,6 +690,8 @@ namespace Vouch
         public static Vouch.ValueTaskFunctionAssertions Should(this System.Func<System.Threading.Tasks.ValueTask>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.GuidAssertions Should(this System.Guid subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableGuidAssertions Should(this System.Guid? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NumericAssertions<System.Half> Should(this System.Half subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.NullableNumericAssertions<System.Half> Should(this System.Half? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.TimeOnlyAssertions Should(this System.TimeOnly subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableTimeOnlyAssertions Should(this System.TimeOnly? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.BooleanAssertions Should(this bool subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
