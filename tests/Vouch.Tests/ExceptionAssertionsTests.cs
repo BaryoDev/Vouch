@@ -875,4 +875,142 @@ public class ExceptionAssertionsTests
         f.Should().NotThrow();
         Assert.Equal(1, calls);
     }
+
+    // WithInnerException / WithInnerExceptionExactly
+
+    [Fact]
+    public void WithInnerException_passes_and_returns_the_inner_exception()
+    {
+        var inner = new ArgumentException("boom");
+        Action act = () => throw new InvalidOperationException("outer", inner);
+        Assert.Same(inner, act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().Which);
+    }
+
+    [Fact]
+    public void WithInnerException_accepts_a_subtype()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentNullException("p"));
+        act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>();
+    }
+
+    [Fact]
+    public void WithInnerException_chains_WithMessage()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentException("boom"));
+        act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithMessage("boom");
+        Assert.Throws<VouchException>(() => act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithMessage("other"));
+    }
+
+    [Fact]
+    public void WithInnerException_fails_on_a_different_type_with_exact_message()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentException("boom"));
+        Assert.Equal("Expected act's exception to have an inner exception of type FormatException, but found ArgumentException:\n  \"boom\".",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerException<FormatException>()));
+    }
+
+    [Fact]
+    public void WithInnerException_fails_with_no_inner_exception_with_exact_message()
+    {
+        Action act = () => throw new InvalidOperationException("outer");
+        Assert.Equal("Expected act's exception to have an inner exception of type ArgumentException, but found no inner exception.",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>()));
+    }
+
+    [Fact]
+    public void WithInnerException_passes_when_any_of_several_exceptions_matches()
+    {
+        Action act = () => throw new AggregateException(
+            new InvalidOperationException("a", new FormatException("fa")),
+            new InvalidOperationException("b", new ArgumentException("gb")));
+        act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithMessage("gb");
+    }
+
+    [Fact]
+    public void WithInnerException_fails_when_none_of_several_exceptions_matches()
+    {
+        Action act = () => throw new AggregateException(
+            new InvalidOperationException("a", new FormatException("fa")),
+            new InvalidOperationException("b", new ArgumentException("gb")));
+        Assert.Equal("Expected act's exception to have an inner exception of type InvalidCastException, but found FormatException \"fa\" | ArgumentException \"gb\".",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerException<InvalidCastException>()));
+    }
+
+    [Fact]
+    public void WithInnerException_inside_a_scope_records_the_failure_and_returns_a_usable_result()
+    {
+        Action act = () => throw new InvalidOperationException("outer");
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithMessage("x");
+        });
+        Assert.Contains("inner exception of type ArgumentException", ex.Message);
+    }
+
+    [Fact]
+    public void WithInnerExceptionExactly_passes()
+    {
+        var inner = new ArgumentException("boom");
+        Action act = () => throw new InvalidOperationException("outer", inner);
+        Assert.Same(inner, act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>().Which);
+    }
+
+    [Fact]
+    public void WithInnerExceptionExactly_chains_WithMessage()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentException("boom"));
+        act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>().WithMessage("boom");
+    }
+
+    [Fact]
+    public void WithInnerExceptionExactly_rejects_a_subtype_with_exact_message()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new InvalidOperationException("boom"));
+        Assert.Equal("Expected act's exception to have an inner exception of exactly type Exception, but found InvalidOperationException:\n  \"boom\".",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<Exception>()));
+    }
+
+    [Fact]
+    public void WithInnerExceptionExactly_fails_with_no_inner_exception_with_exact_message()
+    {
+        Action act = () => throw new InvalidOperationException("outer");
+        Assert.Equal("Expected act's exception to have an inner exception of exactly type ArgumentException, but found no inner exception.",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>()));
+    }
+
+    [Fact]
+    public void WithInnerExceptionExactly_passes_when_any_of_several_exceptions_matches()
+    {
+        Action act = () => throw new AggregateException(
+            new InvalidOperationException("a", new FormatException("fa")),
+            new InvalidOperationException("b", new ArgumentException("gb")));
+        act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>().WithMessage("gb");
+    }
+
+    [Fact]
+    public void WithInnerException_de_duplicates_a_shared_inner_exception_by_reference()
+    {
+        var shared = new ArgumentException("shared");
+        Action act = () => throw new AggregateException(
+            new InvalidOperationException("a", shared),
+            new InvalidOperationException("b", shared));
+        Assert.Same(shared, act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().Which);
+    }
+
+    [Fact]
+    public void WithInnerException_chained_failure_names_the_inner_exception_without_doubling()
+    {
+        Action act = () => throw new InvalidOperationException("outer", new ArgumentException("boom"));
+        Assert.Equal("Expected act's inner exception to have an inner exception of type FormatException, but found no inner exception.",
+            Msg(() => act.Should().Throw<InvalidOperationException>().WithInnerException<ArgumentException>().WithInnerException<FormatException>()));
+    }
+
+    [Fact]
+    public void WithInnerException_on_an_AggregateException_examines_only_the_first_inner_exception()
+    {
+        Action act = () => throw new AggregateException(new FormatException("first"), new ArgumentException("second"));
+        act.Should().Throw<AggregateException>().WithInnerException<FormatException>();
+        Assert.Throws<VouchException>(() => act.Should().Throw<AggregateException>().WithInnerException<ArgumentException>());
+    }
 }

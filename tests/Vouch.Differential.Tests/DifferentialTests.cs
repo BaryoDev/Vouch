@@ -37,6 +37,8 @@ public class DifferentialTests
             "AwesomeAssertions crashes inside Match<T> on a null subject; both reject it, Vouch says why"),
         ["match on wrong type"] = ("throws InvalidCastException", "fails",
             "AwesomeAssertions crashes inside Match<T> on another type; both reject it, Vouch says why"),
+        ["contain in consecutive order backtracking"] = ("fails", "passes",
+            "[1, 1, 1, 2] holds 1, 1, 2 at positions 1 to 3; AwesomeAssertions does not restart after a partial match"),
     };
 
     [Fact]

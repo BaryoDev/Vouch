@@ -207,6 +207,204 @@ public readonly struct StringAssertions
         return new(this);
     }
 
+    public AndConstraint<StringAssertions> ContainAll(params string[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(values, all: true, negate: false);
+    }
+
+    public AndConstraint<StringAssertions> ContainAll(IEnumerable<string> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(AsList(values), all: true, negate: false);
+    }
+
+    public AndConstraint<StringAssertions> ContainAll(IEnumerable<string> values, string because)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        var list = AsList(values);
+        Reason.Set(because);
+        try
+        {
+            return ContainMany(list, all: true, negate: false);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StringAssertions> ContainAny(params string[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(values, all: false, negate: false);
+    }
+
+    public AndConstraint<StringAssertions> ContainAny(IEnumerable<string> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(AsList(values), all: false, negate: false);
+    }
+
+    public AndConstraint<StringAssertions> ContainAny(IEnumerable<string> values, string because)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        var list = AsList(values);
+        Reason.Set(because);
+        try
+        {
+            return ContainMany(list, all: false, negate: false);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotContainAll(params string[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(values, all: true, negate: true);
+    }
+
+    public AndConstraint<StringAssertions> NotContainAll(IEnumerable<string> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(AsList(values), all: true, negate: true);
+    }
+
+    public AndConstraint<StringAssertions> NotContainAll(IEnumerable<string> values, string because)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        var list = AsList(values);
+        Reason.Set(because);
+        try
+        {
+            return ContainMany(list, all: true, negate: true);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotContainAny(params string[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(values, all: false, negate: true);
+    }
+
+    public AndConstraint<StringAssertions> NotContainAny(IEnumerable<string> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return ContainMany(AsList(values), all: false, negate: true);
+    }
+
+    public AndConstraint<StringAssertions> NotContainAny(IEnumerable<string> values, string because)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        var list = AsList(values);
+        Reason.Set(because);
+        try
+        {
+            return ContainMany(list, all: false, negate: true);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private static IReadOnlyList<string> AsList(IEnumerable<string> values) =>
+        values as IReadOnlyList<string> ?? values.ToArray();
+
+    // all/negate: ContainAll = all+!negate, ContainAny = !all+!negate, NotContainAll = all+negate, NotContainAny = !all+negate.
+    private AndConstraint<StringAssertions> ContainMany(IReadOnlyList<string> values, bool all, bool negate)
+    {
+        if (values.Count == 0)
+        {
+            throw new ArgumentException("At least one value is required.", nameof(values));
+        }
+
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (values[i] is null)
+            {
+                throw new ArgumentException("Values cannot contain null.", nameof(values));
+            }
+
+            if (values[i].Length == 0)
+            {
+                throw new ArgumentException("Values cannot contain an empty string.", nameof(values));
+            }
+        }
+
+        var verb = (all, negate) switch
+        {
+            (true, false) => "to contain all of",
+            (false, false) => "to contain any of",
+            (true, true) => "not to contain all of",
+            _ => "not to contain any of",
+        };
+
+        if (Subject is null)
+        {
+            Fail.With($"Expected {Name} {verb} {Formatter.FormatList(Copy(values))}, but found null.");
+            return new(this);
+        }
+
+        var found = 0;
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (Subject.Contains(values[i], StringComparison.Ordinal))
+            {
+                found++;
+            }
+        }
+
+        var failed = (all, negate) switch
+        {
+            (true, false) => found < values.Count,
+            (false, false) => found == 0,
+            (true, true) => found == values.Count,
+            _ => found > 0,
+        };
+
+        if (!failed)
+        {
+            return new(this);
+        }
+
+        // Missing values are named for the positive forms, found values for the negative ones.
+        var wanted = negate;
+        var named = new List<string>();
+        var seenNamed = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < values.Count; i++)
+        {
+            if (Subject.Contains(values[i], StringComparison.Ordinal) == wanted && seenNamed.Add(values[i]))
+            {
+                named.Add(values[i]);
+            }
+        }
+
+        var detail = negate
+            ? $"but found {Formatter.FormatList(named.ToArray())} in {Formatter.Format(Subject)}"
+            : $"but {(all ? "did not find" : "found none of")} {Formatter.FormatList(named.ToArray())} in {Formatter.Format(Subject)}";
+        Fail.With($"Expected {Name} {verb} {Formatter.FormatList(Copy(values))}, {detail}.");
+        return new(this);
+    }
+
+    private static string[] Copy(IReadOnlyList<string> values)
+    {
+        var copy = new string[values.Count];
+        for (var i = 0; i < copy.Length; i++)
+        {
+            copy[i] = values[i];
+        }
+
+        return copy;
+    }
+
     public AndConstraint<StringAssertions> Match(string wildcardPattern)
     {
         Wildcard.RequirePattern(wildcardPattern, nameof(wildcardPattern));
