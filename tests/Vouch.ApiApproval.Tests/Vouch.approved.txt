@@ -6,9 +6,15 @@ namespace Vouch
         public System.Action? Subject { get; }
         public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrow() { }
         public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrow(string because) { }
+        public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrowAfter(System.TimeSpan waitTime, System.TimeSpan pollInterval) { }
+        public Vouch.AndConstraint<Vouch.ActionAssertions> NotThrowAfter(System.TimeSpan waitTime, System.TimeSpan pollInterval, string because) { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>()
             where TException : System.Exception { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> ThrowExactly<TException>()
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> ThrowExactly<TException>(string because)
             where TException : System.Exception { }
     }
     public readonly struct AndConstraint<TAssertions>
@@ -47,6 +53,14 @@ namespace Vouch
             where TException : System.Exception { }
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
             where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowExactlyAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowExactlyAsync<TException>(string because)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowWithinAsync<TException>(System.TimeSpan timeout)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowWithinAsync<TException>(System.TimeSpan timeout, string because)
+            where TException : System.Exception { }
     }
     public readonly struct AsyncFunctionAssertions<T>
     {
@@ -57,6 +71,14 @@ namespace Vouch
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>()
             where TException : System.Exception { }
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowExactlyAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowExactlyAsync<TException>(string because)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowWithinAsync<TException>(System.TimeSpan timeout)
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowWithinAsync<TException>(System.TimeSpan timeout, string because)
             where TException : System.Exception { }
     }
     public static class AtLeast
@@ -350,12 +372,42 @@ namespace Vouch
             where TInner : System.Exception { }
         public Vouch.ExceptionAssertions<TInner> WithInnerExceptionExactly<TInner>()
             where TInner : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate) { }
+        public Vouch.ExceptionAssertions<TException> Where(System.Linq.Expressions.Expression<System.Func<TException, bool>> predicate, string because) { }
         public Vouch.ExceptionAssertions<TException> WithMessage(string pattern) { }
     }
     public static class ExceptionTaskExtensions
     {
         public static System.Threading.Tasks.Task<Vouch.ExceptionAssertions<T>> WithMessage<T>(this System.Threading.Tasks.Task<Vouch.ExceptionAssertions<T>> task, string pattern)
             where T : System.Exception { }
+    }
+    public readonly struct ExecutionTime
+    {
+        public System.TimeSpan Elapsed { get; }
+        public string? Expression { get; }
+    }
+    public readonly struct ExecutionTimeAssertions
+    {
+        public string? Expression { get; }
+        public Vouch.ExecutionTime Subject { get; }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeCloseTo(System.TimeSpan expected, System.TimeSpan precision) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeCloseTo(System.TimeSpan expected, System.TimeSpan precision, string because) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeGreaterThan(System.TimeSpan limit) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeGreaterThan(System.TimeSpan limit, string because) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeGreaterThanOrEqualTo(System.TimeSpan limit) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeGreaterThanOrEqualTo(System.TimeSpan limit, string because) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeLessThan(System.TimeSpan limit) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeLessThan(System.TimeSpan limit, string because) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeLessThanOrEqualTo(System.TimeSpan limit) { }
+        public Vouch.AndConstraint<Vouch.ExecutionTimeAssertions> BeLessThanOrEqualTo(System.TimeSpan limit, string because) { }
+    }
+    public static class ExecutionTimeExtensions
+    {
+        public static Vouch.ExecutionTime ExecutionTime(this System.Action action, [System.Runtime.CompilerServices.CallerArgumentExpression("action")] string? expression = null) { }
+        public static Vouch.ExecutionTime ExecutionTime(this System.Func<System.Threading.Tasks.Task> action, [System.Runtime.CompilerServices.CallerArgumentExpression("action")] string? expression = null) { }
+        public static Vouch.ExecutionTime ExecutionTimeOf<T>(this T subject, System.Linq.Expressions.Expression<System.Action<T>> action) { }
+        public static Vouch.ExecutionTime ExecutionTimeOf<T>(this T subject, System.Linq.Expressions.Expression<System.Func<T, System.Threading.Tasks.Task>> action) { }
+        public static Vouch.ExecutionTimeAssertions Should(this Vouch.ExecutionTime subject) { }
     }
     public static class FluentActions
     {
@@ -370,9 +422,15 @@ namespace Vouch
         public System.Func<T>? Subject { get; }
         public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow() { }
         public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrow(string because) { }
+        public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrowAfter(System.TimeSpan waitTime, System.TimeSpan pollInterval) { }
+        public Vouch.AndWhichConstraint<Vouch.FunctionAssertions<T>, T> NotThrowAfter(System.TimeSpan waitTime, System.TimeSpan pollInterval, string because) { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>()
             where TException : System.Exception { }
         public Vouch.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> ThrowExactly<TException>()
+            where TException : System.Exception { }
+        public Vouch.ExceptionAssertions<TException> ThrowExactly<TException>(string because)
             where TException : System.Exception { }
     }
     public sealed class GenericCollectionAssertions<T> : Vouch.CollectionAssertionsBase<T, Vouch.GenericCollectionAssertions<T>> { }
@@ -734,6 +792,8 @@ namespace Vouch
         public static Vouch.NullableGuidAssertions Should(this System.Guid? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NumericAssertions<System.Half> Should(this System.Half subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableNumericAssertions<System.Half> Should(this System.Half? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.StreamAssertions Should(this System.IO.Stream? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.TaskAssertions Should(this System.Threading.Tasks.Task? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.TimeOnlyAssertions Should(this System.TimeOnly subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.NullableTimeOnlyAssertions Should(this System.TimeOnly? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.BooleanAssertions Should(this bool subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
@@ -768,12 +828,61 @@ namespace Vouch
         public static Vouch.AsyncFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.Task<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueTaskFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.ValueTask<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.FunctionAssertions<T> Should<T>(this System.Func<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Vouch.TaskAssertions<T> Should<T>(this System.Threading.Tasks.Task<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
         public static Vouch.ValueAssertions<T> Should<T>(this T subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
             where T :  struct { }
         public static Vouch.NullableValueAssertions<T> Should<T>(this T? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
             where T :  struct { }
         public static Vouch.DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
             where TKey :  notnull { }
+    }
+    public readonly struct StreamAssertions
+    {
+        public string? Expression { get; }
+        public System.IO.Stream? Subject { get; }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> Be(object? expected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> Be(object? expected, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeAssignableTo<T>() { }
+        public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeAssignableTo<T>(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeNull() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeOfType(System.Type expectedType) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeOfType(System.Type expectedType, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeOfType<T>() { }
+        public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeOfType<T>(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeOneOf(params object?[] validValues) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeReadable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeReadable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeSameAs(object? expected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeSeekable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeSeekable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeWritable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> BeWritable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> HaveLength(long expected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> HaveLength(long expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> HavePosition(long expected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> HavePosition(long expected, string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> Match<T>(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> Match<T>(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBe(object? unexpected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBe(object? unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeAssignableTo<T>() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeOfType<T>() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeReadable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeReadable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeSameAs(object? unexpected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeSeekable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeSeekable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeWritable() { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotBeWritable(string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotHaveLength(long unexpected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotHaveLength(long unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotHavePosition(long unexpected) { }
+        public Vouch.AndConstraint<Vouch.StreamAssertions> NotHavePosition(long unexpected, string because) { }
     }
     public readonly struct StringAssertions
     {
@@ -879,6 +988,70 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWith(string expected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWithEquivalentOf(string expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> StartWithEquivalentOf(string expected, string because) { }
+    }
+    public readonly struct TaskAssertions
+    {
+        public string? Expression { get; }
+        public System.Threading.Tasks.Task? Subject { get; }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> Be(object? expected) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> Be(object? expected, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeAssignableTo<TType>() { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeAssignableTo<TType>(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeNull() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeOfType(System.Type expectedType) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeOfType(System.Type expectedType, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeOfType<TType>() { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeOfType<TType>(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeOneOf(params object?[] validValues) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> BeSameAs(object? expected) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions>> CompleteWithinAsync(System.TimeSpan timeout) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions>> CompleteWithinAsync(System.TimeSpan timeout, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> Match<TType>(System.Linq.Expressions.Expression<System.Func<TType, bool>> predicate) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> Match<TType>(System.Linq.Expressions.Expression<System.Func<TType, bool>> predicate, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBe(object? unexpected) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBe(object? unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBeAssignableTo<TType>() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBeOfType<TType>() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions> NotBeSameAs(object? unexpected) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions>> NotCompleteWithinAsync(System.TimeSpan timeout) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions>> NotCompleteWithinAsync(System.TimeSpan timeout, string because) { }
+    }
+    public readonly struct TaskAssertions<T>
+    {
+        public string? Expression { get; }
+        public System.Threading.Tasks.Task<T>? Subject { get; }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> Be(object? expected) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> Be(object? expected, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeAssignableTo<TType>() { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeAssignableTo<TType>(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeNull() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeOfType(System.Type expectedType) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeOfType(System.Type expectedType, string because) { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeOfType<TType>() { }
+        public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeOfType<TType>(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeOneOf(params object?[] validValues) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeSameAs(object? expected) { }
+        public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, T>> CompleteWithinAsync(System.TimeSpan timeout) { }
+        public System.Threading.Tasks.Task<Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, T>> CompleteWithinAsync(System.TimeSpan timeout, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> Match<TType>(System.Linq.Expressions.Expression<System.Func<TType, bool>> predicate) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> Match<TType>(System.Linq.Expressions.Expression<System.Func<TType, bool>> predicate, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBe(object? unexpected) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBe(object? unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBeAssignableTo<TType>() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBeNull() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBeNull(string because) { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBeOfType<TType>() { }
+        public Vouch.AndConstraint<Vouch.TaskAssertions<T>> NotBeSameAs(object? unexpected) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions<T>>> NotCompleteWithinAsync(System.TimeSpan timeout) { }
+        public System.Threading.Tasks.Task<Vouch.AndConstraint<Vouch.TaskAssertions<T>>> NotCompleteWithinAsync(System.TimeSpan timeout, string because) { }
     }
     public readonly struct TimeOnlyAssertions
     {
