@@ -19,6 +19,21 @@ public class AllocationTests
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
     }
 
+    private sealed class NoopFormatter : Vouch.Sdk.IValueFormatter
+    {
+        public bool CanHandle(object? value) => true;
+        public string Format(object? value, Vouch.Sdk.FormattingContext context) => "x";
+    }
+
+    [Fact]
+    public void Passing_assertion_with_a_registered_formatter()
+    {
+        var formatter = new NoopFormatter();
+        Vouch.Sdk.VouchConfiguration.Formatters.Add(formatter);
+        try { var n = 5; AssertNoAllocation(() => n.Should().Be(5)); }
+        finally { Vouch.Sdk.VouchConfiguration.Formatters.Remove(formatter); }
+    }
+
     [Fact] public void Int_Be() { var n = 5; AssertNoAllocation(() => n.Should().Be(5)); }
 
     [Fact] public void Passing_assertion_inside_scope() { var n = 5; using var scope = new AssertionScope(); AssertNoAllocation(() => n.Should().Be(5)); }

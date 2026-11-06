@@ -3,13 +3,16 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Vouch.Sdk;
 
 namespace Vouch;
 
 internal static class Formatter
 {
-    public const int MaxDepth = 3;
-    public const int MaxItems = 10;
+    private const int HardDepthLimit = 100;
+
+    public static int MaxDepth => VouchConfiguration.Formatting.MaxDepth;
+    public static int MaxItems => VouchConfiguration.Formatting.MaxItems;
     public const int MaxStringLength = 200;
 
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
@@ -29,11 +32,102 @@ internal static class Formatter
             return $"<threw {ex.GetType().Name}>";
         }
 
-        return sb.ToString();
+        return LimitLines(sb.ToString());
+    }
+
+    internal static void WriteNested(StringBuilder sb, object? value, int depth, HashSet<object> path) =>
+        Write(sb, value, depth, path);
+
+    private static string LimitLines(string text)
+    {
+        var max = VouchConfiguration.Formatting.MaxLines;
+        if (max == int.MaxValue)
+        {
+            return text;
+        }
+
+        var lines = 1;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] != '\n')
+            {
+                continue;
+            }
+
+            if (lines == max)
+            {
+                var rest = 1;
+                for (var j = i + 1; j < text.Length; j++)
+                {
+                    if (text[j] == '\n')
+                    {
+                        rest++;
+                    }
+                }
+
+                return text.Substring(0, i) + "\n... (" + rest + " more lines)";
+            }
+
+            lines++;
+        }
+
+        return text;
+    }
+
+    private static bool TryWriteCustom(StringBuilder sb, object? value, int depth, HashSet<object> path)
+    {
+        var formatters = VouchConfiguration.Formatters.Snapshot;
+        if (formatters.Length == 0 || depth >= HardDepthLimit)
+        {
+            return false;
+        }
+
+        // A formatter that formats its own value again must not recurse forever: the second visit skips custom formatters.
+        var tracked = value is not null && !value.GetType().IsValueType;
+        if (tracked && !path.Add(value!))
+        {
+            return false;
+        }
+
+        try
+        {
+            foreach (var formatter in formatters)
+            {
+                if (!formatter.CanHandle(value))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    sb.Append(formatter.Format(value, new FormattingContext(depth, path)));
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    sb.Append("<threw ").Append(ex.GetType().Name).Append('>');
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            if (tracked)
+            {
+                path.Remove(value!);
+            }
+        }
     }
 
     private static void Write(StringBuilder sb, object? value, int depth, HashSet<object> path)
     {
+        if (TryWriteCustom(sb, value, depth, path))
+        {
+            return;
+        }
+
         switch (value)
         {
             case null: sb.Append("null"); return;

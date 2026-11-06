@@ -17,4 +17,46 @@ public static class VouchConfiguration
         get => s_factory ?? DefaultFactory;
         set => s_factory = value;
     }
+
+    private static readonly Dictionary<System.Reflection.Assembly, List<IValueFormatter>> Scanned = new();
+
+    /// <summary>
+    /// Custom formatters, tried before the built-in rules, most recently added first.
+    /// Thread-safe. Formatters run only on the failure path.
+    /// </summary>
+    public static ValueFormatterCollection Formatters { get; } = new();
+
+    /// <summary>Limits for values written into failure messages.</summary>
+    public static FormattingOptions Formatting { get; } = new();
+
+    /// <summary>
+    /// Registers every public static method marked <see cref="ValueFormatterAttribute"/> in the assembly.
+    /// The assembly is scanned once; calling again only re-registers formatters that were removed.
+    /// Scanning is explicit, never over every loaded assembly, so startup cost and surprises stay with the caller.
+    /// Returns how many formatters were newly registered.
+    /// </summary>
+    public static int AddFormattersFrom(System.Reflection.Assembly assembly)
+    {
+        ArgumentNullException.ThrowIfNull(assembly);
+        List<IValueFormatter> found;
+        lock (Scanned)
+        {
+            if (!Scanned.TryGetValue(assembly, out found!))
+            {
+                Scanned[assembly] = found = MethodValueFormatter.Scan(assembly);
+            }
+        }
+
+        var added = 0;
+        foreach (var formatter in found)
+        {
+            if (!Formatters.Contains(formatter))
+            {
+                Formatters.Add(formatter);
+                added++;
+            }
+        }
+
+        return added;
+    }
 }
