@@ -229,6 +229,10 @@ public static class VouchCases
         ["string not end with other"] = () => "abc".Should().NotEndWith("x"),
         ["string not end with matching"] = () => "abc".Should().NotEndWith("bc"),
         ["string not end with because"] = () => "abc".Should().NotEndWith("bc", "reason"),
+        ["string contain all one missing"] = () => "abc".Should().ContainAll("a", "x"),
+        ["string contain any none present"] = () => "abc".Should().ContainAny("x", "y"),
+        ["string not contain all all present"] = () => "abc".Should().NotContainAll("a", "b"),
+        ["string not contain any one present"] = () => "abc".Should().NotContainAny("x", "a"),
         ["string match equivalent of other case"] = () => "abc".Should().MatchEquivalentOf("A?C"),
         ["string match equivalent of absent"] = () => "abc".Should().MatchEquivalentOf("x*"),
         ["string not match equivalent of other case"] = () => "abc".Should().NotMatchEquivalentOf("A*"),
@@ -360,6 +364,20 @@ public static class VouchCases
         ["contain with reason present"] = () => new List<string> { "a" }.Should().Contain("a", "b"),
         ["contain with reason both present"] = () => new List<string> { "a", "b" }.Should().Contain("a", "b"),
         ["contain with reason absent"] = () => new List<string> { "x" }.Should().Contain("a", "b"),
+        ["all be equivalent to one differs"] = () => new List<int> { 1, 2 }.Should().AllBeEquivalentTo(1),
+        ["all be equivalent to with options"] = () => new List<Person> { new("a", 1), new("a", 2) }.Should().AllBeEquivalentTo(new Person("a", 9), o => o.Excluding(p => p.Age)),
+        ["contain in order wrong order"] = () => new List<int> { 1, 2, 3 }.Should().ContainInOrder(3, 1),
+        ["contain in consecutive order apart"] = () => new List<int> { 1, 2, 3 }.Should().ContainInConsecutiveOrder(1, 3),
+        ["throw with inner exception other type"] = () =>
+        {
+            Action act = Throws.Of(new InvalidOperationException("x", new ArgumentException("y")));
+            act.Should().Throw<InvalidOperationException>().WithInnerException<FormatException>();
+        },
+        ["throw with inner exception exactly subtype"] = () =>
+        {
+            Action act = Throws.Of(new InvalidOperationException("x", new ArgumentNullException("p")));
+            act.Should().Throw<InvalidOperationException>().WithInnerExceptionExactly<ArgumentException>();
+        },
 
         ["be close to int"] = () => 5.Should().BeCloseTo(7, 2),
         ["be close to int outside"] = () => 5.Should().BeCloseTo(9, 2),

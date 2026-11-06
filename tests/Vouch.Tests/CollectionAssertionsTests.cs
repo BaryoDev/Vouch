@@ -305,4 +305,48 @@ public class CollectionAssertionsTests
     [Fact] public void BeInAscendingOrder_by_comparer_null_throws_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { "a" }.Should().BeInAscendingOrder((IComparer<string>)null!)); }
     [Fact] public void BeInDescendingOrder_by_comparer_passes_and_fails() { new[] { "c", "B", "a" }.Should().BeInDescendingOrder(StringComparer.OrdinalIgnoreCase); var xs = new[] { "a", "b" }; Assert.Equal("Expected xs to be in descending order, but [1] \"b\" comes after [0] \"a\".", Message(() => xs.Should().BeInDescendingOrder(StringComparer.Ordinal))); }
     [Fact] public void BeInDescendingOrder_by_comparer_null_throws_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { "a" }.Should().BeInDescendingOrder((IComparer<string>)null!)); }
+
+    // AllBeEquivalentTo
+
+    [Fact] public void AllBeEquivalentTo_passes() => new[] { 1, 1 }.Should().AllBeEquivalentTo(1);
+    [Fact] public void AllBeEquivalentTo_passes_on_empty() => new int[0].Should().AllBeEquivalentTo(1);
+    [Fact] public void AllBeEquivalentTo_fails() => Assert.Throws<VouchException>(() => new[] { 1, 2 }.Should().AllBeEquivalentTo(1));
+    [Fact] public void AllBeEquivalentTo_message() { var xs = new[] { 1, 2, 1, 3 }; Assert.Equal("Expected xs to have all items equivalent to 1, but 2 did not:\n  [1] 2\n  [3] 3", Message(() => xs.Should().AllBeEquivalentTo(1))); }
+    [Fact]
+    public void AllBeEquivalentTo_cuts_at_ten()
+    {
+        var xs = Enumerable.Repeat(2, 15).ToArray();
+        var msg = Message(() => xs.Should().AllBeEquivalentTo(1));
+        Assert.Contains("but 15 did not:", msg);
+        Assert.EndsWith("\n  ... (5 more)", msg);
+    }
+    [Fact] public void AllBeEquivalentTo_fails_on_null() { List<int>? xs = null; Assert.Equal("Expected xs to have all items equivalent to 1, but found null.", Message(() => xs.Should().AllBeEquivalentTo(1))); }
+    [Fact] public void AllBeEquivalentTo_with_options_passes() { var rows = new[] { new Row("A", 1), new Row("A", 2) }; rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty)); }
+    [Fact] public void AllBeEquivalentTo_with_options_fails() { var rows = new[] { new Row("A", 1), new Row("B", 2) }; Assert.Throws<VouchException>(() => rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty))); }
+    [Fact] public void AllBeEquivalentTo_with_options_message() { var rows = new[] { new Row("A", 1), new Row("B", 2) }; Assert.Equal("Expected rows to have all items equivalent to Row { Code = \"A\", Qty = 9 }, but 1 did not:\n  [1] Row { Code = \"B\", Qty = 2 }", Message(() => rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty)))); }
+    [Fact] public void AllBeEquivalentTo_with_options_fails_on_null() { Row[]? rows = null; Assert.Equal("Expected rows to have all items equivalent to Row { Code = \"A\", Qty = 9 }, but found null.", Message(() => rows.Should().AllBeEquivalentTo(new Row("A", 9), o => o.Excluding(r => r.Qty)))); }
+    [Fact] public void AllBeEquivalentTo_takes_a_reason() { var xs = new[] { 2 }; Assert.Contains("Because why.", Message(() => xs.Should().AllBeEquivalentTo(1, "why"))); }
+
+    // ContainInOrder
+
+    [Fact] public void ContainInOrder_passes() => new[] { 1, 2, 3, 4 }.Should().ContainInOrder(1, 3, 4);
+    [Fact] public void ContainInOrder_passes_with_a_sequence() => new[] { 1, 2, 3, 4 }.Should().ContainInOrder(new List<int> { 2, 4 });
+    [Fact] public void ContainInOrder_passes_for_an_empty_expectation() => new[] { 1 }.Should().ContainInOrder();
+    [Fact] public void ContainInOrder_fails_when_the_order_is_wrong() => Assert.Throws<VouchException>(() => new[] { 1, 2, 3 }.Should().ContainInOrder(3, 1));
+    [Fact] public void ContainInOrder_message_for_a_missing_item() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain [5] in order, but 5 (item 0 of the expected items) was not found at all. It has:\n  [0] 1\n  [1] 2", Message(() => xs.Should().ContainInOrder(5))); }
+    [Fact] public void ContainInOrder_message_for_a_wrong_order() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to contain [1, 3, 2] in order, but 2 (item 2 of the expected items) was not found after index 2. It has:\n  [0] 1\n  [1] 2\n  [2] 3", Message(() => xs.Should().ContainInOrder(1, 3, 2))); }
+    [Fact] public void ContainInOrder_fails_on_null() { List<int>? xs = null; Assert.Equal("Expected xs to contain [1] in order, but found null.", Message(() => xs.Should().ContainInOrder(1))); }
+    [Fact] public void ContainInOrder_takes_a_reason() { var xs = new int[0]; Assert.Equal("Expected xs to contain [1] in order, but 1 (item 0 of the expected items) was not found at all. Because why.", Message(() => xs.Should().ContainInOrder(new List<int> { 1 }, "why"))); }
+    [Fact] public void ContainInOrder_null_expectation_throws() { var xs = new[] { 1 }; Assert.Throws<ArgumentNullException>(() => xs.Should().ContainInOrder((IEnumerable<int>)null!)); }
+
+    // ContainInConsecutiveOrder
+
+    [Fact] public void ContainInConsecutiveOrder_passes() => new[] { 1, 2, 3, 4 }.Should().ContainInConsecutiveOrder(2, 3);
+    [Fact] public void ContainInConsecutiveOrder_passes_with_a_sequence() => new[] { 1, 2, 3, 4 }.Should().ContainInConsecutiveOrder(new List<int> { 3, 4 });
+    [Fact] public void ContainInConsecutiveOrder_passes_for_an_empty_expectation() => new[] { 1 }.Should().ContainInConsecutiveOrder();
+    [Fact] public void ContainInConsecutiveOrder_fails_when_items_are_apart() => Assert.Throws<VouchException>(() => new[] { 1, 2, 3 }.Should().ContainInConsecutiveOrder(1, 3));
+    [Fact] public void ContainInConsecutiveOrder_message() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to contain [1, 3] in consecutive order, but it did not. It has:\n  [0] 1\n  [1] 2\n  [2] 3", Message(() => xs.Should().ContainInConsecutiveOrder(1, 3))); }
+    [Fact] public void ContainInConsecutiveOrder_fails_on_null() { List<int>? xs = null; Assert.Equal("Expected xs to contain [1] in consecutive order, but found null.", Message(() => xs.Should().ContainInConsecutiveOrder(1))); }
+    [Fact] public void ContainInConsecutiveOrder_takes_a_reason() { var xs = new int[0]; Assert.Equal("Expected xs to contain [1] in consecutive order, but it did not. Because why.", Message(() => xs.Should().ContainInConsecutiveOrder(new List<int> { 1 }, "why"))); }
+    [Fact] public void ContainInConsecutiveOrder_null_expectation_throws() { var xs = new[] { 1 }; Assert.Throws<ArgumentNullException>(() => xs.Should().ContainInConsecutiveOrder((IEnumerable<int>)null!)); }
 }

@@ -844,6 +844,159 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) =>
+        AllEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
+        AllEquivalent(expectation, Equivalency.Options(configure));
+
+    public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return AllBeEquivalentTo(expectation);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndConstraint<TSelf> AllEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        if (IsNull)
+        {
+            return FailNull($"to have all items equivalent to {Formatter.Format(expectation)}");
+        }
+
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
+        List<int>? failing = null;
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (!Equivalency.AreEquivalent(items[i], expectation, options))
+            {
+                (failing ??= []).Add(i);
+            }
+        }
+
+        if (failing is not null)
+        {
+            Fail.With($"Expected {Name} to have all items equivalent to {Formatter.Format(expectation)}, but {failing.Count} did not{Listing(items, failing)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> ContainInOrder(params T[] expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        return InOrderCore(expected, consecutive: false);
+    }
+
+    public AndConstraint<TSelf> ContainInOrder(IEnumerable<T> expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        return InOrderCore(Materialise(expected), consecutive: false);
+    }
+
+    public AndConstraint<TSelf> ContainInOrder(IEnumerable<T> expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainInOrder(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<TSelf> ContainInConsecutiveOrder(params T[] expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        return InOrderCore(expected, consecutive: true);
+    }
+
+    public AndConstraint<TSelf> ContainInConsecutiveOrder(IEnumerable<T> expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        return InOrderCore(Materialise(expected), consecutive: true);
+    }
+
+    public AndConstraint<TSelf> ContainInConsecutiveOrder(IEnumerable<T> expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return ContainInConsecutiveOrder(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndConstraint<TSelf> InOrderCore(IReadOnlyList<T> expected, bool consecutive)
+    {
+        if (IsNull)
+        {
+            return FailNull($"to contain {Formatter.Format(expected)} in {(consecutive ? "consecutive " : "")}order");
+        }
+
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
+        var comparer = EqualityComparer<T>.Default;
+        if (consecutive)
+        {
+            for (var start = 0; start + expected.Count <= items.Count; start++)
+            {
+                var matches = true;
+                for (var j = 0; matches && j < expected.Count; j++)
+                {
+                    matches = comparer.Equals(items[start + j], expected[j]);
+                }
+
+                if (matches)
+                {
+                    return And();
+                }
+            }
+
+            Fail.With($"Expected {Name} to contain {Formatter.Format(expected)} in consecutive order, but it did not.{HasTail(items)}");
+            return And();
+        }
+
+        var position = -1;
+        for (var j = 0; j < expected.Count; j++)
+        {
+            var next = position + 1;
+            while (next < items.Count && !comparer.Equals(items[next], expected[j]))
+            {
+                next++;
+            }
+
+            if (next >= items.Count)
+            {
+                var where = position < 0 ? "at all" : $"after index {position}";
+                Fail.With($"Expected {Name} to contain {Formatter.Format(expected)} in order, but {Formatter.Format(expected[j])} (item {j} of the expected items) was not found {where}.{HasTail(items)}");
+                return And();
+            }
+
+            position = next;
+        }
+
+        return And();
+    }
+
     public AndConstraint<TSelf> NotIntersectWith(IEnumerable<T> other)
     {
         ArgumentNullException.ThrowIfNull(other);

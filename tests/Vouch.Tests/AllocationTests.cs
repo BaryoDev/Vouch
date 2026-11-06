@@ -423,4 +423,26 @@ public class AllocationTests
         other["c"] = 4;
         AssertAssertionAllocatesNothing(Dict(), a => a.NotEqual(other));
     }
+
+    [Fact] public void String_ContainAll() { var s = "abc"; var values = new[] { "a", "c" }; AssertNoAllocation(() => s.Should().ContainAll(values)); }
+
+    [Fact] public void String_ContainAny() { var s = "abc"; var values = new[] { "x", "c" }; AssertNoAllocation(() => s.Should().ContainAny(values)); }
+
+    [Fact] public void String_NotContainAll() { var s = "abc"; var values = new[] { "a", "x" }; AssertNoAllocation(() => s.Should().NotContainAll(values)); }
+
+    [Fact] public void String_NotContainAny() { var s = "abc"; var values = new[] { "x", "y" }; AssertNoAllocation(() => s.Should().NotContainAny(values)); }
+
+    [Fact]
+    public void Collection_ContainInOrder()
+    {
+        var expected = new[] { 1, 3, 5 };
+        AssertNoCopy(new[] { 1, 2, 3, 4, 5 }, a => a.ContainInOrder(expected));
+    }
+
+    [Fact]
+    public void Collection_ContainInConsecutiveOrder()
+    {
+        var expected = new[] { 3, 4 };
+        AssertNoCopy(new[] { 1, 2, 3, 4, 5 }, a => a.ContainInConsecutiveOrder(expected));
+    }
 }

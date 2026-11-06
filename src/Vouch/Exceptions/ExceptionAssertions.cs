@@ -68,4 +68,45 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
         Fail.With($"Expected {_name}'s exception message to match {Formatter.Format(pattern)}, but found {Formatter.Format(found)}.");
         return this;
     }
+
+    /// <summary>Asserts the exception has an inner exception of type <typeparamref name="TInner"/> or a subtype.</summary>
+    /// <remarks>If several exceptions matched, it passes when any of them has such an inner exception, as WithMessage does, and the result holds those inner exceptions.</remarks>
+    public ExceptionAssertions<TInner> WithInnerException<TInner>() where TInner : Exception => Inner<TInner>(exactly: false);
+
+    /// <summary>Asserts the exception has an inner exception of exactly type <typeparamref name="TInner"/>.</summary>
+    /// <remarks>If several exceptions matched, it passes when any of them has such an inner exception, as WithMessage does, and the result holds those inner exceptions.</remarks>
+    public ExceptionAssertions<TInner> WithInnerExceptionExactly<TInner>() where TInner : Exception => Inner<TInner>(exactly: true);
+
+    private ExceptionAssertions<TInner> Inner<TInner>(bool exactly) where TInner : Exception
+    {
+        var innerName = $"{_name}'s inner exception";
+        if (_matches.Count == 0)
+        {
+            return new ExceptionAssertions<TInner>([], innerName);
+        }
+
+        List<TInner>? found = null;
+        foreach (var match in _matches)
+        {
+            if (match.InnerException is TInner inner && (!exactly || inner.GetType() == typeof(TInner)))
+            {
+                (found ??= []).Add(inner);
+            }
+        }
+
+        if (found is not null)
+        {
+            return new ExceptionAssertions<TInner>(found, innerName);
+        }
+
+        string Describe(Exception match) => match.InnerException is { } other
+            ? _matches.Count == 1
+                ? $"{Formatter.TypeName(other.GetType())}:\n  {Formatter.Format(other.Message)}"
+                : $"{Formatter.TypeName(other.GetType())} {Formatter.Format(other.Message)}"
+            : "no inner exception";
+
+        var actual = _matches.Count == 1 ? Describe(_matches[0]) : string.Join(" | ", _matches.Select(Describe));
+        Fail.With($"Expected {_name}'s exception to have an inner exception of {(exactly ? "exactly " : "")}type {Formatter.TypeName(typeof(TInner))}, but found {actual}.");
+        return new ExceptionAssertions<TInner>([], innerName);
+    }
 }

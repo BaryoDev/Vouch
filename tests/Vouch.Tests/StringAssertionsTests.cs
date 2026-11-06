@@ -376,4 +376,41 @@ public class StringAssertionsTests
     }
 
     [Fact] public void MatchRegex_invalid_options_propagate() { var s = "a"; Assert.Throws<ArgumentOutOfRangeException>(() => s.Should().MatchRegex("a", (RegexOptions)(-1))); }
+
+    // ContainAll / ContainAny / NotContainAll / NotContainAny
+
+    [Fact] public void ContainAll_passes() { var s = "abc"; s.Should().ContainAll("a", "c"); }
+    [Fact] public void ContainAll_passes_with_a_sequence() { var s = "abc"; s.Should().ContainAll(new List<string> { "a", "b" }.Select(x => x)); }
+    [Fact] public void ContainAll_fails() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().ContainAll("a", "x")); }
+    [Fact] public void ContainAll_is_ordinal() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().ContainAll("A")); }
+    [Fact] public void ContainAll_message() { var s = "abc"; Assert.Equal("Expected s to contain all of [\"a\", \"x\", \"y\"], but did not find [\"x\", \"y\"] in \"abc\".", Message(() => s.Should().ContainAll("a", "x", "y"))); }
+    [Fact] public void ContainAll_message_with_a_sequence() { var s = "abc"; Assert.Equal("Expected s to contain all of [\"a\", \"x\"], but did not find [\"x\"] in \"abc\".", Message(() => s.Should().ContainAll(new List<string> { "a", "x" }.Select(x => x)))); }
+    [Fact] public void ContainAll_fails_on_null() { string? s = null; Assert.Equal("Expected s to contain all of [\"a\"], but found null.", Message(() => s.Should().ContainAll("a"))); }
+    [Fact] public void ContainAll_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s to contain all of [\"x\"], but did not find [\"x\"] in \"abc\". Because why.", Message(() => s.Should().ContainAll(new[] { "x" }.AsEnumerable(), "why"))); }
+    [Fact] public void ContainAll_rejects_no_values() { var s = "abc"; Assert.Throws<ArgumentException>(() => s.Should().ContainAll()); }
+    [Fact] public void ContainAll_rejects_a_null_value() { var s = "abc"; Assert.Throws<ArgumentException>(() => s.Should().ContainAll("a", null!)); }
+    [Fact] public void ContainAll_rejects_an_empty_value() { var s = "abc"; Assert.Throws<ArgumentException>(() => s.Should().ContainAll("a", "")); }
+
+    [Fact] public void ContainAny_passes() { var s = "abc"; s.Should().ContainAny("x", "c"); }
+    [Fact] public void ContainAny_passes_with_a_sequence() { var s = "abc"; s.Should().ContainAny(new List<string> { "x", "b" }.Select(x => x)); }
+    [Fact] public void ContainAny_fails() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().ContainAny("x", "y")); }
+    [Fact] public void ContainAny_is_ordinal() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().ContainAny("A", "B")); }
+    [Fact] public void ContainAny_message() { var s = "abc"; Assert.Equal("Expected s to contain any of [\"x\", \"y\"], but found none of [\"x\", \"y\"] in \"abc\".", Message(() => s.Should().ContainAny("x", "y"))); }
+    [Fact] public void ContainAny_fails_on_null() { string? s = null; Assert.Equal("Expected s to contain any of [\"a\"], but found null.", Message(() => s.Should().ContainAny("a"))); }
+    [Fact] public void ContainAny_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s to contain any of [\"x\"], but found none of [\"x\"] in \"abc\". Because why.", Message(() => s.Should().ContainAny(new[] { "x" }.AsEnumerable(), "why"))); }
+    [Fact] public void ContainAny_rejects_no_values() { var s = "abc"; Assert.Throws<ArgumentException>(() => s.Should().ContainAny()); }
+
+    [Fact] public void NotContainAll_passes() { var s = "abc"; s.Should().NotContainAll("a", "x"); }
+    [Fact] public void NotContainAll_passes_with_a_sequence() { var s = "abc"; s.Should().NotContainAll(new List<string> { "a", "x" }.Select(x => x)); }
+    [Fact] public void NotContainAll_fails() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().NotContainAll("a", "b")); }
+    [Fact] public void NotContainAll_message() { var s = "abc"; Assert.Equal("Expected s not to contain all of [\"a\", \"b\"], but found [\"a\", \"b\"] in \"abc\".", Message(() => s.Should().NotContainAll("a", "b"))); }
+    [Fact] public void NotContainAll_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain all of [\"a\"], but found null.", Message(() => s.Should().NotContainAll("a"))); }
+    [Fact] public void NotContainAll_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s not to contain all of [\"a\"], but found [\"a\"] in \"abc\". Because why.", Message(() => s.Should().NotContainAll(new[] { "a" }.AsEnumerable(), "why"))); }
+
+    [Fact] public void NotContainAny_passes() { var s = "abc"; s.Should().NotContainAny("x", "y"); }
+    [Fact] public void NotContainAny_passes_with_a_sequence() { var s = "abc"; s.Should().NotContainAny(new List<string> { "x", "y" }.Select(x => x)); }
+    [Fact] public void NotContainAny_fails() { var s = "abc"; Assert.Throws<VouchException>(() => s.Should().NotContainAny("x", "a")); }
+    [Fact] public void NotContainAny_message() { var s = "abc"; Assert.Equal("Expected s not to contain any of [\"a\", \"x\"], but found [\"a\"] in \"abc\".", Message(() => s.Should().NotContainAny("a", "x"))); }
+    [Fact] public void NotContainAny_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain any of [\"a\"], but found null.", Message(() => s.Should().NotContainAny("a"))); }
+    [Fact] public void NotContainAny_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s not to contain any of [\"a\"], but found [\"a\"] in \"abc\". Because why.", Message(() => s.Should().NotContainAny(new[] { "a" }.AsEnumerable(), "why"))); }
 }
