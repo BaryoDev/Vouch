@@ -89,6 +89,10 @@ namespace Vouch
     {
         public string? Expression { get; }
         public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
         public Vouch.AndConstraint<TSelf> BeEmpty() { }
         public Vouch.AndConstraint<TSelf> BeEmpty(string because) { }
@@ -116,6 +120,14 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(T expected, string because) { }
+        public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(params T[] expected) { }
+        public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected, string because) { }
+        public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(T[] expected, string because) { }
+        public Vouch.AndConstraint<TSelf> ContainInOrder(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Vouch.AndConstraint<TSelf> ContainInOrder(params T[] expected) { }
+        public Vouch.AndConstraint<TSelf> ContainInOrder(System.Collections.Generic.IEnumerable<T> expected, string because) { }
+        public Vouch.AndConstraint<TSelf> ContainInOrder(T[] expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle() { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle(string because) { }
@@ -334,6 +346,10 @@ namespace Vouch
         public Vouch.ExceptionAssertions<TException> And { get; }
         public TException Subject { get; }
         public TException Which { get; }
+        public Vouch.ExceptionAssertions<TInner> WithInnerException<TInner>()
+            where TInner : System.Exception { }
+        public Vouch.ExceptionAssertions<TInner> WithInnerExceptionExactly<TInner>()
+            where TInner : System.Exception { }
         public Vouch.ExceptionAssertions<TException> WithMessage(string pattern) { }
     }
     public static class ExceptionTaskExtensions
@@ -791,6 +807,12 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, Vouch.OccurrenceConstraint occurrence) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> Contain(string expected, Vouch.OccurrenceConstraint occurrence, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAll(System.Collections.Generic.IEnumerable<string> values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAll(params string[] values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAll(System.Collections.Generic.IEnumerable<string> values, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAny(System.Collections.Generic.IEnumerable<string> values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAny(params string[] values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> ContainAny(System.Collections.Generic.IEnumerable<string> values, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> EndWith(string expected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> EndWith(string expected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> EndWithEquivalentOf(string expected) { }
@@ -827,6 +849,12 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StringAssertions> NotBeUpperCased(string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContain(string unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContain(string unexpected, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAll(System.Collections.Generic.IEnumerable<string> values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAll(params string[] values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAll(System.Collections.Generic.IEnumerable<string> values, string because) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAny(System.Collections.Generic.IEnumerable<string> values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAny(params string[] values) { }
+        public Vouch.AndConstraint<Vouch.StringAssertions> NotContainAny(System.Collections.Generic.IEnumerable<string> values, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContainEquivalentOf(string unexpected) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotContainEquivalentOf(string unexpected, string because) { }
         public Vouch.AndConstraint<Vouch.StringAssertions> NotEndWith(string unexpected) { }
