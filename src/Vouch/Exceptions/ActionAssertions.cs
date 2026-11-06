@@ -118,7 +118,11 @@ public readonly struct FunctionAssertions<T>
         {
             var box = new Box();
             _box = box;
-            _inner = new ActionAssertions(() => box.Value = subject(), expression);
+            _inner = new ActionAssertions(() =>
+            {
+                box.Value = default!;
+                box.Value = subject();
+            }, expression);
         }
     }
 

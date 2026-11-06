@@ -25,6 +25,23 @@ public class EnumAndTimeSpanAssertionsTests
     [Fact] public void HaveSameValueAs_passes() { var s = Status.Draft; s.Should().HaveSameValueAs(Mood.Draft); }
     [Fact] public void HaveSameValueAs_message() { var s = Status.Active; Assert.Equal("Expected s to have the same value as Mood.Active, but found Status.Active.", Msg(() => s.Should().HaveSameValueAs(Mood.Active))); }
 
+    [Fact] public void HaveValue_ulong_enum_at_max() { var w = Wide.Huge; w.Should().HaveValue(ulong.MaxValue); }
+    [Fact] public void HaveValue_ulong_enum_at_max_does_not_equal_minus_one() { var w = Wide.Huge; Assert.Throws<VouchException>(() => w.Should().HaveValue(-1)); }
+    [Fact] public void HaveSameValueAs_ulong_max_and_long_minus_one_fails() { var w = Wide.Huge; var s = (Signed)(-1L); Assert.Throws<VouchException>(() => w.Should().HaveSameValueAs(s)); }
+    [Fact] public void HaveSameNameAs_undefined_value_fails() { var s = (Status)7; var msg = Msg(() => s.Should().HaveSameNameAs(Mood.Draft)); Assert.Contains("has no name", msg); }
+    [Fact] public void HaveSameNameAs_undefined_other_fails() { var s = Status.Draft; var msg = Msg(() => s.Should().HaveSameNameAs((Mood)99)); Assert.Contains("has no name", msg); }
+    [Fact] public void HaveFlag_zero_member_always_passes() { var p = Perm.Read; p.Should().HaveFlag(Perm.None); var none = Perm.None; none.Should().HaveFlag(Perm.None); }
+    [Fact] public void BeDefined_combined_flag_value_fails() { var p = Perm.Read | Perm.Write; Assert.Throws<VouchException>(() => p.Should().BeDefined()); }
+
+    [Fact] public void BeCloseTo_extreme_values_fails_with_VouchException()
+    {
+        var t = TimeSpan.MaxValue;
+        Assert.Throws<VouchException>(() => t.Should().BeCloseTo(TimeSpan.MinValue, TimeSpan.FromSeconds(1)));
+        Assert.Throws<VouchException>(() => t.Should().BeCloseTo(TimeSpan.MinValue, TimeSpan.MaxValue));
+    }
+
+    [Fact] public void BeCloseTo_negative_precision_throws() { var t = TimeSpan.FromSeconds(1); Assert.Throws<ArgumentOutOfRangeException>(() => t.Should().BeCloseTo(t, TimeSpan.FromSeconds(-1))); }
+
     [Fact] public void BeCloseTo_passes() { var t = TimeSpan.FromSeconds(10); t.Should().BeCloseTo(TimeSpan.FromSeconds(11), TimeSpan.FromSeconds(1)); }
     [Fact]
     public void BeCloseTo_message()

@@ -159,6 +159,47 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
         }
     }
 
+    public AndConstraint<NullableNumericAssertions<T>> Be(T? expected)
+    {
+        if (expected is { } value)
+        {
+            return Be(value);
+        }
+
+        if (Subject is not null)
+        {
+            Fail.With($"Expected {Name} to be null, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> Be(T? expected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return Be(expected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> NotBe(T unexpected, string because)
+    {
+        Reason.Set(because);
+        try
+        {
+            return NotBe(unexpected);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
     public AndConstraint<NullableNumericAssertions<T>> BeGreaterThan(T expected, string because)
     {
         Reason.Set(because);

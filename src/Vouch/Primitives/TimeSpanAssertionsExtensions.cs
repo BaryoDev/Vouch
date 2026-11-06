@@ -4,10 +4,20 @@ public static class TimeSpanAssertionsExtensions
 {
     public static AndConstraint<ValueAssertions<TimeSpan>> BeCloseTo(this ValueAssertions<TimeSpan> assertions, TimeSpan expected, TimeSpan precision)
     {
-        var difference = (assertions.Subject - expected).Duration();
-        if (difference > precision)
+        if (precision < TimeSpan.Zero)
         {
-            Fail.With($"Expected {assertions.Name} to be within {Formatter.Format(precision)} of {Formatter.Format(expected)}, but found {Formatter.Format(assertions.Subject)} (off by {Formatter.Format(difference)}).");
+            throw new ArgumentOutOfRangeException(nameof(precision), precision, "Precision must not be negative.");
+        }
+
+        var ticks = (Int128)assertions.Subject.Ticks - expected.Ticks;
+        if (ticks < 0)
+        {
+            ticks = -ticks;
+        }
+
+        if (ticks > precision.Ticks)
+        {
+            Fail.With($"Expected {assertions.Name} to be within {Formatter.Format(precision)} of {Formatter.Format(expected)}, but found {Formatter.Format(assertions.Subject)} (off by {(ticks <= long.MaxValue ? Formatter.Format(TimeSpan.FromTicks((long)ticks)) : $"{ticks} ticks")}).");
         }
 
         return new(assertions);

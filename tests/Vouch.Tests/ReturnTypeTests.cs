@@ -37,12 +37,15 @@ public class ReturnTypeTests
     [Fact]
     public void Function_NotThrow_failure_under_a_scope_gives_default()
     {
-        Func<int> f = () => throw new InvalidOperationException("boom");
+        var calls = 0;
+        Func<int> f = () => ++calls == 1 ? 42 : throw new InvalidOperationException("boom");
+        var assertions = f.Should();
+        Assert.Equal(42, assertions.NotThrow().Which);
         var which = -1;
         Assert.Throws<VouchException>(() =>
         {
             using var scope = new AssertionScope();
-            which = f.Should().NotThrow().Which;
+            which = assertions.NotThrow().Which;
         });
         Assert.Equal(0, which);
     }
