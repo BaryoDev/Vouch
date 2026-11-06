@@ -359,10 +359,15 @@ public class AllocationTests
         return GC.GetAllocatedBytesForCurrentThread() - before;
     }
 
+    // Under one byte per call: the smallest object is 24 bytes, so this still catches any
+    // per-call allocation, but not a few bytes the runtime adds once during the loop.
+    private static void AssertNoExtra(long baseline, long measured) =>
+        Assert.True(measured - baseline < Calls, $"{measured - baseline} extra bytes over {Calls} calls");
+
     private static void AssertNoCopy<T>(IEnumerable<T> subject, Action<GenericCollectionAssertions<T>> assertion)
     {
         var baseline = Bytes(() => subject.Should());
-        Assert.Equal(baseline, Bytes(() => assertion(subject.Should())));
+        AssertNoExtra(baseline, Bytes(() => assertion(subject.Should())));
     }
 
     [Theory]
@@ -385,8 +390,8 @@ public class AllocationTests
     {
         var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);
         var baseline = Bytes(() => d.Should());
-        Assert.Equal(baseline, Bytes(() => d.Should().HaveCount(size)));
-        Assert.Equal(baseline, Bytes(() => d.Should().NotBeEmpty()));
+        AssertNoExtra(baseline, Bytes(() => d.Should().HaveCount(size)));
+        AssertNoExtra(baseline, Bytes(() => d.Should().NotBeEmpty()));
     }
 
     // issue #15: the new collection assertions
@@ -431,7 +436,7 @@ public class AllocationTests
     {
         Action<DictionaryAssertions<string, int>> none = static _ => { };
         var baseline = Bytes(() => none(d.Should()));
-        Assert.Equal(baseline, Bytes(() => assertion(d.Should())));
+        AssertNoExtra(baseline, Bytes(() => assertion(d.Should())));
     }
 
     [Fact] public void Dictionary_ContainValue() => AssertAssertionAllocatesNothing(Dict(), a => a.ContainValue(3));
