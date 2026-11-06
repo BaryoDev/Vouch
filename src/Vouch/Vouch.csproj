@@ -2,22 +2,14 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <LangVersion>latest</LangVersion>
-    <Deterministic>true</Deterministic>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <Version>0.2.0</Version>
     <PackageId>Vouch</PackageId>
-    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
     <Description>Fluent assertions for .NET with no dependencies. The .Should() surface of FluentAssertions, with failure messages built only when an assertion fails.</Description>
-    <Authors>BaryoDev</Authors>
     <PackageTags>assertions testing fluentassertions should</PackageTags>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <RepositoryUrl>https://github.com/BaryoDev/Vouch</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,8 @@
+<Project>
+
+  <!-- Samples build standalone through samples/check.sh and pin their own versions. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+</Project>
