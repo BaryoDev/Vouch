@@ -362,6 +362,15 @@ public class TaskTimingStreamTests
     }
 
     [Fact]
+    public void ThrowExactly_fails_for_a_subtype_inside_an_aggregate()
+    {
+        // ObjectDisposedException derives from InvalidOperationException, so only an exact check rejects it.
+        Action act = () => throw new AggregateException(new ObjectDisposedException("x"));
+        Assert.Throws<VouchException>(() => act.Should().ThrowExactly<InvalidOperationException>());
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
     public void ThrowExactly_fails_for_a_subtype_with_exact_message()
     {
         Action act = () => throw new ArgumentException("boom");
