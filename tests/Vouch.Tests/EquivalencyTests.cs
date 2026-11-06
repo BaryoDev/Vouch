@@ -312,6 +312,263 @@ public class EquivalencyTests
         Assert.True(new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Excluding(x => x.Id).State.HasPathRules);
     }
 
+    // Using, ComparingByMembers, ComparingByValue, WithoutStrictOrdering, IgnoringCyclicReferences, WithMaxDepth, RespectingRuntimeTypes
+
+    public class OptPriced { public Money? Price { get; set; } }
+
+    private const string OrderHead = "Expected subject to be equivalent to the expected OptOrder, but:";
+
+    [Fact]
+    public void Using_comparer_replaces_the_structural_rules_for_that_type() =>
+        new EqPerson { Id = 1, Name = "A" }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "a" }, o => o.Using<string>(StringComparer.OrdinalIgnoreCase));
+
+    [Fact]
+    public void Using_comparer_fails_when_the_comparer_says_unequal()
+    {
+        var subject = new EqPerson { Id = 1, Name = "A" };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "b" }, o => o.Using<string>(StringComparer.OrdinalIgnoreCase)));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Name was \"A\", expected \"b\".", msg);
+    }
+
+    [Fact]
+    public void Using_comparer_leaves_other_types_structural()
+    {
+        var subject = new EqPerson { Id = 1, Name = "A" };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new EqPerson { Id = 2, Name = "a" }, o => o.Using<string>(StringComparer.OrdinalIgnoreCase)));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Id was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void Using_comparer_applies_inside_collections_and_nested_objects()
+    {
+        var subject = Order(new EqPerson { Id = 1, Name = "A" });
+        subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "a" }), o => o.Using<string>(StringComparer.OrdinalIgnoreCase));
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "b" }), o => o.WithStrictOrdering().Using<string>(StringComparer.OrdinalIgnoreCase)));
+        Assert.Equal(OrderHead + "\n  People[0].Name was \"A\", expected \"b\".", msg);
+    }
+
+    [Fact]
+    public void Using_comparer_applies_to_a_root_scalar() =>
+        ((object)"A").Should().BeEquivalentTo("a", o => o.Using<string>(StringComparer.OrdinalIgnoreCase));
+
+    [Fact]
+    public void Using_comparer_for_a_nullable_type_matches_the_underlying_type() =>
+        new { V = 1 }.Should().BeEquivalentTo(new { V = 2 }, o => o.Using<int?>(new AlwaysEqualInts()));
+
+    private sealed class AlwaysEqualInts : IEqualityComparer<int?>
+    {
+        public bool Equals(int? x, int? y) => true;
+        public int GetHashCode(int? obj) => 0;
+    }
+
+    [Fact]
+    public void Using_member_comparer_applies_to_that_member_only()
+    {
+        Customer("n", "X", "1").Should().BeEquivalentTo(Customer("n", "x", "1"), o => o.Using<string?>(x => x.Address!.City, StringComparer.OrdinalIgnoreCase));
+        var subject = Customer("n", "X", "1");
+        var msg = Message(() => subject.Should().BeEquivalentTo(Customer("m", "y", "1"), o => o.Using<string?>(x => x.Address!.City, StringComparer.OrdinalIgnoreCase)));
+        Assert.Equal(CustomerHead + "\n  Name was \"n\", expected \"m\".\n  Address.City was \"X\", expected \"y\".", msg);
+    }
+
+    [Fact]
+    public void Using_member_comparer_applies_to_every_collection_element()
+    {
+        var subject = Order(new EqPerson { Id = 1, Name = "A" }, new EqPerson { Id = 2, Name = "B" });
+        subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "a" }, new EqPerson { Id = 2, Name = "b" }), o => o.WithStrictOrdering().Using<string?>(x => x.People[0].Name, StringComparer.OrdinalIgnoreCase));
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1, Name = "a" }, new EqPerson { Id = 2, Name = "c" }), o => o.WithStrictOrdering().Using<string?>(x => x.People[0].Name, StringComparer.OrdinalIgnoreCase)));
+        Assert.Equal(OrderHead + "\n  People[1].Name was \"B\", expected \"c\".", msg);
+    }
+
+    [Fact]
+    public void Using_rejects_null_comparers_and_bad_members()
+    {
+        Assert.Throws<ArgumentNullException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Using<string>(null!));
+        Assert.Throws<ArgumentException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).Using<int>(x => x.Id + 1, EqualityComparer<int>.Default));
+    }
+
+    [Fact]
+    public void Using_on_one_instance_does_not_affect_another_built_from_the_same_base()
+    {
+        var baseOptions = new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithStrictOrdering();
+        var lenient = baseOptions.Using<string>(StringComparer.OrdinalIgnoreCase);
+        var other = baseOptions.ComparingByMembers<Money>();
+        Assert.False(baseOptions.State.HasTypeRules);
+        Assert.True(lenient.State.HasTypeRules);
+        Assert.Empty(other.State.TypeComparers);
+        Assert.Empty(baseOptions.State.TypeComparers);
+        Assert.Single(lenient.State.TypeComparers);
+        Assert.Empty(lenient.State.KindOverrides);
+        Assert.False(EquivalencyOptions.Default.HasTypeRules);
+
+        var subject = new EqPerson { Name = "A" };
+        subject.Should().BeEquivalentTo(new EqPerson { Name = "a" }, _ => lenient);
+        Assert.Throws<VouchException>(() => subject.Should().BeEquivalentTo(new EqPerson { Name = "a" }, _ => other));
+    }
+
+    [Fact]
+    public void ComparingByMembers_ignores_an_equals_override()
+    {
+        new Money(1m) { Hidden = 1 }.Should().BeEquivalentTo(new Money(1m) { Hidden = 1 }, o => o.ComparingByMembers<Money>());
+        var subject = new Money(1m) { Hidden = 1 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new Money(1m) { Hidden = 2 }, o => o.ComparingByMembers<Money>()));
+        Assert.Equal("Expected subject to be equivalent to the expected Money, but:\n  Hidden was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void ComparingByMembers_applies_to_nested_objects_and_collection_elements()
+    {
+        var subject = new OptPriced { Price = new Money(1m) { Hidden = 1 } };
+        var msg = Message(() => subject.Should().BeEquivalentTo(new OptPriced { Price = new Money(1m) { Hidden = 2 } }, o => o.ComparingByMembers<Money>()));
+        Assert.Equal("Expected subject to be equivalent to the expected OptPriced, but:\n  Price.Hidden was 1, expected 2.", msg);
+
+        var items = new[] { new Money(1m) { Hidden = 1 } };
+        Assert.Contains("[0].Hidden was 1, expected 2.", Message(() => items.Should().BeEquivalentTo(new[] { new Money(1m) { Hidden = 2 } }, o => o.ComparingByMembers<Money>())));
+        items.Should().BeEquivalentTo(new[] { new Money(1m) { Hidden = 2 } });
+    }
+
+    [Fact]
+    public void ComparingByValue_uses_equals_even_when_the_type_has_members()
+    {
+        new OptByRef { Item = new ByRef(1, 1) }.Should().BeEquivalentTo(new OptByRef { Item = new ByRef(1, 2) }, o => o.ComparingByValue<ByRef>());
+    }
+
+    public sealed class ByRef
+    {
+        public ByRef(int key, int other) { Key = key; Other = other; }
+        public int Key { get; }
+        public int Other { get; }
+        public override bool Equals(object? obj) => obj is ByRef r && r.Key == Key;
+        public override int GetHashCode() => Key;
+    }
+
+    public class OptByRef { public ByRef? Item { get; set; } }
+
+    [Fact]
+    public void ComparingByValue_fails_with_the_equals_result()
+    {
+        var subject = new OptPlain { Item = new Plain(1) };
+        var expected = new OptPlain { Item = new Plain(1) };
+        var msg = Message(() => subject.Should().BeEquivalentTo(expected, o => o.ComparingByValue<Plain>()));
+        Assert.Equal($"Expected subject to be equivalent to the expected OptPlain, but:\n  Item was {Formatter.Format(subject.Item)}, expected {Formatter.Format(expected.Item)}.", msg);
+        subject.Should().BeEquivalentTo(expected);
+    }
+
+    public sealed class Plain { public Plain(int value) => Value = value; public int Value { get; } }
+
+    public class OptPlain { public Plain? Item { get; set; } }
+
+    [Fact]
+    public void ComparingByValue_applies_to_collection_elements()
+    {
+        var items = new[] { new ByRef(1, 1) };
+        items.Should().BeEquivalentTo(new[] { new ByRef(1, 9) }, o => o.ComparingByValue<ByRef>().WithStrictOrdering());
+        Assert.Throws<VouchException>(() => items.Should().BeEquivalentTo(new[] { new ByRef(2, 1) }, o => o.ComparingByValue<ByRef>()));
+    }
+
+    [Fact]
+    public void ComparingByMembers_and_ByValue_for_the_same_type_let_the_last_call_win()
+    {
+        var a = new Money(1m) { Hidden = 1 };
+        var b = new Money(1m) { Hidden = 2 };
+        a.Should().BeEquivalentTo(b, o => o.ComparingByMembers<Money>().ComparingByValue<Money>());
+        Assert.Throws<VouchException>(() => a.Should().BeEquivalentTo(b, o => o.ComparingByValue<Money>().ComparingByMembers<Money>()));
+    }
+
+    [Fact]
+    public void WithoutStrictOrdering_restores_order_insensitive_matching()
+    {
+        new[] { 1, 2 }.Should().BeEquivalentTo(new[] { 2, 1 }, o => o.WithStrictOrdering().WithoutStrictOrdering());
+        Assert.Throws<VouchException>(() => new[] { 1, 2 }.Should().BeEquivalentTo(new[] { 2, 1 }, o => o.WithoutStrictOrdering().WithStrictOrdering()));
+    }
+
+    [Fact]
+    public void WithoutStrictOrdering_still_fails_on_a_missing_item()
+    {
+        var subject = Order(new EqPerson { Id = 1 }, new EqPerson { Id = 2 });
+        var missing = new EqPerson { Id = 3 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(Order(new EqPerson { Id = 1 }, missing), o => o.WithStrictOrdering().WithoutStrictOrdering()));
+        Assert.Equal(OrderHead + $"\n  People[1] expected {Formatter.Format(missing)} was not found.", msg);
+    }
+
+    [Fact]
+    public void WithoutStrictOrdering_applies_to_nested_collections() =>
+        Order(new EqPerson { Id = 1 }, new EqPerson { Id = 2 }).Should().BeEquivalentTo(Order(new EqPerson { Id = 2 }, new EqPerson { Id = 1 }), o => o.WithStrictOrdering().WithoutStrictOrdering());
+
+    [Fact]
+    public void IgnoringCyclicReferences_treats_a_revisited_pair_as_equal()
+    {
+        var a = new EqNode(); a.Next = a;
+        var b = new EqNode(); b.Next = b;
+        a.Should().BeEquivalentTo(b, o => o.IgnoringCyclicReferences());
+        Assert.Contains("cyclic reference", Message(() => a.Should().BeEquivalentTo(b)));
+    }
+
+    [Fact]
+    public void IgnoringCyclicReferences_still_reports_other_differences()
+    {
+        var a = new EqNode { Value = 1 }; a.Next = a;
+        var b = new EqNode { Value = 2 }; b.Next = b;
+        var msg = Message(() => a.Should().BeEquivalentTo(b, o => o.IgnoringCyclicReferences()));
+        Assert.Equal("Expected a to be equivalent to the expected EqNode, but:\n  Value was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void IgnoringCyclicReferences_applies_inside_collections()
+    {
+        EqNode Ring() { var x = new EqNode(); var y = new EqNode { Next = x }; x.Next = y; return x; }
+        new[] { Ring() }.Should().BeEquivalentTo(new[] { Ring() }, o => o.IgnoringCyclicReferences());
+        Assert.Throws<VouchException>(() => new[] { Ring() }.Should().BeEquivalentTo(new[] { Ring() }));
+    }
+
+    [Fact]
+    public void WithMaxDepth_raises_the_limit() => Chain(50).Should().BeEquivalentTo(Chain(50), o => o.WithMaxDepth(60));
+
+    [Fact]
+    public void WithMaxDepth_lowers_the_limit_and_reports_it()
+    {
+        var a = Chain(10);
+        var b = Chain(10);
+        var msg = Message(() => a.Should().BeEquivalentTo(b, o => o.WithMaxDepth(3)));
+        Assert.Equal("Expected a to be equivalent to the expected EqNode, but:\n  Next.Next.Next.Next is nested deeper than 3 levels.", msg);
+    }
+
+    [Fact]
+    public void WithMaxDepth_applies_inside_collections()
+    {
+        Assert.Contains("deeper than 3 levels", Message(() => new[] { Chain(10) }.Should().BeEquivalentTo(new[] { Chain(10) }, o => o.WithMaxDepth(3))));
+        new[] { Chain(10) }.Should().BeEquivalentTo(new[] { Chain(10) }, o => o.WithMaxDepth(20));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void WithMaxDepth_below_one_throws(int depth) =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithMaxDepth(depth));
+
+    [Fact]
+    public void WithMaxDepth_one_is_accepted_and_defaults_are_unchanged()
+    {
+        Assert.Equal(1, new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default).WithMaxDepth(1).State.MaxDepth);
+        Assert.Equal(Equivalency.MaxDepth, EquivalencyOptions.Default.MaxDepth);
+        Assert.False(EquivalencyOptions.Default.IgnoreCycles);
+    }
+
+    [Fact]
+    public void RespectingRuntimeTypes_compares_members_of_the_runtime_type()
+    {
+        object subject = new EqPerson { Id = 1, Name = "A", Extra = 1 };
+        object same = new EqPerson { Id = 1, Name = "A", Extra = 1 };
+        subject.Should().BeEquivalentTo(same, o => o.RespectingRuntimeTypes());
+        object other = new EqPerson { Id = 1, Name = "A", Extra = 2 };
+        var msg = Message(() => subject.Should().BeEquivalentTo(other, o => o.RespectingRuntimeTypes()));
+        Assert.Equal("Expected subject to be equivalent to the expected EqPerson, but:\n  Extra was 1, expected 2.", msg);
+    }
+
+    [Fact]
+    public void RespectingRuntimeTypes_applies_to_members_declared_as_object() =>
+        Assert.Contains("Inner.Id was 1, expected 2.", Message(() =>
+            new OtherWrapper { Inner = new EqPerson { Id = 1 } }.Should().BeEquivalentTo(new OtherWrapper { Inner = new EqPerson { Id = 2 } }, o => o.RespectingRuntimeTypes())));
+
     private static string Message(Action act) => Assert.Throws<VouchException>(act).Message;
 
     private static EqNode Chain(int n)

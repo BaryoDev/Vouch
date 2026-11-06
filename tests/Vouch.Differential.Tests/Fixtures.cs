@@ -6,6 +6,13 @@ public record OtherPerson(string Name, int Age);
 
 public record Titled(string Title, int Age);
 
+public class Loop
+{
+    public Loop? Next { get; set; }
+
+    public int Value { get; set; }
+}
+
 public record struct Point(int X, int Y);
 
 public record Node(string Name, string? Note);

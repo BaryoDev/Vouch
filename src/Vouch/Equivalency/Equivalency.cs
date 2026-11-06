@@ -22,6 +22,7 @@ internal static class Equivalency
     {
         if (typeof(TSubject) == typeof(TExpectation)
             && ScalarType<TSubject>.Is
+            && !options.HasTypeRules
             && EqualityComparer<TSubject>.Default.Equals(subject, Unsafe.As<TExpectation, TSubject>(ref expectation)))
         {
             return;
@@ -34,6 +35,7 @@ internal static class Equivalency
     {
         if (subject is not null
             && expectation is not null
+            && !options.HasTypeRules
             && MemberCache.ShapeOf(expectation.GetType()).Kind == TypeKind.Scalar
             && Comparison.ScalarEquals(subject, expectation))
         {
@@ -284,9 +286,15 @@ internal sealed class Comparison
             return;
         }
 
+        if (Options.HasTypeRules && Options.TypeComparers.TryGetValue(EquivalencyOptions.KeyOf(expectation.GetType()), out var comparer))
+        {
+            CompareWith(subject, expectation, comparer);
+            return;
+        }
+
         try
         {
-            var shape = MemberCache.ShapeOf(expectation.GetType());
+            var shape = ShapeFor(expectation.GetType());
             switch (shape.Kind)
             {
                 case TypeKind.Scalar:
@@ -343,9 +351,35 @@ internal sealed class Comparison
         _path.RemoveAt(_path.Count - 1);
     }
 
-    private static bool Compatible(object subject, TypeKind expected)
+    // The one place that decides how a type is compared; options can override the classification.
+    private TypeShape ShapeFor(Type type)
     {
-        var actual = MemberCache.ShapeOf(subject.GetType()).Kind;
+        if (Options.HasTypeRules && Options.KindOverrides.TryGetValue(EquivalencyOptions.KeyOf(type), out var byValue))
+        {
+            return MemberCache.ShapeOf(type, byValue ? TypeKind.Equatable : TypeKind.Members);
+        }
+
+        return MemberCache.ShapeOf(type);
+    }
+
+    private void CompareWith(object subject, object expectation, Func<object, object, bool> comparer)
+    {
+        try
+        {
+            if (!comparer(subject, expectation))
+            {
+                Add(Kind.Mismatch, subject, expectation);
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            AddThrew(ex);
+        }
+    }
+
+    private bool Compatible(object subject, TypeKind expected)
+    {
+        var actual = ShapeFor(subject.GetType()).Kind;
         return expected switch
         {
             TypeKind.Dictionary => actual == TypeKind.Dictionary,
@@ -375,7 +409,7 @@ internal sealed class Comparison
         var pairCount = _pairs.Count;
         try
         {
-            if (pathCount > Equivalency.MaxDepth)
+            if (pathCount > Options.MaxDepth)
             {
                 Add(Kind.Depth, null, null);
                 return;
@@ -385,7 +419,11 @@ internal sealed class Comparison
             {
                 if (ReferenceEquals(_pairs[i], subject) && ReferenceEquals(_pairs[i + 1], expectation))
                 {
-                    Add(Kind.Cycle, null, null);
+                    if (!Options.IgnoreCycles)
+                    {
+                        Add(Kind.Cycle, null, null);
+                    }
+
                     return;
                 }
             }
@@ -484,6 +522,7 @@ internal sealed class Comparison
         {
             var member = members[i];
             var subjectName = member.Name;
+            Func<object, object, bool>? memberComparer = null;
             if (Options.HasPathRules)
             {
                 var memberPath = MemberPath(member.Name);
@@ -496,6 +535,8 @@ internal sealed class Comparison
                 {
                     subjectName = mapped;
                 }
+
+                Options.PathComparers.TryGetValue(memberPath, out memberComparer);
             }
 
             var counterpart = subjectShape.Find(subjectName);
@@ -516,7 +557,14 @@ internal sealed class Comparison
             {
                 var actual = counterpart.Get(subject);
                 var expected = member.Get(expectation);
-                CompareValues(actual, expected);
+                if (memberComparer is not null && actual is not null && expected is not null)
+                {
+                    CompareWith(actual, expected, memberComparer);
+                }
+                else
+                {
+                    CompareValues(actual, expected);
+                }
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
@@ -653,7 +701,7 @@ internal sealed class Comparison
         (_differences ??= new List<Difference>()).Add(new Difference(PathText(), Describe(kind, actual, expected, name)));
     }
 
-    private static string Describe(Kind kind, object? actual, object? expected, string? name) => kind switch
+    private string Describe(Kind kind, object? actual, object? expected, string? name) => kind switch
     {
         Kind.Mismatch => $"was {Formatter.Format(actual)}, expected {Formatter.Format(expected)}",
         Kind.NotFound => $"expected {Formatter.Format(expected)} was not found",
@@ -662,7 +710,7 @@ internal sealed class Comparison
         Kind.NoKey => $"has no key {Formatter.Format(actual)}",
         Kind.UnexpectedKey => $"has unexpected key {Formatter.Format(actual)}",
         Kind.Cycle => "is a cyclic reference",
-        Kind.Depth => $"is nested deeper than {Equivalency.MaxDepth} levels",
+        Kind.Depth => $"is nested deeper than {Options.MaxDepth} levels",
         Kind.TooMany => $"has more than {Equivalency.MaxItems} items, not compared",
         Kind.NoMembers => "has no members to compare",
         _ => $"threw {actual!.GetType().Name}: {((Exception)actual).Message}",
