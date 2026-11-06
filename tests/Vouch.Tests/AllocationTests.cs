@@ -339,4 +339,73 @@ public class AllocationTests
         Assert.Equal(baseline, Bytes(() => d.Should().HaveCount(size)));
         Assert.Equal(baseline, Bytes(() => d.Should().NotBeEmpty()));
     }
+
+    private static Dictionary<string, int> Dict() => new() { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
+
+    // The assertions object from Should() is a class and costs a few bytes on its own, so a passing assertion is measured
+    // against a call that creates the same object and does nothing with it: the difference is what the assertion allocates.
+    private static void AssertAssertionAllocatesNothing(Dictionary<string, int> d, Action<DictionaryAssertions<string, int>> assertion)
+    {
+        Action<DictionaryAssertions<string, int>> none = static _ => { };
+        var baseline = Bytes(() => none(d.Should()));
+        Assert.Equal(baseline, Bytes(() => assertion(d.Should())));
+    }
+
+    [Fact] public void Dictionary_ContainValue() => AssertAssertionAllocatesNothing(Dict(), a => a.ContainValue(3));
+
+    [Fact]
+    public void Dictionary_ContainValues()
+    {
+        var wanted = new[] { 1, 3 };
+        AssertAssertionAllocatesNothing(Dict(), a => a.ContainValues(wanted));
+    }
+
+    [Fact] public void Dictionary_NotContainValue() => AssertAssertionAllocatesNothing(Dict(), a => a.NotContainValue(9));
+
+    [Fact]
+    public void Dictionary_NotContainValues()
+    {
+        var unwanted = new[] { 8, 9 };
+        AssertAssertionAllocatesNothing(Dict(), a => a.NotContainValues(unwanted));
+    }
+
+    [Fact]
+    public void Dictionary_Contain_pair()
+    {
+        var pair = new KeyValuePair<string, int>("b", 2);
+        AssertAssertionAllocatesNothing(Dict(), a => a.Contain(pair));
+    }
+
+    [Fact] public void Dictionary_Contain_key_and_value() => AssertAssertionAllocatesNothing(Dict(), a => a.Contain("b", 2));
+
+    [Fact]
+    public void Dictionary_NotContain_pair()
+    {
+        var pair = new KeyValuePair<string, int>("b", 9);
+        AssertAssertionAllocatesNothing(Dict(), a => a.NotContain(pair));
+    }
+
+    [Fact] public void Dictionary_NotContain_key_and_value() => AssertAssertionAllocatesNothing(Dict(), a => a.NotContain("b", 9));
+
+    [Fact]
+    public void Dictionary_NotContainKeys()
+    {
+        var keys = new[] { "x", "y" };
+        AssertAssertionAllocatesNothing(Dict(), a => a.NotContainKeys(keys));
+    }
+
+    [Fact]
+    public void Dictionary_Equal()
+    {
+        var expected = Dict();
+        AssertAssertionAllocatesNothing(Dict(), a => a.Equal(expected));
+    }
+
+    [Fact]
+    public void Dictionary_NotEqual()
+    {
+        var other = Dict();
+        other["c"] = 4;
+        AssertAssertionAllocatesNothing(Dict(), a => a.NotEqual(other));
+    }
 }
