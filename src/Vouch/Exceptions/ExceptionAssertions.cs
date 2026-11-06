@@ -17,6 +17,11 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
     {
         get
         {
+            if (_matches.Count == 0)
+            {
+                return default!;
+            }
+
             if (_matches.Count > 1)
             {
                 Fail.With("More than one exception was thrown. Vouch cannot tell which one was meant.");
@@ -33,6 +38,11 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
     public ExceptionAssertions<TException> WithMessage(string pattern)
     {
         Wildcard.RequirePattern(pattern, nameof(pattern));
+        if (_matches.Count == 0)
+        {
+            return this;
+        }
+
         foreach (var match in _matches)
         {
             if (Wildcard.MatchesMessage(match.Message, pattern))

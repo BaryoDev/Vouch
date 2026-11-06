@@ -2,11 +2,21 @@ namespace Vouch;
 
 internal static class Reason
 {
-    public static VouchException Add(VouchException failure, string? because)
+    [ThreadStatic]
+    private static string? t_because;
+
+    public static void Set(string? because) => t_because = because;
+
+    public static void Clear() => t_because = null;
+
+    public static string? Current => t_because;
+
+    public static VouchException Apply(string message)
     {
+        var because = t_because;
         if (string.IsNullOrWhiteSpace(because))
         {
-            return failure;
+            return new VouchException(message);
         }
 
         var reason = because.Trim();
@@ -15,7 +25,7 @@ internal static class Reason
             reason += ".";
         }
 
-        var separator = failure.Message.Contains('\n') ? "\n" : " ";
-        return new VouchException($"{failure.Message}{separator}Because {reason}");
+        var separator = message.Contains('\n') ? "\n" : " ";
+        return new VouchException($"{message}{separator}Because {reason}");
     }
 }

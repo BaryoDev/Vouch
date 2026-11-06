@@ -15,11 +15,22 @@ public sealed class DictionaryAssertions<TKey, TValue>
         if (IsNull)
         {
             Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, but found null.");
+            return new(this, default!);
+        }
+
+        if (!Prepare())
+        {
+            return new(this, default!);
         }
 
         if (!TryGetValue(expected, out var value))
         {
-            Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, {NotFound(Items)}");
+            if (TryItems(out var items))
+            {
+                Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, {NotFound(items)}");
+            }
+
+            return new(this, default!);
         }
 
         return new(this, value);
@@ -31,6 +42,12 @@ public sealed class DictionaryAssertions<TKey, TValue>
         if (IsNull)
         {
             Fail.With($"Expected {Name} not to contain key {Formatter.Format(unexpected)}, but found null.");
+            return And();
+        }
+
+        if (!Prepare())
+        {
+            return And();
         }
 
         if (TryGetValue(unexpected, out var value))
@@ -52,6 +69,12 @@ public sealed class DictionaryAssertions<TKey, TValue>
         if (IsNull)
         {
             Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but found null.");
+            return And();
+        }
+
+        if (!Prepare())
+        {
+            return And();
         }
 
         List<TKey>? missing = null;
@@ -63,13 +86,15 @@ public sealed class DictionaryAssertions<TKey, TValue>
             }
         }
 
-        if (missing is not null)
+        if (missing is not null && TryItems(out var items))
         {
-            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(Items)}");
+            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(items)}");
         }
 
         return And();
     }
+
+    private bool Prepare() => Source is IDictionary<TKey, TValue> or IReadOnlyDictionary<TKey, TValue> || TryItems(out _);
 
     private bool TryGetValue(TKey key, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TValue value)
     {
@@ -97,25 +122,27 @@ public sealed class DictionaryAssertions<TKey, TValue>
 
     public AndWhichConstraint<DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return ContainKey(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContainKey(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }

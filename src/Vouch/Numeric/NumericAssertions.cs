@@ -124,97 +124,105 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> Be(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> NotBe(T unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BeGreaterThan(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeGreaterThan(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeGreaterThanOrEqualTo(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BeLessThan(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeLessThan(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BeLessThanOrEqualTo(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeLessThanOrEqualTo(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BePositive(string because)
     {
+        Reason.Set(because);
         try
         {
             return BePositive();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NumericAssertions<T>> BeInRange(T min, T max, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeInRange(min, max);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -23,9 +22,29 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     private protected bool IsNull => Source is null;
 
-    private protected IReadOnlyList<T> Items => _list ??= Materialise();
+    private protected IReadOnlyList<T> Items => TryItems(out var items) ? items : [];
 
-    private List<T> Materialise()
+    private protected bool TryItems(out IReadOnlyList<T> items)
+    {
+        if (_list is not null)
+        {
+            items = _list;
+            return true;
+        }
+
+        var list = Materialise();
+        if (list is null)
+        {
+            items = [];
+            return false;
+        }
+
+        _list = list;
+        items = list;
+        return true;
+    }
+
+    private List<T>? Materialise()
     {
         if (Source is ICollection<T>)
         {
@@ -38,6 +57,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             if (list.Count == Equivalency.MaxItems)
             {
                 Fail.With($"{Name} has more than {Equivalency.MaxItems} items, not compared.");
+                return null;
             }
 
             list.Add(item);
@@ -46,28 +66,52 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return list;
     }
 
+    private bool TryCount(out int count)
+    {
+        switch (Source)
+        {
+            case IReadOnlyCollection<T> c:
+                count = c.Count;
+                return true;
+            case ICollection<T> c:
+                count = c.Count;
+                return true;
+            case System.Collections.ICollection c:
+                count = c.Count;
+                return true;
+        }
+
+        if (TryItems(out var items))
+        {
+            count = items.Count;
+            return true;
+        }
+
+        count = 0;
+        return false;
+    }
+
     private protected string Name => Fail.Name(_expression);
 
-    [DoesNotReturn]
-    private void FailNull(string expectation) => Fail.With($"Expected {Name} {expectation}, but found null.");
+    private void ReportNull(string expectation) => Fail.With($"Expected {Name} {expectation}, but found null.");
 
-    private protected IReadOnlyList<T> Required(string expectation)
+    private AndConstraint<TSelf> FailNull(string expectation)
+    {
+        ReportNull(expectation);
+        return And();
+    }
+
+    private bool TryRequire(string expectation, out IReadOnlyList<T> items)
     {
         if (IsNull)
         {
-            FailNull(expectation);
+            ReportNull(expectation);
+            items = [];
+            return false;
         }
 
-        return Items;
+        return TryItems(out items);
     }
-
-    private int Count => Source switch
-    {
-        IReadOnlyCollection<T> c => c.Count,
-        ICollection<T> c => c.Count,
-        System.Collections.ICollection c => c.Count,
-        _ => Items.Count,
-    };
 
     private protected AndConstraint<TSelf> And() => new((TSelf)this);
 
@@ -75,12 +119,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull("to be empty");
+            return FailNull("to be empty");
         }
 
-        if (Count != 0)
+        if (!TryCount(out var count))
         {
-            var items = Items;
+            return And();
+        }
+
+        if (count != 0)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to be empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
@@ -91,10 +144,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull("not to be empty");
+            return FailNull("not to be empty");
         }
 
-        if (Count == 0)
+        if (!TryCount(out var count))
+        {
+            return And();
+        }
+
+        if (count == 0)
         {
             Fail.With($"Expected {Name} not to be empty, but it was.");
         }
@@ -106,7 +164,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (!IsNull)
         {
-            Fail.With($"Expected {Name} to be null, but found {Formatter.Format(Items)}.");
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
+            Fail.With($"Expected {Name} to be null, but found {Formatter.Format(items)}.");
         }
 
         return And();
@@ -126,12 +189,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to contain {Plural(expected)}");
+            return FailNull($"to contain {Plural(expected)}");
         }
 
-        if (Count != expected)
+        if (!TryCount(out var count))
         {
-            var items = Items;
+            return And();
+        }
+
+        if (count != expected)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -142,12 +214,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to contain more than {Plural(expected)}");
+            return FailNull($"to contain more than {Plural(expected)}");
         }
 
-        if (Count <= expected)
+        if (!TryCount(out var count))
         {
-            var items = Items;
+            return And();
+        }
+
+        if (count <= expected)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain more than {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -158,12 +239,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to contain at least {Plural(expected)}");
+            return FailNull($"to contain at least {Plural(expected)}");
         }
 
-        if (Count < expected)
+        if (!TryCount(out var count))
         {
-            var items = Items;
+            return And();
+        }
+
+        if (count < expected)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to contain at least {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -174,14 +264,20 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to contain {Formatter.Format(expected)}");
+            ReportNull($"to contain {Formatter.Format(expected)}");
+            return new((TSelf)this, default!);
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
         var index = IndexOf(items, expected);
         if (index < 0)
         {
             Fail.With($"Expected {Name} to contain {Formatter.Format(expected)}, {NotFound(items)}");
+            return new((TSelf)this, default!);
         }
 
         return new((TSelf)this, items[index]);
@@ -203,10 +299,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to contain all of {Formatter.Format(expected)}");
+            return FailNull($"to contain all of {Formatter.Format(expected)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         List<T>? missing = null;
         for (var i = 0; i < expected.Count; i++)
         {
@@ -229,10 +329,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(predicate);
         if (IsNull)
         {
-            FailNull($"to contain an item matching {predicate.Body}");
+            ReportNull($"to contain an item matching {predicate.Body}");
+            return new((TSelf)this, default!);
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
         var match = predicate.Compile();
         for (var i = 0; i < items.Count; i++)
         {
@@ -243,17 +348,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
 
         Fail.With($"Expected {Name} to contain an item matching {predicate.Body}, {NotFound(items)}");
-        return default;
+        return new((TSelf)this, default!);
     }
 
     public AndConstraint<TSelf> NotContain(T unexpected)
     {
         if (IsNull)
         {
-            FailNull($"not to contain {Formatter.Format(unexpected)}");
+            return FailNull($"not to contain {Formatter.Format(unexpected)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var index = IndexOf(items, unexpected);
         if (index >= 0)
         {
@@ -269,10 +378,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var other = Materialise(unexpected);
         if (IsNull)
         {
-            FailNull($"not to contain any of {Formatter.Format(other)}");
+            return FailNull($"not to contain any of {Formatter.Format(other)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         List<T>? found = null;
         for (var i = 0; i < other.Count; i++)
         {
@@ -319,7 +432,18 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         object? subject = null;
         if (!IsNull)
         {
-            subject = Equivalency.IsDictionary(Source!) && Equivalency.IsDictionary(expectation) ? Source : Items;
+            if (Equivalency.IsDictionary(Source!) && Equivalency.IsDictionary(expectation))
+            {
+                subject = Source;
+            }
+            else if (TryItems(out var items))
+            {
+                subject = items;
+            }
+            else
+            {
+                return And();
+            }
         }
 
         Equivalency.Require(subject, expectation, expectation.GetType(), options, Name);
@@ -330,16 +454,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"not to contain an item equivalent to {Formatter.Format(unexpected)}");
+            return FailNull($"not to contain an item equivalent to {Formatter.Format(unexpected)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var options = EquivalencyOptions.Default;
         for (var i = 0; i < items.Count; i++)
         {
             if (Equivalency.AreEquivalent(items[i], unexpected, options))
             {
                 Fail.With($"Expected {Name} not to contain an item equivalent to {Formatter.Format(unexpected)}, but found one at index {i}.");
+                return And();
             }
         }
 
@@ -351,10 +480,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(predicate);
         if (IsNull)
         {
-            FailNull($"not to contain any item matching {predicate.Body}");
+            return FailNull($"not to contain any item matching {predicate.Body}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is not null)
         {
@@ -366,10 +499,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndWhichConstraint<TSelf, T> ContainSingle()
     {
-        var items = Required("to contain a single item");
+        if (!TryRequire("to contain a single item", out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
         if (items.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item, but found {items.Count}{Listing(items)}");
+            return new((TSelf)this, default!);
         }
 
         return new((TSelf)this, items[0]);
@@ -380,19 +518,26 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(predicate);
         if (IsNull)
         {
-            FailNull($"to contain a single item matching {predicate.Body}");
+            ReportNull($"to contain a single item matching {predicate.Body}");
+            return new((TSelf)this, default!);
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return new((TSelf)this, default!);
+        }
+
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is null)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found 0.{HasTail(items)}");
+            return new((TSelf)this, default!);
         }
 
         if (matching.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found {matching.Count}{Listing(items, matching)}");
+            return new((TSelf)this, default!);
         }
 
         return new((TSelf)this, items[matching[0]]);
@@ -403,10 +548,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(predicate);
         if (IsNull)
         {
-            FailNull($"to only contain items matching {predicate.Body}");
+            return FailNull($"to only contain items matching {predicate.Body}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var failing = Where(items, predicate.Compile(), expected: false);
         if (failing is not null)
         {
@@ -430,7 +579,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     private AndConstraint<TSelf> EqualTo(IReadOnlyList<T> expected)
     {
-        var items = Required("to equal the expected items");
+        if (!TryRequire("to equal the expected items", out var items))
+        {
+            return And();
+        }
+
         var comparer = EqualityComparer<T>.Default;
         var common = Math.Min(items.Count, expected.Count);
         var differ = -1;
@@ -459,10 +612,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         if (items.Count != expected.Count)
         {
             Fail.With($"Expected {Name} to equal the expected items, but it has {Plural(items.Count)}, expected {expected.Count}.\n  They {at}");
+            return And();
         }
 
         Fail.With($"Expected {Name} to equal the expected items, but they {at}");
-        return default!;
+        return And();
     }
 
     public AndConstraint<TSelf> NotEqual(IEnumerable<T> unexpected)
@@ -471,10 +625,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var other = Materialise(unexpected);
         if (IsNull)
         {
-            FailNull($"not to equal {Formatter.Format(other)}");
+            return FailNull($"not to equal {Formatter.Format(other)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         if (items.Count != other.Count)
         {
             return And();
@@ -490,12 +648,16 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
 
         Fail.With($"Expected {Name} not to equal {Formatter.Format(other)}, but it did.");
-        return default!;
+        return And();
     }
 
     public AndConstraint<TSelf> OnlyHaveUniqueItems()
     {
-        var items = Required("to have unique items");
+        if (!TryRequire("to have unique items", out var items))
+        {
+            return And();
+        }
+
         var seen = new HashSet<T>();
         for (var i = 0; i < items.Count; i++)
         {
@@ -515,6 +677,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             }
 
             Fail.With($"Expected {Name} to have unique items, but {Formatter.Format(items[i])} appears {times} times.");
+            return And();
         }
 
         return And();
@@ -543,10 +706,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         if (IsNull)
         {
-            FailNull($"to be in {direction} order");
+            return FailNull($"to be in {direction} order");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         if (items.Count < 2)
         {
             return And();
@@ -564,12 +731,13 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
             {
                 Fail.With($"Expected {Name} to be in {direction} order, but {Formatter.Format(typeof(TKey))} is not comparable.");
-                return default!;
+                return And();
             }
 
             if (descending ? order < 0 : order > 0)
             {
                 Fail.With($"Expected {Name} to be in {direction} order, but [{i}] {Formatter.Format(items[i])} comes after [{i - 1}] {Formatter.Format(items[i - 1])}.");
+                return And();
             }
 
             previous = current;
@@ -581,18 +749,37 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> AllSatisfy(Action<T> assertion)
     {
         ArgumentNullException.ThrowIfNull(assertion);
-        var items = Required("to have all items satisfy the assertion");
-        List<(int Index, string Message)>? failures = null;
-        for (var i = 0; i < items.Count; i++)
+        if (!TryRequire("to have all items satisfy the assertion", out var items))
         {
-            try
+            return And();
+        }
+
+        List<(int Index, string Message)>? failures = null;
+        var outerReason = Reason.Current;
+        var outerRecorder = Fail.Recorder;
+        Fail.Recorder = null;
+        try
+        {
+            for (var i = 0; i < items.Count; i++)
             {
-                assertion(items[i]);
+                Reason.Clear();
+                try
+                {
+                    assertion(items[i]);
+                }
+                catch (VouchException ex)
+                {
+                    (failures ??= []).Add((i, ex.Message));
+                }
+                finally
+                {
+                    Reason.Set(outerReason);
+                }
             }
-            catch (VouchException ex)
-            {
-                (failures ??= []).Add((i, ex.Message));
-            }
+        }
+        finally
+        {
+            Fail.Recorder = outerRecorder;
         }
 
         if (failures is not null)
@@ -618,10 +805,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var expected = Materialise(other);
         if (IsNull)
         {
-            FailNull($"not to intersect with {Formatter.Format(expected)}");
+            return FailNull($"not to intersect with {Formatter.Format(expected)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? common = null;
@@ -647,10 +838,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var expected = Materialise(superset);
         if (IsNull)
         {
-            FailNull($"to be a subset of {Formatter.Format(expected)}");
+            return FailNull($"to be a subset of {Formatter.Format(expected)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? extra = null;
@@ -737,61 +932,66 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> BeEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> NotBeEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> BeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> NotBeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> HaveCount(int expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return HaveCount(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -800,37 +1000,40 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     /// </remarks>
     public AndWhichConstraint<TSelf, T> Contain(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Contain(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> Contain(IEnumerable<T> expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Contain(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<TSelf, T> Contain(Expression<Func<T, bool>> predicate, string because)
     {
+        Reason.Set(because);
         try
         {
             return Contain(predicate);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -839,105 +1042,127 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     /// </remarks>
     public AndConstraint<TSelf> NotContain(T unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContain(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> NotContain(IEnumerable<T> unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContain(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> NotContain(Expression<Func<T, bool>> predicate, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContain(predicate);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<TSelf, T> ContainSingle(string because)
     {
+        Reason.Set(because);
         try
         {
             return ContainSingle();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<TSelf, T> ContainSingle(Expression<Func<T, bool>> predicate, string because)
     {
+        Reason.Set(because);
         try
         {
             return ContainSingle(predicate);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> OnlyContain(Expression<Func<T, bool>> predicate, string because)
     {
+        Reason.Set(because);
         try
         {
             return OnlyContain(predicate);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> Equal(IEnumerable<T> expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Equal(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeEquivalentTo<TExpectation>(expectation);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<TSelf> BeNullOrEmpty()
     {
-        if (!IsNull && Count != 0)
+        if (IsNull)
         {
-            var items = Items;
+            return And();
+        }
+
+        if (!TryCount(out var count))
+        {
+            return And();
+        }
+
+        if (count != 0)
+        {
+            if (!TryItems(out var items))
+            {
+                return And();
+            }
+
             Fail.With($"Expected {Name} to be null or empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
@@ -946,13 +1171,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> BeNullOrEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNullOrEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -961,12 +1187,17 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(expected);
         if (IsNull)
         {
-            FailNull($"to refer to {Formatter.Format(expected)}");
+            return FailNull($"to refer to {Formatter.Format(expected)}");
         }
 
         if (!ReferenceEquals(Source, expected))
         {
-            Fail.With($"Expected {Name} to refer to {Formatter.Format(expected)}, but found another collection: {Formatter.Format(Items)}.");
+            if (!TryItems(out var other))
+            {
+                return And();
+            }
+
+            Fail.With($"Expected {Name} to refer to {Formatter.Format(expected)}, but found another collection: {Formatter.Format(other)}.");
         }
 
         return And();
@@ -978,10 +1209,14 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var tail = Materialise(expected);
         if (IsNull)
         {
-            FailNull($"to end with {Formatter.Format(tail)}");
+            return FailNull($"to end with {Formatter.Format(tail)}");
         }
 
-        var items = Items;
+        if (!TryItems(out var items))
+        {
+            return And();
+        }
+
         var offset = items.Count - tail.Count;
         var comparer = EqualityComparer<T>.Default;
         var matches = offset >= 0;

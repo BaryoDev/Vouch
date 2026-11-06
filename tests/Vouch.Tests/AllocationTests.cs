@@ -73,6 +73,30 @@ public class AllocationTests
         Assert.True(large / Calls <= 128);
     }
 
+    private static long BytesForAllSatisfy(int size)
+    {
+        var items = new int[size];
+        Action<int> check = static _ => { };
+        items.Should().AllSatisfy(check);
+
+        // Lowest of three runs, so a one-off runtime allocation during the loop does not count.
+        var lowest = long.MaxValue;
+        for (var run = 0; run < 3; run++)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < Calls; i++) items.Should().AllSatisfy(check);
+            lowest = Math.Min(lowest, GC.GetAllocatedBytesForCurrentThread() - before);
+        }
+
+        return lowest;
+    }
+
+    [Fact]
+    public void Passing_AllSatisfy_has_no_per_item_allocation()
+    {
+        Assert.Equal(BytesForAllSatisfy(10), BytesForAllSatisfy(1000));
+    }
+
     private static long Bytes(Action call)
     {
         call();

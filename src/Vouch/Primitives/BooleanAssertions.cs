@@ -38,49 +38,53 @@ public readonly struct BooleanAssertions
 
     public AndConstraint<BooleanAssertions> BeTrue(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeTrue();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<BooleanAssertions> BeFalse(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeFalse();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<BooleanAssertions> Be(bool expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<BooleanAssertions> NotBe(bool unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -138,7 +142,7 @@ public readonly struct NullableBooleanAssertions
         if (Subject is not { } value)
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be null, but it was.");
-            return default;
+            return new(this, default);
         }
 
         return new(this, value);
@@ -146,73 +150,79 @@ public readonly struct NullableBooleanAssertions
 
     public AndConstraint<NullableBooleanAssertions> BeTrue(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeTrue();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableBooleanAssertions> BeFalse(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeFalse();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableBooleanAssertions> Be(bool expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableBooleanAssertions> NotBe(bool unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableBooleanAssertions> BeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndWhichConstraint<NullableBooleanAssertions, bool> NotBeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 

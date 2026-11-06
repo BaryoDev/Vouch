@@ -26,14 +26,8 @@ public readonly struct AsyncFunctionAssertions<T>
 
     public async Task<AndWhichConstraint<AsyncFunctionAssertions<T>, T>> NotThrowAsync(string because)
     {
-        try
-        {
-            return await NotThrowAsync().ConfigureAwait(false);
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
+        await Untyped(out var result).NotThrowAsync(because).ConfigureAwait(false);
+        return new(this, result.Value);
     }
 
     private AsyncFunctionAssertions Untyped(out Holder result)

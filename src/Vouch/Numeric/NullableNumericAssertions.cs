@@ -128,7 +128,7 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
         if (Subject is not { } value)
         {
             Fail.With($"Expected {Name} not to be null, but it was.");
-            return default;
+            return new(this, default);
         }
 
         return new(this, value);
@@ -148,25 +148,27 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NullableNumericAssertions<T>> Be(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<NullableNumericAssertions<T>> BeGreaterThan(T expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeGreaterThan(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }

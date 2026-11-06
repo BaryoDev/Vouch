@@ -15,30 +15,73 @@ public readonly struct ActionAssertions
     public Action? Subject { get; }
 
     public ExceptionAssertions<TException> Throw<TException>() where TException : Exception
-    {
-        var name = Fail.Name(_expression);
-        if (Subject is null)
-        {
-            ExceptionMessages.NullDelegate(name, $"to throw {Formatter.Format(typeof(TException))}");
-        }
-
-        RejectAsyncVoid(Subject!);
-        return ExceptionMessages.Check<TException>(name, Capture.Run(Subject!));
-    }
+        => ThrowCore<TException>(null);
 
     public AndConstraint<ActionAssertions> NotThrow()
+        => NotThrowCore(null);
+
+    private ExceptionAssertions<TException> ThrowCore<TException>(string? because) where TException : Exception
     {
         var name = Fail.Name(_expression);
         if (Subject is null)
         {
-            ExceptionMessages.NullDelegate(name, "not to throw");
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.NullDelegate(name, $"to throw {Formatter.Format(typeof(TException))}");
+            }
+            finally
+            {
+                Reason.Clear();
+            }
+
+            return ExceptionMessages.Empty<TException>(name);
         }
 
-        RejectAsyncVoid(Subject!);
-        var thrown = Capture.Run(Subject!);
+        RejectAsyncVoid(Subject);
+        var thrown = Capture.Run(Subject);
+        Reason.Set(because);
+        try
+        {
+            return ExceptionMessages.Check<TException>(name, thrown);
+        }
+        finally
+        {
+            Reason.Clear();
+        }
+    }
+
+    private AndConstraint<ActionAssertions> NotThrowCore(string? because)
+    {
+        var name = Fail.Name(_expression);
+        if (Subject is null)
+        {
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.NullDelegate(name, "not to throw");
+            }
+            finally
+            {
+                Reason.Clear();
+            }
+
+            return new(this);
+        }
+
+        RejectAsyncVoid(Subject);
+        var thrown = Capture.Run(Subject);
         if (thrown is not null)
         {
-            ExceptionMessages.Threw(name, thrown);
+            Reason.Set(because);
+            try
+            {
+                ExceptionMessages.Threw(name, thrown);
+            }
+            finally
+            {
+                Reason.Clear();
+            }
         }
 
         return new(this);
@@ -53,28 +96,10 @@ public readonly struct ActionAssertions
     }
 
     public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
-    {
-        try
-        {
-            return Throw<TException>();
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
-    }
+        => ThrowCore<TException>(because);
 
     public AndConstraint<ActionAssertions> NotThrow(string because)
-    {
-        try
-        {
-            return NotThrow();
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
-    }
+        => NotThrowCore(because);
 }
 
 public readonly struct FunctionAssertions<T>
@@ -99,27 +124,12 @@ public readonly struct FunctionAssertions<T>
     }
 
     public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
-    {
-        try
-        {
-            return Throw<TException>();
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
-    }
+        => _inner.Throw<TException>(because);
 
     public AndConstraint<FunctionAssertions<T>> NotThrow(string because)
     {
-        try
-        {
-            return NotThrow();
-        }
-        catch (VouchException failure)
-        {
-            throw Reason.Add(failure, because);
-        }
+        _inner.NotThrow(because);
+        return new(this);
     }
 }
 

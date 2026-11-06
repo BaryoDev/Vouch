@@ -31,43 +31,43 @@ internal static class ExceptionMessages
     public static void NullTask(string name, string expectation) =>
         Fail.With($"Expected {name} {expectation}, but it returned a null Task.");
 
+    public static ExceptionAssertions<T> Empty<T>(string name) where T : Exception
+        => new(new List<T>(), name);
+
     public static ExceptionAssertions<T> Check<T>(string name, Exception? thrown) where T : Exception
     {
+        var matches = new List<T>();
         if (thrown is null)
         {
             DidNotThrow(name, typeof(T));
+            return new ExceptionAssertions<T>(matches, name);
         }
-        else
+
+        if (thrown is AggregateException aggregate)
         {
-            var matches = new List<T>();
-            if (thrown is AggregateException aggregate)
+            foreach (var inner in aggregate.Flatten().InnerExceptions)
             {
-                foreach (var inner in aggregate.Flatten().InnerExceptions)
+                if (inner is T unwrapped)
                 {
-                    if (inner is T unwrapped)
-                    {
-                        matches.Add(unwrapped);
-                    }
-                }
-
-                if (matches.Count == 0 && thrown is T self && typeof(AggregateException).IsAssignableFrom(typeof(T)))
-                {
-                    matches.Add(self);
+                    matches.Add(unwrapped);
                 }
             }
-            else if (thrown is T match)
-            {
-                matches.Add(match);
-            }
 
-            if (matches.Count > 0)
+            if (matches.Count == 0 && thrown is T self && typeof(AggregateException).IsAssignableFrom(typeof(T)))
             {
-                return new ExceptionAssertions<T>(matches, name);
+                matches.Add(self);
             }
+        }
+        else if (thrown is T match)
+        {
+            matches.Add(match);
+        }
 
+        if (matches.Count == 0)
+        {
             ThrewWrongType(name, typeof(T), thrown);
         }
 
-        throw new InvalidOperationException("unreachable");
+        return new ExceptionAssertions<T>(matches, name);
     }
 }

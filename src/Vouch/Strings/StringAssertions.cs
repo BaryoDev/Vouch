@@ -59,6 +59,7 @@ public readonly struct StringAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Name} not to be empty, but found null.");
+            return new(this);
         }
 
         if (Subject.Length == 0)
@@ -218,12 +219,14 @@ public readonly struct StringAssertions
             catch (ArgumentException ex)
             {
                 Fail.With($"Expected {Name} to match regex {Formatter.Format(pattern)}, but the pattern is not a valid regular expression: {ex.Message.TrimEnd('.')}.");
+                return new(this);
             }
         }
 
         if (timedOut)
         {
             Fail.With($"Expected {Name} to match regex {Formatter.Format(pattern)}, but the match timed out after 1 second.");
+            return new(this);
         }
 
         if (!matched)
@@ -239,6 +242,7 @@ public readonly struct StringAssertions
         if (Subject is null)
         {
             Fail.With($"Expected {Name} to have length {expected}, but found null.");
+            return new(this);
         }
 
         if (Subject.Length != expected)
@@ -277,217 +281,235 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> Be(string? expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Be(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotBe(string? unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBe(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> BeEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotBeEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> BeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotBeNull(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNull();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> BeNullOrEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return BeNullOrEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotBeNullOrEmpty(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNullOrEmpty();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotBeNullOrWhiteSpace(string because)
     {
+        Reason.Set(because);
         try
         {
             return NotBeNullOrWhiteSpace();
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> StartWith(string expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return StartWith(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotStartWith(string unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotStartWith(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> EndWith(string expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return EndWith(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> Contain(string expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return Contain(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> NotContain(string unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContain(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> Match(string wildcardPattern, string because)
     {
+        Reason.Set(because);
         try
         {
             return Match(wildcardPattern);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> MatchRegex(string pattern, string because)
     {
+        Reason.Set(because);
         try
         {
             return MatchRegex(pattern);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> HaveLength(int expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return HaveLength(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
     public AndConstraint<StringAssertions> BeEquivalentTo(string? expected, string because)
     {
+        Reason.Set(because);
         try
         {
             return BeEquivalentTo(expected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -495,13 +517,14 @@ public readonly struct StringAssertions
     {
         ArgumentNullException.ThrowIfNull(validValues);
         var values = validValues.ToArray();
+        Reason.Set(because);
         try
         {
             return BeOneOf(values);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 
@@ -519,13 +542,14 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> NotContainEquivalentOf(string unexpected, string because)
     {
+        Reason.Set(because);
         try
         {
             return NotContainEquivalentOf(unexpected);
         }
-        catch (VouchException failure)
+        finally
         {
-            throw Reason.Add(failure, because);
+            Reason.Clear();
         }
     }
 }
