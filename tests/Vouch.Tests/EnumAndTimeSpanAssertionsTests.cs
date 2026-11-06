@@ -33,7 +33,8 @@ public class EnumAndTimeSpanAssertionsTests
     [Fact] public void HaveFlag_zero_member_always_passes() { var p = Perm.Read; p.Should().HaveFlag(Perm.None); var none = Perm.None; none.Should().HaveFlag(Perm.None); }
     [Fact] public void BeDefined_combined_flag_value_fails() { var p = Perm.Read | Perm.Write; Assert.Throws<VouchException>(() => p.Should().BeDefined()); }
 
-    [Fact] public void BeCloseTo_extreme_values_fails_with_VouchException()
+    [Fact]
+    public void BeCloseTo_extreme_values_fails_with_VouchException()
     {
         var t = TimeSpan.MaxValue;
         Assert.Throws<VouchException>(() => t.Should().BeCloseTo(TimeSpan.MinValue, TimeSpan.FromSeconds(1)));
