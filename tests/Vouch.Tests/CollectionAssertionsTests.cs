@@ -635,7 +635,16 @@ public class CollectionAssertionsTests
     [Fact]
     public void HaveSameCount_caps_the_other_collection()
     {
-        var ex = Assert.Throws<VouchException>(() => new[] { 1 }.Should().HaveSameCount(Enumerable.Range(0, Equivalency.MaxItems + 1)));
+        // Enumerable.Range knows its count, so use an iterator to reach the capped path.
+        static IEnumerable<int> Endless(int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                yield return i;
+            }
+        }
+
+        var ex = Assert.Throws<VouchException>(() => new[] { 1 }.Should().HaveSameCount(Endless(Equivalency.MaxItems + 1)));
         Assert.Contains("more than", ex.Message);
     }
 
