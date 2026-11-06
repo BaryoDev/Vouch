@@ -203,6 +203,8 @@ namespace Vouch
             where TOther :  struct, System.Enum { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveValue<T>(this Vouch.ValueAssertions<T> assertions, long value)
             where T :  struct, System.Enum { }
+        public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> HaveValue<T>(this Vouch.ValueAssertions<T> assertions, ulong value)
+            where T :  struct, System.Enum { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBeDefined<T>(this Vouch.ValueAssertions<T> assertions)
             where T :  struct, System.Enum { }
         public static Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotHaveFlag<T>(this Vouch.ValueAssertions<T> assertions, T flag)
@@ -355,7 +357,9 @@ namespace Vouch
     {
         public T? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected) { }
@@ -368,18 +372,26 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BePositive() { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBe(T unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> NotBe(T unexpected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.NullableNumericAssertions<T>, T> NotBeNull() { }
     }
     public readonly struct NullableTimeOnlyAssertions
     {
         public System.TimeOnly? Subject { get; }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly? expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly expected, string because) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOneOf(params System.TimeOnly[] validValues) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotBe(System.TimeOnly unexpected) { }
+        public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> NotBe(System.TimeOnly unexpected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.NullableTimeOnlyAssertions, System.TimeOnly> NotBeNull() { }
     }
     public readonly struct NullableValueAssertions<T>
@@ -557,11 +569,20 @@ namespace Vouch
     {
         public System.TimeOnly Subject { get; }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected, string because) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeGreaterThan(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeGreaterThanOrEqualTo(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeLessThan(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeLessThanOrEqualTo(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeOnOrBefore(System.TimeOnly expected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeOneOf(params System.TimeOnly[] validValues) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> NotBe(System.TimeOnly unexpected) { }
+        public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> NotBe(System.TimeOnly unexpected, string because) { }
     }
     public static class TimeSpanAssertionsExtensions
     {
