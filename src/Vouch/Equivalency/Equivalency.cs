@@ -192,6 +192,7 @@ internal sealed class Comparison
     private readonly List<Step> _path = new();
     private readonly List<object> _pairs = new();
     private Dictionary<PairKey, Settled>? _settled;
+    private int _ignoredCycles;
 
     private bool _quiet;
     private bool _stopOnFirst;
@@ -423,6 +424,10 @@ internal sealed class Comparison
                     {
                         Add(Kind.Cycle, null, null);
                     }
+                    else
+                    {
+                        _ignoredCycles++;
+                    }
 
                     return;
                 }
@@ -453,6 +458,7 @@ internal sealed class Comparison
             }
 
             var before = Total;
+            var cyclesBefore = _ignoredCycles;
             _pairs.Add(subject);
             _pairs.Add(expectation);
             switch (shape.Kind)
@@ -468,7 +474,8 @@ internal sealed class Comparison
                     break;
             }
 
-            if (memoize && (Total == before || !_stopOnFirst))
+            // A subtree that hit an ignored cycle depends on the pairs above it, so it is not settled.
+            if (memoize && _ignoredCycles == cyclesBefore && (Total == before || !_stopOnFirst))
             {
                 Settle(key, pathCount, Total - before);
             }
@@ -522,6 +529,7 @@ internal sealed class Comparison
         {
             var member = members[i];
             var subjectName = member.Name;
+            var isMapped = false;
             Func<object, object, bool>? memberComparer = null;
             if (Options.HasPathRules)
             {
@@ -534,6 +542,7 @@ internal sealed class Comparison
                 if (Options.Mappings.TryGetValue(memberPath, out var mapped))
                 {
                     subjectName = mapped;
+                    isMapped = true;
                 }
 
                 Options.PathComparers.TryGetValue(memberPath, out memberComparer);
@@ -542,7 +551,7 @@ internal sealed class Comparison
             var counterpart = subjectShape.Find(subjectName);
             if (counterpart is null)
             {
-                if (Options.SkipMissingMembers)
+                if (Options.SkipMissingMembers && !isMapped)
                 {
                     continue;
                 }

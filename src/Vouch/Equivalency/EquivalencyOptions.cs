@@ -163,6 +163,13 @@ internal sealed class EquivalencyOptions
                         throw Bad(expression, option);
                     }
 
+                    // Nullable<T>.Value (or HasValue) is not a member of the compared object.
+                    if (member.Member.DeclaringType is { IsGenericType: true } declaring && declaring.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        node = member.Expression;
+                        continue;
+                    }
+
                     segments.Add(member.Member.Name);
                     node = member.Expression;
                     continue;
@@ -208,7 +215,10 @@ public sealed class EquivalencyOptions<TExpectation>
     public EquivalencyOptions<TExpectation> Using<TMember>(IEqualityComparer<TMember> comparer) =>
         new(State.WithTypeComparer(EquivalencyOptions.KeyOf(typeof(TMember)), EquivalencyOptions.Wrap(comparer)));
 
-    /// <summary>Compares one member of the expectation, or a nested member such as <c>x => x.Address.City</c>, with <paramref name="comparer"/>.</summary>
+    /// <summary>
+    /// Compares one member of the expectation, or a nested member such as <c>x => x.Address.City</c>, with <paramref name="comparer"/>.
+    /// An index in the expression, as in <c>x => x.Items[0].Name</c>, is ignored, so the rule applies to that member on every element.
+    /// </summary>
     public EquivalencyOptions<TExpectation> Using<TMember>(Expression<Func<TExpectation, TMember>> member, IEqualityComparer<TMember> comparer)
     {
         var path = EquivalencyOptions.PathOf(member, nameof(Using));
@@ -218,12 +228,25 @@ public sealed class EquivalencyOptions<TExpectation>
     /// <summary>
     /// Compares <typeparamref name="T"/> member by member, even if it overrides Equals.
     /// If this and <see cref="ComparingByValue{T}"/> are both called for the same type, the last call wins.
+    /// Like <c>Using</c>, this matches the exact runtime type only, not base types or interfaces.
+    /// Throws <see cref="ArgumentException"/> when <typeparamref name="T"/> is a scalar (string, number, enum, Guid, date and so on) or a collection.
     /// </summary>
-    public EquivalencyOptions<TExpectation> ComparingByMembers<T>() => new(State.WithKindOverride(EquivalencyOptions.KeyOf(typeof(T)), byValue: false));
+    public EquivalencyOptions<TExpectation> ComparingByMembers<T>()
+    {
+        var type = EquivalencyOptions.KeyOf(typeof(T));
+        var kind = MemberCache.Classify(type);
+        if (kind is TypeKind.Scalar or TypeKind.Sequence or TypeKind.Dictionary)
+        {
+            throw new ArgumentException($"ComparingByMembers cannot be used for {type.Name}: it is a scalar or a collection, which has no members to compare.");
+        }
+
+        return new(State.WithKindOverride(type, byValue: false));
+    }
 
     /// <summary>
     /// Compares <typeparamref name="T"/> with its Equals, even if it has members.
     /// If this and <see cref="ComparingByMembers{T}"/> are both called for the same type, the last call wins.
+    /// Like <c>Using</c>, this matches the exact runtime type only, not base types or interfaces.
     /// </summary>
     public EquivalencyOptions<TExpectation> ComparingByValue<T>() => new(State.WithKindOverride(EquivalencyOptions.KeyOf(typeof(T)), byValue: true));
 
@@ -243,18 +266,32 @@ public sealed class EquivalencyOptions<TExpectation>
     /// </summary>
     public EquivalencyOptions<TExpectation> RespectingRuntimeTypes() => new(State);
 
-    /// <summary>Skips a member of the expectation, or a nested member such as <c>x => x.Address.City</c>.</summary>
+    /// <summary>
+    /// Skips a member of the expectation, or a nested member such as <c>x => x.Address.City</c>.
+    /// An index in the expression, as in <c>x => x.Items[0].Name</c>, is ignored, so the rule applies to that member on every element.
+    /// With path rules set, a shared object reached through several paths is compared once per path,
+    /// so a deep shared graph with a raised <see cref="WithMaxDepth"/> can be slow.
+    /// </summary>
     public EquivalencyOptions<TExpectation> Excluding(Expression<Func<TExpectation, object?>> member) =>
         new(State.WithExcluded(EquivalencyOptions.PathOf(member, nameof(Excluding))));
 
-    /// <summary>Compares only the included members. Naming a nested member keeps its parents so it can be reached.</summary>
+    /// <summary>
+    /// Compares only the included members. Naming a nested member keeps its parents so it can be reached.
+    /// An index in the expression, as in <c>x => x.Items[0].Name</c>, is ignored, so the rule applies to that member on every element.
+    /// With path rules set, a shared object reached through several paths is compared once per path,
+    /// so a deep shared graph with a raised <see cref="WithMaxDepth"/> can be slow.
+    /// </summary>
     public EquivalencyOptions<TExpectation> Including(Expression<Func<TExpectation, object?>> member) =>
         new(State.WithIncluded(EquivalencyOptions.PathOf(member, nameof(Including))));
 
     /// <summary>Skips expectation members the subject does not have instead of reporting them.</summary>
     public EquivalencyOptions<TExpectation> ExcludingMissingMembers() => new(State.WithSkipMissingMembers());
 
-    /// <summary>Compares an expectation member with the subject member of another name on the same object.</summary>
+    /// <summary>
+    /// Compares an expectation member with the subject member of another name on the same object.
+    /// An index in the expression, as in <c>x => x.Items[0].Name</c>, is ignored, so the rule applies to that member on every element.
+    /// A mapping target the subject does not have is always reported, even with <see cref="ExcludingMissingMembers"/>.
+    /// </summary>
     public EquivalencyOptions<TExpectation> WithMapping(Expression<Func<TExpectation, object?>> expectationMember, string subjectMemberName)
     {
         var path = EquivalencyOptions.PathOf(expectationMember, nameof(WithMapping));

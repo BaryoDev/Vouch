@@ -422,23 +422,25 @@ public class EquivalencyTests
         Assert.Equal("Expected subject to be equivalent to the expected OptPriced, but:\n  Price.Hidden was 1, expected 2.", msg);
 
         var items = new[] { new Money(1m) { Hidden = 1 } };
-        Assert.Contains("[0].Hidden was 1, expected 2.", Message(() => items.Should().BeEquivalentTo(new[] { new Money(1m) { Hidden = 2 } }, o => o.ComparingByMembers<Money>())));
+        Assert.Contains("[0].Hidden was 1, expected 2.", Message(() => items.Should().BeEquivalentTo(new[] { new Money(1m) { Hidden = 2 } }, o => o.ComparingByMembers<Money>().WithStrictOrdering())));
         items.Should().BeEquivalentTo(new[] { new Money(1m) { Hidden = 2 } });
     }
 
     [Fact]
     public void ComparingByValue_uses_equals_even_when_the_type_has_members()
     {
-        new OptByRef { Item = new ByRef(1, 1) }.Should().BeEquivalentTo(new OptByRef { Item = new ByRef(1, 2) }, o => o.ComparingByValue<ByRef>());
+        var shared = new ByRef(1, 1);
+        new OptByRef { Item = shared }.Should().BeEquivalentTo(new OptByRef { Item = shared }, o => o.ComparingByValue<ByRef>());
+        Assert.Throws<VouchException>(() => new OptByRef { Item = new ByRef(1, 1) }.Should().BeEquivalentTo(new OptByRef { Item = new ByRef(1, 1) }, o => o.ComparingByValue<ByRef>()));
+        new OptByRef { Item = new ByRef(1, 1) }.Should().BeEquivalentTo(new OptByRef { Item = new ByRef(1, 1) });
     }
 
+    // Does not override Equals: by default compared by members, by value means reference equality.
     public sealed class ByRef
     {
         public ByRef(int key, int other) { Key = key; Other = other; }
         public int Key { get; }
         public int Other { get; }
-        public override bool Equals(object? obj) => obj is ByRef r && r.Key == Key;
-        public override int GetHashCode() => Key;
     }
 
     public class OptByRef { public ByRef? Item { get; set; } }
@@ -460,9 +462,10 @@ public class EquivalencyTests
     [Fact]
     public void ComparingByValue_applies_to_collection_elements()
     {
-        var items = new[] { new ByRef(1, 1) };
-        items.Should().BeEquivalentTo(new[] { new ByRef(1, 9) }, o => o.ComparingByValue<ByRef>().WithStrictOrdering());
-        Assert.Throws<VouchException>(() => items.Should().BeEquivalentTo(new[] { new ByRef(2, 1) }, o => o.ComparingByValue<ByRef>()));
+        var item = new ByRef(1, 1);
+        var items = new[] { item };
+        items.Should().BeEquivalentTo(new[] { item }, o => o.ComparingByValue<ByRef>().WithStrictOrdering());
+        Assert.Throws<VouchException>(() => items.Should().BeEquivalentTo(new[] { new ByRef(1, 1) }, o => o.ComparingByValue<ByRef>()));
     }
 
     [Fact]
@@ -535,7 +538,7 @@ public class EquivalencyTests
     [Fact]
     public void WithMaxDepth_applies_inside_collections()
     {
-        Assert.Contains("deeper than 3 levels", Message(() => new[] { Chain(10) }.Should().BeEquivalentTo(new[] { Chain(10) }, o => o.WithMaxDepth(3))));
+        Assert.Contains("deeper than 3 levels", Message(() => new[] { Chain(10) }.Should().BeEquivalentTo(new[] { Chain(10) }, o => o.WithMaxDepth(3).WithStrictOrdering())));
         new[] { Chain(10) }.Should().BeEquivalentTo(new[] { Chain(10) }, o => o.WithMaxDepth(20));
     }
 
@@ -1369,5 +1372,90 @@ public class EquivalencyTests
         public bool TryGetValue(string key, out int value) => _inner.TryGetValue(key, out value);
         public IEnumerator<KeyValuePair<string, int>> GetEnumerator() => _inner.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public class HItem { public int Id { get; set; } public string? Tag { get; set; } public string? Note { get; set; } }
+
+    public class HHolder { public List<HItem> Items { get; set; } = new(); }
+
+    private static HHolder Reversed(bool expected)
+    {
+        var holder = new HHolder();
+        for (var i = 0; i < 20; i++)
+        {
+            var id = expected ? 19 - i : i;
+            holder.Items.Add(new HItem { Id = id, Tag = expected ? "T" + id : "t" + id, Note = (expected ? "e" : "s") + id });
+        }
+
+        return holder;
+    }
+
+    [Fact]
+    public void Many_items_in_reverse_order_ignore_an_excluded_member_that_differs()
+    {
+        var subject = Reversed(false);
+        var expected = Reversed(true);
+        subject.Should().BeEquivalentTo(expected, o => o.Excluding(x => x.Items[0].Note).Excluding(x => x.Items[0].Tag));
+        Assert.Throws<VouchException>(() => subject.Should().BeEquivalentTo(expected, o => o.Excluding(x => x.Items[0].Tag)));
+    }
+
+    [Fact]
+    public void Many_items_in_reverse_order_use_a_member_comparer()
+    {
+        var subject = Reversed(false);
+        var expected = Reversed(true);
+        subject.Should().BeEquivalentTo(expected, o => o.Excluding(x => x.Items[0].Note).Using(x => x.Items[0].Tag, StringComparer.OrdinalIgnoreCase));
+    }
+
+    public class QNode { public PNode? Child { get; set; } public string? Name { get; set; } }
+
+    public class PNode { public QNode? Back { get; set; } }
+
+    private static QNode Cyclic(string name)
+    {
+        var p = new PNode();
+        var q = new QNode { Child = p, Name = name };
+        p.Back = q;
+        return q;
+    }
+
+    [Fact]
+    public void IgnoringCyclicReferences_does_not_settle_a_pair_whose_ancestor_fails()
+    {
+        var msg = Message(() => Cyclic("a").Should().BeEquivalentTo(Cyclic("b"), o => o.IgnoringCyclicReferences()));
+        Assert.Contains("Name was \"a\", expected \"b\".", msg);
+
+        var subject = new List<QNode> { Cyclic("a"), Cyclic("c") };
+        var expected = new List<QNode> { Cyclic("c"), Cyclic("b") };
+        Assert.Throws<VouchException>(() => subject.Should().BeEquivalentTo(expected, o => o.IgnoringCyclicReferences()));
+        Assert.Throws<VouchException>(() => subject.Should().BeEquivalentTo(expected, o => o.IgnoringCyclicReferences().WithStrictOrdering()));
+    }
+
+    public struct NAddr { public string? City { get; set; } }
+
+    public class NHolder { public int? NullableInt { get; set; } public NAddr? Addr { get; set; } }
+
+    [Fact]
+    public void Excluding_resolves_through_Nullable_Value()
+    {
+        new NHolder { NullableInt = 1 }.Should().BeEquivalentTo(new NHolder { NullableInt = 2 }, o => o.Excluding(x => x.NullableInt!.Value));
+        new NHolder { Addr = new NAddr { City = "a" } }.Should().BeEquivalentTo(new NHolder { Addr = new NAddr { City = "b" } }, o => o.Excluding(x => x.Addr!.Value.City));
+        Assert.Throws<VouchException>(() => new NHolder { NullableInt = 1 }.Should().BeEquivalentTo(new NHolder { NullableInt = 2 }));
+    }
+
+    [Fact]
+    public void ExcludingMissingMembers_still_reports_a_missing_mapping_target()
+    {
+        var msg = Message(() => new EqPerson { Name = "a" }.Should().BeEquivalentTo(new EqPerson { Name = "a" }, o => o.WithMapping(x => x.Name, "Typo").ExcludingMissingMembers()));
+        Assert.Contains("Typo", msg);
+    }
+
+    [Fact]
+    public void ComparingByMembers_rejects_scalars_and_collections()
+    {
+        var options = new EquivalencyOptions<EqPerson>(EquivalencyOptions.Default);
+        Assert.Throws<ArgumentException>(() => options.ComparingByMembers<string>());
+        Assert.Throws<ArgumentException>(() => options.ComparingByMembers<List<int>>());
+        Assert.Throws<ArgumentException>(() => options.ComparingByMembers<int>());
     }
 }

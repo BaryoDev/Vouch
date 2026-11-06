@@ -39,6 +39,12 @@ public class NeverEqual
     public override int GetHashCode() => 0;
 }
 
+// Does not override Equals, so by default it is compared by members and by value means reference equality.
+public class RefOnly
+{
+    public int Value { get; init; }
+}
+
 public class Wrapper
 {
     public List<List<int>> Rows { get; init; } = new();
