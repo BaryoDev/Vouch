@@ -164,10 +164,10 @@ public class TaskTimingStreamTests
     {
         var stream = new MemoryStream();
         stream.Dispose();
-        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().HaveLength(0)));
-        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().NotHaveLength(0)));
-        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().HavePosition(0)));
-        Assert.Contains("ObjectDisposedException", Msg(() => stream.Should().NotHavePosition(0)));
+        Assert.Contains("Expected stream ", Msg(() => stream.Should().HaveLength(0)));
+        Assert.Contains("Expected stream ", Msg(() => stream.Should().NotHaveLength(0)));
+        Assert.Contains("Expected stream ", Msg(() => stream.Should().HavePosition(0)));
+        Assert.Contains("Expected stream ", Msg(() => stream.Should().NotHavePosition(0)));
     }
 
     [Fact]

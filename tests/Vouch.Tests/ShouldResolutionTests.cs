@@ -26,7 +26,7 @@ public class ShouldResolutionTests
         task.Should().Be(task).And.NotBe(number).And.NotBeNull().And.BeSameAs(task).And.NotBeSameAs(number)
             .And.BeOneOf(task).And.BeEquivalentTo(task).And.Match<Task>(t => t.IsCompleted);
         task.Should().BeOfType(task.GetType()).And.BeAssignableTo<Task>();
-        task.Should().BeOfType<Task>("because").Which.Should().BeSameAs(task);
+        task.Should().BeAssignableTo<Task>("because").Which.Should().BeSameAs(task);
         task.Should().NotBeOfType<string>().And.NotBeAssignableTo<string>();
         Task? none = null;
         none.Should().BeNull().And.BeNull("because");

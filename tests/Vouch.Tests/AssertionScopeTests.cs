@@ -47,7 +47,7 @@ public class AssertionScopeTests
         var ex = await Assert.ThrowsAsync<VouchException>(async () =>
         {
             using var scope = new AssertionScope();
-            await Task.Yield();
+            await Task.Delay(10);
             late.Should().Be(2);
             await Task.Yield();
             late.Should().Be(3);
