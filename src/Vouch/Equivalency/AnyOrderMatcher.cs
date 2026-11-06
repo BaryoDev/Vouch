@@ -209,7 +209,7 @@ internal sealed class AnyOrderMatcher
         HashIndex? hashIndex = null;
         var hash = 0;
         var equatable = false;
-        if (item is not null && _subject.Length >= IndexThreshold)
+        if (item is not null && _subject.Length >= IndexThreshold && !_run.Options.HasTypeRules && !_run.Options.HasPathRules)
         {
             TypeShape? shape = null;
             try
@@ -256,7 +256,7 @@ internal sealed class AnyOrderMatcher
 
         if (hashIndex is null)
         {
-            return _cheap && _subject.Length >= IndexThreshold ? -1 : Scan(item, index);
+            return _cheap && _subject.Length >= IndexThreshold && !_run.Options.HasTypeRules && !_run.Options.HasPathRules ? -1 : Scan(item, index);
         }
 
         if (hashIndex.Buckets.TryGetValue(hash, out var bucket))

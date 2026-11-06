@@ -4,6 +4,15 @@ public record Person(string Name, int Age);
 
 public record OtherPerson(string Name, int Age);
 
+public record Titled(string Title, int Age);
+
+public class Loop
+{
+    public Loop? Next { get; set; }
+
+    public int Value { get; set; }
+}
+
 public record struct Point(int X, int Y);
 
 public record Node(string Name, string? Note);
@@ -28,6 +37,12 @@ public class NeverEqual
     public override bool Equals(object? obj) => false;
 
     public override int GetHashCode() => 0;
+}
+
+// Does not override Equals, so by default it is compared by members and by value means reference equality.
+public class RefOnly
+{
+    public int Value { get; init; }
 }
 
 public class Wrapper

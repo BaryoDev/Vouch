@@ -45,9 +45,9 @@ internal sealed class TypeShape
 
     private Dictionary<string, MemberGetter>? _byName;
 
-    public TypeShape(Type type)
+    public TypeShape(Type type, TypeKind? forced = null)
     {
-        Kind = MemberCache.Classify(type);
+        Kind = forced ?? MemberCache.Classify(type);
         Members = MemberCache.Read(type);
     }
 
@@ -90,6 +90,12 @@ internal sealed class TypeShape
 internal static class MemberCache
 {
     private static readonly ConcurrentDictionary<Type, TypeShape> Shapes = new();
+
+    private static readonly ConcurrentDictionary<(Type, TypeKind), TypeShape> Forced = new();
+
+    // The shape of a type whose kind was chosen by an option instead of Classify.
+    public static TypeShape ShapeOf(Type type, TypeKind forced) =>
+        Forced.GetOrAdd((type, forced), static key => new TypeShape(key.Item1, key.Item2));
 
     public static MemberGetter[] For(Type type) => ShapeOf(type).Members;
 

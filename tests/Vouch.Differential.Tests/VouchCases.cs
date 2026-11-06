@@ -4,6 +4,13 @@ namespace Differential;
 
 public static class VouchCases
 {
+    private static Loop SelfLoop(int value)
+    {
+        var node = new Loop { Value = value };
+        node.Next = node;
+        return node;
+    }
+
     private static Action WithMessage(string message, string pattern) => () =>
     {
         Action act = Throws.Of(new InvalidOperationException(message));
@@ -134,6 +141,21 @@ public static class VouchCases
 
         ["equivalent record same"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 1)),
         ["equivalent record one member changed"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 2)),
+        ["equivalent excluding changed member"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 2), o => o.Excluding(x => x.Age)),
+        ["equivalent including only unchanged member"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("b", 1), o => o.Including(x => x.Age)),
+        ["equivalent excluding missing members"] = () => new { Name = "a" }.Should().BeEquivalentTo(new Person("a", 1), o => o.ExcludingMissingMembers()),
+        ["equivalent with mapping to renamed member"] = () => new Titled("a", 1).Should().BeEquivalentTo(new Person("a", 1), o => o.WithMapping(x => x.Name, "Title")),
+        ["equivalent using comparer same"] = () => new Person("A", 1).Should().BeEquivalentTo(new Person("a", 1), o => o.Using<string>(StringComparer.OrdinalIgnoreCase)),
+        ["equivalent using comparer differs"] = () => new Person("A", 1).Should().BeEquivalentTo(new Person("b", 1), o => o.Using<string>(StringComparer.OrdinalIgnoreCase)),
+        ["equivalent comparing by members passes where equals says unequal"] = () => new NeverEqual { Value = 1 }.Should().BeEquivalentTo(new NeverEqual { Value = 1 }, o => o.ComparingByMembers<NeverEqual>()),
+        ["equivalent comparing by members fails where equals says equal"] = () => new AlwaysEqual { Value = 1 }.Should().BeEquivalentTo(new AlwaysEqual { Value = 2 }, o => o.ComparingByMembers<AlwaysEqual>()),
+        ["equivalent comparing by value passes where members differ"] = () => { var same = new RefOnly { Value = 1 }; same.Should().BeEquivalentTo(same, o => o.ComparingByValue<RefOnly>()); },
+        ["equivalent comparing by value fails where equals says unequal"] = () => new RefOnly { Value = 1 }.Should().BeEquivalentTo(new RefOnly { Value = 1 }, o => o.ComparingByValue<RefOnly>()),
+        ["equivalent without strict ordering after strict ordering"] = () => new[] { 1, 2 }.Should().BeEquivalentTo(new[] { 2, 1 }, o => o.WithStrictOrdering().WithoutStrictOrdering()),
+        ["equivalent ignoring cyclic references"] = () => SelfLoop(1).Should().BeEquivalentTo(SelfLoop(1), o => o.IgnoringCyclicReferences()),
+        ["equivalent ignoring cyclic references still fails on a difference"] = () => SelfLoop(1).Should().BeEquivalentTo(SelfLoop(2), o => o.IgnoringCyclicReferences()),
+        ["equivalent respecting runtime types same"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 1), o => o.RespectingRuntimeTypes()),
+        ["equivalent respecting runtime types changed"] = () => new Person("a", 1).Should().BeEquivalentTo(new Person("a", 2), o => o.RespectingRuntimeTypes()),
         ["equivalent record against anonymous"] = () => new Person("a", 1).Should().BeEquivalentTo(new { Name = "a", Age = 1 }),
         ["equivalent record against anonymous changed"] = () => new Person("a", 1).Should().BeEquivalentTo(new { Name = "a", Age = 2 }),
         ["equivalent record against other record type"] = () => new Person("a", 1).Should().BeEquivalentTo(new OtherPerson("a", 1)),

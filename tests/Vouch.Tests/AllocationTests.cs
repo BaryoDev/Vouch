@@ -78,6 +78,18 @@ public class AllocationTests
         Assert.True((GC.GetAllocatedBytesForCurrentThread() - before) / Calls <= 512);
     }
 
+    [Fact]
+    public void Default_options_BeEquivalentTo_takes_the_zero_option_path()
+    {
+        Assert.False(EquivalencyOptions.Default.HasPathRules);
+        var a = new Row("A", 1);
+        var b = new Row("A", 1);
+        a.Should().BeEquivalentTo(b);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < Calls; i++) a.Should().BeEquivalentTo(b);
+        Assert.True((GC.GetAllocatedBytesForCurrentThread() - before) / Calls <= 512);
+    }
+
     private static long BytesForContainKey(int size)
     {
         var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);

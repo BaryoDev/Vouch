@@ -22,6 +22,7 @@ internal static class Equivalency
     {
         if (typeof(TSubject) == typeof(TExpectation)
             && ScalarType<TSubject>.Is
+            && !options.HasTypeRules
             && EqualityComparer<TSubject>.Default.Equals(subject, Unsafe.As<TExpectation, TSubject>(ref expectation)))
         {
             return;
@@ -34,6 +35,7 @@ internal static class Equivalency
     {
         if (subject is not null
             && expectation is not null
+            && !options.HasTypeRules
             && MemberCache.ShapeOf(expectation.GetType()).Kind == TypeKind.Scalar
             && Comparison.ScalarEquals(subject, expectation))
         {
@@ -190,6 +192,7 @@ internal sealed class Comparison
     private readonly List<Step> _path = new();
     private readonly List<object> _pairs = new();
     private Dictionary<PairKey, Settled>? _settled;
+    private int _ignoredCycles;
 
     private bool _quiet;
     private bool _stopOnFirst;
@@ -284,9 +287,15 @@ internal sealed class Comparison
             return;
         }
 
+        if (Options.HasTypeRules && Options.TypeComparers.TryGetValue(EquivalencyOptions.KeyOf(expectation.GetType()), out var comparer))
+        {
+            CompareWith(subject, expectation, comparer);
+            return;
+        }
+
         try
         {
-            var shape = MemberCache.ShapeOf(expectation.GetType());
+            var shape = ShapeFor(expectation.GetType());
             switch (shape.Kind)
             {
                 case TypeKind.Scalar:
@@ -343,9 +352,35 @@ internal sealed class Comparison
         _path.RemoveAt(_path.Count - 1);
     }
 
-    private static bool Compatible(object subject, TypeKind expected)
+    // The one place that decides how a type is compared; options can override the classification.
+    private TypeShape ShapeFor(Type type)
     {
-        var actual = MemberCache.ShapeOf(subject.GetType()).Kind;
+        if (Options.HasTypeRules && Options.KindOverrides.TryGetValue(EquivalencyOptions.KeyOf(type), out var byValue))
+        {
+            return MemberCache.ShapeOf(type, byValue ? TypeKind.Equatable : TypeKind.Members);
+        }
+
+        return MemberCache.ShapeOf(type);
+    }
+
+    private void CompareWith(object subject, object expectation, Func<object, object, bool> comparer)
+    {
+        try
+        {
+            if (!comparer(subject, expectation))
+            {
+                Add(Kind.Mismatch, subject, expectation);
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            AddThrew(ex);
+        }
+    }
+
+    private bool Compatible(object subject, TypeKind expected)
+    {
+        var actual = ShapeFor(subject.GetType()).Kind;
         return expected switch
         {
             TypeKind.Dictionary => actual == TypeKind.Dictionary,
@@ -375,7 +410,7 @@ internal sealed class Comparison
         var pairCount = _pairs.Count;
         try
         {
-            if (pathCount > Equivalency.MaxDepth)
+            if (pathCount > Options.MaxDepth)
             {
                 Add(Kind.Depth, null, null);
                 return;
@@ -385,13 +420,23 @@ internal sealed class Comparison
             {
                 if (ReferenceEquals(_pairs[i], subject) && ReferenceEquals(_pairs[i + 1], expectation))
                 {
-                    Add(Kind.Cycle, null, null);
+                    if (!Options.IgnoreCycles)
+                    {
+                        Add(Kind.Cycle, null, null);
+                    }
+                    else
+                    {
+                        _ignoredCycles++;
+                    }
+
                     return;
                 }
             }
 
             // The root pair is compared once, so it is not worth a dictionary.
+            // With path rules the same pair can differ by member path, so it is not memoized.
             var memoize = pathCount > 0
+                && !Options.HasPathRules
                 && !subject.GetType().IsValueType && !expectation.GetType().IsValueType;
             var key = default(PairKey);
             if (memoize)
@@ -413,6 +458,7 @@ internal sealed class Comparison
             }
 
             var before = Total;
+            var cyclesBefore = _ignoredCycles;
             _pairs.Add(subject);
             _pairs.Add(expectation);
             switch (shape.Kind)
@@ -428,7 +474,8 @@ internal sealed class Comparison
                     break;
             }
 
-            if (memoize && (Total == before || !_stopOnFirst))
+            // A subtree that hit an ignored cycle depends on the pairs above it, so it is not settled.
+            if (memoize && _ignoredCycles == cyclesBefore && (Total == before || !_stopOnFirst))
             {
                 Settle(key, pathCount, Total - before);
             }
@@ -481,10 +528,35 @@ internal sealed class Comparison
         for (var i = 0; i < members.Length && !Stop; i++)
         {
             var member = members[i];
-            var counterpart = subjectShape.Find(member.Name);
+            var subjectName = member.Name;
+            var isMapped = false;
+            Func<object, object, bool>? memberComparer = null;
+            if (Options.HasPathRules)
+            {
+                var memberPath = MemberPath(member.Name);
+                if (!Options.IsSelected(memberPath))
+                {
+                    continue;
+                }
+
+                if (Options.Mappings.TryGetValue(memberPath, out var mapped))
+                {
+                    subjectName = mapped;
+                    isMapped = true;
+                }
+
+                Options.PathComparers.TryGetValue(memberPath, out memberComparer);
+            }
+
+            var counterpart = subjectShape.Find(subjectName);
             if (counterpart is null)
             {
-                Add(Kind.NoMember, null, null, member.Name);
+                if (Options.SkipMissingMembers && !isMapped)
+                {
+                    continue;
+                }
+
+                Add(Kind.NoMember, null, null, subjectName);
                 continue;
             }
 
@@ -494,7 +566,14 @@ internal sealed class Comparison
             {
                 var actual = counterpart.Get(subject);
                 var expected = member.Get(expectation);
-                CompareValues(actual, expected);
+                if (memberComparer is not null && actual is not null && expected is not null)
+                {
+                    CompareWith(actual, expected, memberComparer);
+                }
+                else
+                {
+                    CompareValues(actual, expected);
+                }
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
@@ -503,6 +582,21 @@ internal sealed class Comparison
 
             _path.RemoveRange(pathCount, _path.Count - pathCount);
         }
+    }
+
+    // Dot-joined member names down to this member; index and key steps are left out.
+    private string MemberPath(string name)
+    {
+        var sb = new StringBuilder();
+        foreach (var step in _path)
+        {
+            if (step.Kind == Segment.Member)
+            {
+                sb.Append(step.Name).Append('.');
+            }
+        }
+
+        return sb.Append(name).ToString();
     }
 
     private void CompareSequences(object subject, object expectation)
@@ -616,7 +710,7 @@ internal sealed class Comparison
         (_differences ??= new List<Difference>()).Add(new Difference(PathText(), Describe(kind, actual, expected, name)));
     }
 
-    private static string Describe(Kind kind, object? actual, object? expected, string? name) => kind switch
+    private string Describe(Kind kind, object? actual, object? expected, string? name) => kind switch
     {
         Kind.Mismatch => $"was {Formatter.Format(actual)}, expected {Formatter.Format(expected)}",
         Kind.NotFound => $"expected {Formatter.Format(expected)} was not found",
@@ -625,7 +719,7 @@ internal sealed class Comparison
         Kind.NoKey => $"has no key {Formatter.Format(actual)}",
         Kind.UnexpectedKey => $"has unexpected key {Formatter.Format(actual)}",
         Kind.Cycle => "is a cyclic reference",
-        Kind.Depth => $"is nested deeper than {Equivalency.MaxDepth} levels",
+        Kind.Depth => $"is nested deeper than {Options.MaxDepth} levels",
         Kind.TooMany => $"has more than {Equivalency.MaxItems} items, not compared",
         Kind.NoMembers => "has no members to compare",
         _ => $"threw {actual!.GetType().Name}: {((Exception)actual).Message}",
