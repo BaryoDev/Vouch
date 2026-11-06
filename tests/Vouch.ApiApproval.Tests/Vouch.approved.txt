@@ -111,14 +111,14 @@ namespace Vouch
     {
         public string? Expression { get; }
         public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
-        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
-        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because) { }
-        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndConstraint<TSelf> AllBe(T expected) { }
         public Vouch.AndConstraint<TSelf> AllBe(T expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>() { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>(string because) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because) { }
+        public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>() { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>(string because) { }
         public Vouch.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
@@ -148,6 +148,10 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(T expected, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because) { }
+        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(params T[] expected) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected, string because) { }
@@ -156,10 +160,6 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> ContainInOrder(params T[] expected) { }
         public Vouch.AndConstraint<TSelf> ContainInOrder(System.Collections.Generic.IEnumerable<T> expected, string because) { }
         public Vouch.AndConstraint<TSelf> ContainInOrder(T[] expected, string because) { }
-        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) { }
-        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
-        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because) { }
-        public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle() { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
         public Vouch.AndWhichConstraint<TSelf, T> ContainSingle(string because) { }
