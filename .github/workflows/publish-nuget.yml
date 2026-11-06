@@ -1,6 +1,6 @@
 name: Publish to NuGet
 
-# Version comes from <Version> in src/Vouch/Vouch.csproj, never from a
+# Version comes from <VersionPrefix> in Directory.Build.props, never from a
 # hand-typed input, so the published version is always recorded in git.
 on:
   push:
@@ -42,9 +42,9 @@ jobs:
       - name: Read version from source
         id: version
         run: |
-          VERSION=$(grep -oP '(?<=<Version>)[^<]+' src/Vouch/Vouch.csproj)
+          VERSION=$(grep -oP '(?<=<VersionPrefix>)[^<]+' Directory.Build.props)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Version from Vouch.csproj: $VERSION"
+          echo "Version from Directory.Build.props: $VERSION"
 
       # Runs unconditionally. A publish that is not from a tag fails here rather
       # than silently skipping the push step and looking like a success.
