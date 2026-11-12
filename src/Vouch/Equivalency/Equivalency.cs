@@ -147,6 +147,7 @@ internal sealed class Comparison
         Threw,
         TooMany,
         NoMembers,
+        NoneSelected,
     }
 
     private struct Step
@@ -525,6 +526,7 @@ internal sealed class Comparison
             return;
         }
 
+        var selected = 0;
         for (var i = 0; i < members.Length && !Stop; i++)
         {
             var member = members[i];
@@ -547,6 +549,8 @@ internal sealed class Comparison
 
                 Options.PathComparers.TryGetValue(memberPath, out memberComparer);
             }
+
+            selected++;
 
             var counterpart = subjectShape.Find(subjectName);
             if (counterpart is null)
@@ -581,6 +585,12 @@ internal sealed class Comparison
             }
 
             _path.RemoveRange(pathCount, _path.Count - pathCount);
+        }
+
+        // Excluding or Including left nothing to compare. Skipping members the subject lacks does not count.
+        if (selected == 0 && !Stop)
+        {
+            Add(Kind.NoneSelected, null, null);
         }
     }
 
@@ -722,6 +732,7 @@ internal sealed class Comparison
         Kind.Depth => $"is nested deeper than {Options.MaxDepth} levels",
         Kind.TooMany => $"has more than {Equivalency.MaxItems} items, not compared",
         Kind.NoMembers => "has no members to compare",
+        Kind.NoneSelected => "has no members found for comparison, all were excluded",
         _ => $"threw {actual!.GetType().Name}: {((Exception)actual).Message}",
     };
 

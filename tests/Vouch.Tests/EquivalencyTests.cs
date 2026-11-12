@@ -1132,6 +1132,19 @@ public class EquivalencyTests
         Assert.Contains("has no members to compare", Message(() => new EqPerson { Id = 1 }.Should().BeEquivalentTo(new { })));
     }
 
+    [Fact]
+    public void Excluding_every_member_is_a_difference()
+    {
+        var msg = Message(() => new EqPerson { Id = 1, Name = "b", Extra = 9 }.Should().BeEquivalentTo(new EqPerson { Id = 2, Name = "a", Extra = 3 }, o => o.Excluding(x => x.Id).Excluding(x => x.Name).Excluding(x => x.Extra)));
+        Assert.Contains("has no members found for comparison", msg);
+    }
+
+    [Fact]
+    public void Excluding_some_members_still_compares_the_rest() => new EqPerson { Id = 1, Name = "a", Extra = 9 }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "a", Extra = 3 }, o => o.Excluding(x => x.Extra));
+
+    [Fact]
+    public void ExcludingMissingMembers_with_no_shared_member_still_passes() => new { Zzz = "b" }.Should().BeEquivalentTo(new { Name = "a", Age = 3 }, o => o.ExcludingMissingMembers());
+
     [Fact] public void Nested_expectation_with_no_members_reports_its_path() => Assert.Contains("\n  Inner has no members to compare.", Message(() => new OtherWrapper { Inner = new EqPerson { Id = 1 } }.Should().BeEquivalentTo(new OtherWrapper { Inner = new Empty() })));
 
     [Fact]

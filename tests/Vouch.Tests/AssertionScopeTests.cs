@@ -22,6 +22,33 @@ public class AssertionScopeTests
     }
 
     [Fact]
+    public void Which_after_a_failed_ContainSingle_adds_no_second_failure()
+    {
+        var empty = new List<int>();
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            empty.Should().ContainSingle().Which.Should().Be(1);
+        });
+        Assert.Single(ex.Message.Split("\n\n"));
+        Assert.Contains("to contain a single item", ex.Message);
+    }
+
+    [Fact]
+    public void A_later_failure_is_kept_after_a_failed_ContainSingle()
+    {
+        var empty = new List<int>();
+        var other = 1;
+        var ex = Assert.Throws<VouchException>(() =>
+        {
+            using var scope = new AssertionScope();
+            empty.Should().ContainSingle();
+            other.Should().Be(2);
+        });
+        Assert.Equal(2, ex.Message.Split("\n\n").Length);
+    }
+
+    [Fact]
     public void Nested_scopes_throw_once_from_the_outer()
     {
         var inner = 1;

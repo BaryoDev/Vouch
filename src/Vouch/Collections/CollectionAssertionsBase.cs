@@ -594,17 +594,23 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    private AndWhichConstraint<TSelf, T> FailedSingle()
+    {
+        Fail.DropChainedFailure($"{Name}.Should().ContainSingle(");
+        return new((TSelf)this, default!);
+    }
+
     public AndWhichConstraint<TSelf, T> ContainSingle()
     {
         if (!TryRequire("to contain a single item", out var items))
         {
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         if (items.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item, but found {items.Count}{Listing(items)}");
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         return new((TSelf)this, items[0]);
@@ -616,25 +622,25 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         if (IsNull)
         {
             ReportNull($"to contain a single item matching {predicate.Body}");
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         if (!TryItems(out var items))
         {
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is null)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found 0.{HasTail(items)}");
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         if (matching.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found {matching.Count}{Listing(items, matching)}");
-            return new((TSelf)this, default!);
+            return FailedSingle();
         }
 
         return new((TSelf)this, items[matching[0]]);
@@ -780,22 +786,22 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
-    public AndConstraint<TSelf> BeInAscendingOrder() => InOrder(Comparer<T>.Default, "ascending", false);
+    public AndConstraint<TSelf> BeInAscendingOrder() => InOrder(OrderComparer<T>.Default, "ascending", false);
 
     /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
     public OrderedAndConstraint<TSelf, T, TKey> BeInAscendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "ascending", false);
+        return InOrderKeyed(OrderComparer<TKey>.Default, keySelector, "ascending", false);
     }
 
-    public AndConstraint<TSelf> BeInDescendingOrder() => InOrder(Comparer<T>.Default, "descending", true);
+    public AndConstraint<TSelf> BeInDescendingOrder() => InOrder(OrderComparer<T>.Default, "descending", true);
 
     /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
     public OrderedAndConstraint<TSelf, T, TKey> BeInDescendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "descending", true);
+        return InOrderKeyed(OrderComparer<TKey>.Default, keySelector, "descending", true);
     }
 
     private AndConstraint<TSelf> InOrder(IComparer<T> comparer, string direction, bool descending)

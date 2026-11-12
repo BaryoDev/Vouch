@@ -191,6 +191,28 @@ public class CollectionAssertionsTests
 
     // ordering
 
+    [Fact] public void String_ordering_is_ordinal_in_every_culture()
+    {
+        var saved = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            foreach (var name in new[] { "en-US", "sv-SE", "tr-TR", "" })
+            {
+                System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo(name);
+                new[] { "B", "a" }.Should().BeInAscendingOrder();
+                new[] { "a", "B" }.Should().BeInDescendingOrder();
+                Assert.Throws<VouchException>(() => new[] { "a", "Z", "B" }.Should().BeInAscendingOrder());
+                new[] { "B", "a" }.Should().BeInAscendingOrder(x => x);
+                new[] { "a", "B" }.Should().BeInDescendingOrder(x => x);
+                new[] { (1, "B"), (1, "a") }.Should().BeInAscendingOrder(x => x.Item1).ThenBeInAscendingOrder(x => x.Item2);
+            }
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = saved;
+        }
+    }
+
     [Fact] public void BeInAscendingOrder_passes() => new[] { 1, 2, 2, 3 }.Should().BeInAscendingOrder();
     [Fact] public void BeInAscendingOrder_fails() => Assert.Throws<VouchException>(() => new[] { 2, 1 }.Should().BeInAscendingOrder());
     [Fact] public void BeInAscendingOrder_message() { var xs = new[] { 1, 3, 7, 5 }; Assert.Equal("Expected xs to be in ascending order, but [3] 5 comes after [2] 7.", Message(() => xs.Should().BeInAscendingOrder())); }

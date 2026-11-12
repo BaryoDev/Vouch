@@ -66,21 +66,15 @@ public class DifferentialTests
         Assert.True(oracle == vouch, $"{name}: AwesomeAssertions {oracle}, Vouch {vouch}");
     }
 
-    [Fact]
-    public void PrintsEveryOutcome()
-    {
-        foreach (var name in AwesomeCases.Pass.Keys.OrderBy(k => k))
-        {
-            _output.WriteLine($"{name} | awesome {Oracle.AwesomeOutcome(AwesomeCases.Pass[name])} | vouch {Oracle.VouchOutcome(VouchCases.Pass[name])}");
-        }
-    }
-
     [Theory]
     [MemberData(nameof(MessageNames))]
-    public void PrintsBothMessages(string name)
+    public void BothLibrariesFailWithAMessage(string name)
     {
-        _output.WriteLine($"[{name}]");
-        _output.WriteLine("Awesome: " + (Oracle.AwesomeMessage(AwesomeCases.Messages[name]) ?? "(passed)"));
-        _output.WriteLine("Vouch:    " + (Oracle.VouchMessage(VouchCases.Messages[name]) ?? "(passed)"));
+        var awesome = Oracle.AwesomeMessage(AwesomeCases.Messages[name]);
+        var vouch = Oracle.VouchMessage(VouchCases.Messages[name]);
+        _output.WriteLine($"[{name}]\nAwesome: {awesome}\nVouch:    {vouch}");
+
+        Assert.False(string.IsNullOrWhiteSpace(awesome), $"{name}: AwesomeAssertions did not fail with a message");
+        Assert.False(string.IsNullOrWhiteSpace(vouch), $"{name}: Vouch did not fail with a message");
     }
 }
