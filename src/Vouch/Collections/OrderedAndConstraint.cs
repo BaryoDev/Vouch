@@ -42,7 +42,7 @@ public readonly struct OrderedAndConstraint<TAssertions, T, TKey>
     private OrderedAndConstraint<TAssertions, T, TNext> Then<TNext>(Func<T, TNext> next, string direction, bool descending)
     {
         ArgumentNullException.ThrowIfNull(next);
-        var comparer = Comparer<TNext>.Default;
+        var comparer = OrderComparer<TNext>.Default;
         var items = _items;
         if (items is null)
         {
@@ -121,5 +121,21 @@ internal static class OrderCheck
                 }
             }
         }
+    }
+}
+
+internal static class OrderComparer<T>
+{
+    // Strings order ordinally, like every other string assertion, so the result does not depend on the machine culture.
+    internal static readonly IComparer<T> Default = typeof(T) == typeof(string)
+        ? (IComparer<T>)(object)StringComparer.Ordinal
+        : typeof(T) == typeof(object)
+            ? (IComparer<T>)(object)new ObjectComparer()
+            : Comparer<T>.Default;
+
+    private sealed class ObjectComparer : IComparer<object?>
+    {
+        public int Compare(object? x, object? y) =>
+            x is string a && y is string b ? string.CompareOrdinal(a, b) : Comparer<object?>.Default.Compare(x, y);
     }
 }

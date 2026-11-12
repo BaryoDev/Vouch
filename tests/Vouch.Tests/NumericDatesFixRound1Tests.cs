@@ -23,6 +23,20 @@ public class NumericDatesFixRound1Tests
     }
 
     [Fact]
+    public void Negative_precision_throws_for_date_BeCloseTo()
+    {
+        var negative = TimeSpan.FromSeconds(-1);
+        var now = DateTime.UtcNow;
+        var offset = DateTimeOffset.UtcNow;
+        DateTime? nullable = now;
+        DateTimeOffset? nullableOffset = offset;
+        Assert.Throws<ArgumentOutOfRangeException>(() => now.Should().BeCloseTo(now, negative));
+        Assert.Throws<ArgumentOutOfRangeException>(() => nullable.Should().BeCloseTo(now, negative));
+        Assert.Throws<ArgumentOutOfRangeException>(() => offset.Should().BeCloseTo(offset, negative));
+        Assert.Throws<ArgumentOutOfRangeException>(() => nullableOffset.Should().BeCloseTo(offset, negative));
+    }
+
+    [Fact]
     public void Negative_delta_throws_for_every_closeness_assertion()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => 5.Should().BeCloseTo(5, -1));

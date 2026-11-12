@@ -780,22 +780,22 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
-    public AndConstraint<TSelf> BeInAscendingOrder() => InOrder(Comparer<T>.Default, "ascending", false);
+    public AndConstraint<TSelf> BeInAscendingOrder() => InOrder(OrderComparer<T>.Default, "ascending", false);
 
     /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
     public OrderedAndConstraint<TSelf, T, TKey> BeInAscendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "ascending", false);
+        return InOrderKeyed(OrderComparer<TKey>.Default, keySelector, "ascending", false);
     }
 
-    public AndConstraint<TSelf> BeInDescendingOrder() => InOrder(Comparer<T>.Default, "descending", true);
+    public AndConstraint<TSelf> BeInDescendingOrder() => InOrder(OrderComparer<T>.Default, "descending", true);
 
     /// <remarks>Returns a constraint that also offers <c>ThenBeInAscendingOrder</c> and <c>ThenBeInDescendingOrder</c>.</remarks>
     public OrderedAndConstraint<TSelf, T, TKey> BeInDescendingOrder<TKey>(Func<T, TKey> keySelector)
     {
         ArgumentNullException.ThrowIfNull(keySelector);
-        return InOrderKeyed(Comparer<TKey>.Default, keySelector, "descending", true);
+        return InOrderKeyed(OrderComparer<TKey>.Default, keySelector, "descending", true);
     }
 
     private AndConstraint<TSelf> InOrder(IComparer<T> comparer, string direction, bool descending)

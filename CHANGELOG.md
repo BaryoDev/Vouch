@@ -30,6 +30,9 @@ Breaking changes come first. All of them land before 1.0, as the roadmap in #20 
 
 ### Changed
 
+- `BeInAscendingOrder` and `BeInDescendingOrder`, with or without a key selector and in `ThenBe...`, compare strings ordinally. They used the culture-sensitive default comparer, so `["B", "a"]` passed or failed depending on the machine culture. Pass an `IComparer<T>` for culture order.
+- `BeEquivalentTo` fails when `Excluding` or `Including` leaves no member to compare on the root object, as AwesomeAssertions does. Before, it passed.
+- `BeCloseTo` on `DateTime` and `DateTimeOffset` (and their nullable forms) throws `ArgumentOutOfRangeException` for a negative precision, like the number and `TimeSpan` overloads.
 - Shared build settings moved to `Directory.Build.props` (#6).
 - The README benchmark table shows current Vouch memory figures. One record allocates 1.56 KB, not 960 B, and 100 reordered records 161 KB, not 89 KB. The 5x targets against FluentAssertions still hold.
 

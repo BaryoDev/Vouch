@@ -77,6 +77,7 @@ public readonly struct DateTimeAssertions
 
     public AndConstraint<DateTimeAssertions> BeCloseTo(DateTime expected, TimeSpan precision)
     {
+        TimeSpanAssertionsExtensions.ThrowIfNegative(precision);
         var difference = (Subject - expected).Duration();
         if (difference > precision)
         {
@@ -224,6 +225,7 @@ public readonly struct NullableDateTimeAssertions
 
     public AndConstraint<NullableDateTimeAssertions> BeCloseTo(DateTime expected, TimeSpan precision)
     {
+        TimeSpanAssertionsExtensions.ThrowIfNegative(precision);
         if (Subject is not { } actual)
         {
             Fail.With($"Expected {Fail.Name(_expression)} to be within {Formatter.Format(precision)} of {Formatter.Format(expected)}, but found null.");

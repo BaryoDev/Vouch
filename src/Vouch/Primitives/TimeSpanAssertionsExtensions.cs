@@ -2,12 +2,17 @@ namespace Vouch;
 
 public static class TimeSpanAssertionsExtensions
 {
-    public static AndConstraint<ValueAssertions<TimeSpan>> BeCloseTo(this ValueAssertions<TimeSpan> assertions, TimeSpan expected, TimeSpan precision)
+    internal static void ThrowIfNegative(TimeSpan precision)
     {
         if (precision < TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(precision), precision, "Precision must not be negative.");
         }
+    }
+
+    public static AndConstraint<ValueAssertions<TimeSpan>> BeCloseTo(this ValueAssertions<TimeSpan> assertions, TimeSpan expected, TimeSpan precision)
+    {
+        ThrowIfNegative(precision);
 
         var ticks = (Int128)assertions.Subject.Ticks - expected.Ticks;
         if (ticks < 0)
