@@ -19,33 +19,10 @@ internal static class Fail
         set => Sink.Value = value;
     }
 
-    // Set by a failed ContainSingle inside a scope: the failure that chains off its Which is the same
-    // failure again, so the next failure is dropped if its subject starts with this text.
-    private static readonly AsyncLocal<string?> Chained = new();
-
-    // Only the very next failure is checked, so a later unrelated failure is never swallowed.
-    internal static void DropChainedFailure(string subjectPrefix)
-    {
-        if (Sink.Value is not null)
-        {
-            Chained.Value = subjectPrefix;
-        }
-    }
-
     public static void With(string message)
     {
         var failure = Reason.Apply(message);
         var recorder = Sink.Value;
-        var chained = Chained.Value;
-        if (chained is not null)
-        {
-            Chained.Value = null;
-            if (recorder is not null && message.StartsWith("Expected " + chained, StringComparison.Ordinal))
-            {
-                return;
-            }
-        }
-
         if (recorder is null)
         {
             Throw(failure.Message);

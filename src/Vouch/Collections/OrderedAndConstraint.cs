@@ -129,5 +129,13 @@ internal static class OrderComparer<T>
     // Strings order ordinally, like every other string assertion, so the result does not depend on the machine culture.
     internal static readonly IComparer<T> Default = typeof(T) == typeof(string)
         ? (IComparer<T>)(object)StringComparer.Ordinal
-        : Comparer<T>.Default;
+        : typeof(T) == typeof(object)
+            ? (IComparer<T>)(object)new ObjectComparer()
+            : Comparer<T>.Default;
+
+    private sealed class ObjectComparer : IComparer<object?>
+    {
+        public int Compare(object? x, object? y) =>
+            x is string a && y is string b ? string.CompareOrdinal(a, b) : Comparer<object?>.Default.Compare(x, y);
+    }
 }

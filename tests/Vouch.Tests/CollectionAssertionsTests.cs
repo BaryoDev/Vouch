@@ -191,7 +191,10 @@ public class CollectionAssertionsTests
 
     // ordering
 
-    [Fact] public void String_ordering_is_ordinal_in_every_culture()
+    [Fact] public void Strings_in_an_object_array_order_ordinally() { var saved = System.Globalization.CultureInfo.CurrentCulture; try { System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("sv-SE"); new object[] { "B", "a" }.Should().BeInAscendingOrder(); } finally { System.Globalization.CultureInfo.CurrentCulture = saved; } }
+
+    [Fact]
+    public void String_ordering_is_ordinal_in_every_culture()
     {
         var saved = System.Globalization.CultureInfo.CurrentCulture;
         try

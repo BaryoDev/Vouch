@@ -594,23 +594,17 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
-    private AndWhichConstraint<TSelf, T> FailedSingle()
-    {
-        Fail.DropChainedFailure($"{Name}.Should().ContainSingle(");
-        return new((TSelf)this, default!);
-    }
-
     public AndWhichConstraint<TSelf, T> ContainSingle()
     {
         if (!TryRequire("to contain a single item", out var items))
         {
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         if (items.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item, but found {items.Count}{Listing(items)}");
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         return new((TSelf)this, items[0]);
@@ -622,25 +616,25 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         if (IsNull)
         {
             ReportNull($"to contain a single item matching {predicate.Body}");
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         if (!TryItems(out var items))
         {
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is null)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found 0.{HasTail(items)}");
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         if (matching.Count != 1)
         {
             Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found {matching.Count}{Listing(items, matching)}");
-            return FailedSingle();
+            return new((TSelf)this, default!);
         }
 
         return new((TSelf)this, items[matching[0]]);
