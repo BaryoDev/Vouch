@@ -1140,6 +1140,9 @@ public class EquivalencyTests
     }
 
     [Fact]
+    public void Excluding_every_member_of_a_nested_object_passes() => Customer("n", "X", "1").Should().BeEquivalentTo(Customer("n", "Y", "2"), o => o.Excluding(x => x.Address!.City).Excluding(x => x.Address!.Zip));
+
+    [Fact]
     public void Excluding_some_members_still_compares_the_rest() => new EqPerson { Id = 1, Name = "a", Extra = 9 }.Should().BeEquivalentTo(new EqPerson { Id = 1, Name = "a", Extra = 3 }, o => o.Excluding(x => x.Extra));
 
     [Fact]

@@ -587,8 +587,9 @@ internal sealed class Comparison
             _path.RemoveRange(pathCount, _path.Count - pathCount);
         }
 
-        // Excluding or Including left nothing to compare. Skipping members the subject lacks does not count.
-        if (selected == 0 && !Stop)
+        // Excluding or Including left nothing to compare at the root, as AwesomeAssertions reports. A nested object
+        // whose members are all excluded passes there too. Skipping members the subject lacks does not count.
+        if (selected == 0 && _path.Count == 0 && !Stop)
         {
             Add(Kind.NoneSelected, null, null);
         }
