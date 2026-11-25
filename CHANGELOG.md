@@ -34,7 +34,7 @@ Breaking changes come first. All of them land before 1.0, as the roadmap in #20 
 - `BeEquivalentTo` fails when `Excluding` or `Including` leaves no member to compare on the root object, as AwesomeAssertions does. Before, it passed.
 - `BeCloseTo` on `DateTime` and `DateTimeOffset` (and their nullable forms) throws `ArgumentOutOfRangeException` for a negative precision, like the number and `TimeSpan` overloads.
 - Shared build settings moved to `Directory.Build.props` (#6).
-- `IsTrimmable` and `IsAotCompatible` are back on the library (#30). Every `BeEquivalentTo`, `NotBeEquivalentTo`, `AllBeEquivalentTo`, `ContainEquivalentOf` and `NotContainEquivalentOf` overload, and `EquivalencyOptions<T>.ComparingByMembers`, now carries `RequiresUnreferencedCode`, because they compare members found by reflection on the runtime type. Failure messages skip members a trimmed app has removed.
+- `IsTrimmable` and `IsAotCompatible` are back on the library (#30). Every `BeEquivalentTo`, `NotBeEquivalentTo`, `AllBeEquivalentTo`, `ContainEquivalentOf` and `NotContainEquivalentOf` overload, and `EquivalencyOptions<T>.ComparingByMembers`, now carries `RequiresUnreferencedCode`. Under trimming the comparison uses only the members that survive, so equal objects can fail and unequal ones can pass. Under Native AOT `BeEquivalentTo` on user types does not work. This behaviour is unchanged from before; the change adds the warnings.
 - The README benchmark table shows current Vouch memory figures. One record allocates 1.56 KB, not 960 B, and 100 reordered records 161 KB, not 89 KB. The 5x targets against FluentAssertions still hold.
 
 ## 0.2.0
