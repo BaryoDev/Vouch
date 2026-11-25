@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 namespace Vouch;
 
 public readonly struct TimeOnlyAssertions
@@ -129,12 +130,15 @@ public readonly struct TimeOnlyAssertions
         return new(this);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<TimeOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
@@ -304,12 +308,15 @@ public readonly struct NullableTimeOnlyAssertions
         return new(this);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<NullableTimeOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));

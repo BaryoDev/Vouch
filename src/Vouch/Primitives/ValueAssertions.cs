@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 namespace Vouch;
 
 public readonly struct ValueAssertions<T> where T : struct
@@ -52,12 +53,15 @@ public readonly struct ValueAssertions<T> where T : struct
         return new(this);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<ValueAssertions<T>> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));

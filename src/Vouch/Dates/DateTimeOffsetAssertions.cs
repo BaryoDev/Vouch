@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 namespace Vouch;
 
 public readonly struct DateTimeOffsetAssertions
@@ -142,12 +143,15 @@ public readonly struct DateTimeOffsetAssertions
     /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
     public DateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<DateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
@@ -347,12 +351,15 @@ public readonly struct NullableDateTimeOffsetAssertions
     /// <exception cref="ArgumentOutOfRangeException">The span is negative.</exception>
     public NullableDateTimeOffsetWithin BeWithin(TimeSpan timeSpan) => new(this, _expression, DatePart.RequireNonNegative(timeSpan));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<NullableDateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -360,6 +361,8 @@ internal static class Formatter
         sb.Append('}');
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070",
+        Justification = "Only runs while writing a failure message. If trimming removed Key or Value the formatter prints '<threw ...>' for that value; it never changes whether an assertion passes.")]
     private static void WriteKeyValuePair(StringBuilder sb, object pair, Type type, int depth, FormatState state)
     {
         sb.Append('[');
@@ -392,6 +395,8 @@ internal static class Formatter
     }
 
     // Only collections that already know their size are counted. Anything else is not walked to find out.
+    [UnconditionalSuppressMessage("Trimming", "IL2075",
+        Justification = "Only runs while writing a failure message. A missing interface or Count property gives null, and the formatter then prints no count.")]
     private static int? KnownCount(object source)
     {
         if (source is ICollection collection)
@@ -434,6 +439,8 @@ internal static class Formatter
         }
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "Only runs while writing a failure message. Members removed by trimming are left out of the printed object; it never changes whether an assertion passes.")]
     private static void WriteObject(StringBuilder sb, object value, Type type, int depth, FormatState state, MemberGetter[]? only = null)
     {
         var anonymous = IsAnonymous(type);
@@ -488,6 +495,8 @@ internal static class Formatter
         sb.Append(" }");
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070",
+        Justification = "Looks up one property by a constant name (Status, IsCompleted or IsValueCreated) on Task, ValueTask or Lazy, which the runtime itself uses. A missing property gives null and the value prints as a plain object.")]
     private static MemberGetter[]? SafeMembers(Type type)
     {
         string? name = null;
@@ -508,6 +517,8 @@ internal static class Formatter
         return property is null ? null : [new MemberGetter(property)];
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070",
+        Justification = "Looks up ToString(), which every type has, and only reads its declaring type.")]
     private static bool OverridesToString(Type type)
     {
         var declaring = type.GetMethod(nameof(ToString), Type.EmptyTypes)?.DeclaringType;
@@ -519,6 +530,8 @@ internal static class Formatter
     internal static bool IsAnonymous(Type type) =>
         type.IsDefined(typeof(CompilerGeneratedAttribute), false) && type.Name.Contains("AnonymousType", StringComparison.Ordinal);
 
+    [UnconditionalSuppressMessage("Trimming", "IL2070",
+        Justification = "Looks up compiler generated record members only to choose how a failure message prints a value. A member removed by trimming makes the value print as a plain object.")]
     internal static bool IsRecord(Type type)
     {
         const BindingFlags all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;

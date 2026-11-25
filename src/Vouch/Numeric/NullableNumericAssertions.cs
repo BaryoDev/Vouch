@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace Vouch;
@@ -196,12 +197,15 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
         return new(this, value);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<NullableNumericAssertions<T>> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));

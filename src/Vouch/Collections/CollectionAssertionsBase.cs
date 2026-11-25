@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Text;
 
@@ -500,30 +501,35 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> BeEquivalentTo(params T[] expectation)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, EquivalencyOptions.Default);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> BeEquivalentTo(T[] expectation, Func<EquivalencyOptions<T>, EquivalencyOptions<T>> configure)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, Equivalency.Options(configure));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, EquivalencyOptions.Default);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
     {
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, Equivalency.Options(configure));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<TSelf> CheckEquivalent(object expectation, EquivalencyOptions options)
     {
         object? subject = null;
@@ -547,6 +553,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotContainEquivalentOf<TExpectation>(TExpectation unexpected)
     {
         if (IsNull)
@@ -884,16 +891,19 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>.</summary>
     /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) =>
         AllEquivalent(expectation, EquivalencyOptions.Default);
 
     /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with options.</summary>
     /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
         AllEquivalent(expectation, Equivalency.Options(configure));
 
     /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with options and a reason.</summary>
     /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure, string because)
     {
         Reason.Set(because);
@@ -909,6 +919,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     /// <summary>Asserts every item is equivalent to <paramref name="expectation"/>, with a reason.</summary>
     /// <remarks>This goes through the equivalency engine, which allocates, so like BeEquivalentTo it is exempt from the 0 B allocation rule.</remarks>
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because)
     {
         Reason.Set(because);
@@ -922,6 +933,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<TSelf> AllEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         if (IsNull)
@@ -1464,6 +1476,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, string because)
     {
         Reason.Set(because);
@@ -1674,12 +1687,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) =>
         ContainEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
         ContainEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because)
     {
         Reason.Set(because);
@@ -1693,6 +1709,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure, string because)
     {
         Reason.Set(because);
@@ -1706,6 +1723,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndWhichConstraint<TSelf, T> ContainEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         if (IsNull)
@@ -2227,30 +2245,35 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     private string ListingIfStored() =>
         _list is not null ? Listing(_list) : ".";
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotBeEquivalentTo(params T[] unexpected)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         return CheckNotEquivalent(unexpected, EquivalencyOptions.Default);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotBeEquivalentTo(T[] unexpected, Func<EquivalencyOptions<T>, EquivalencyOptions<T>> configure)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         return CheckNotEquivalent(unexpected, Equivalency.Options(configure));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         return CheckNotEquivalent(unexpected, EquivalencyOptions.Default);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         return CheckNotEquivalent(unexpected, Equivalency.Options(configure));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(IEnumerable<TExpectation> unexpected, string because)
     {
         Reason.Set(because);
@@ -2264,6 +2287,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<TSelf> CheckNotEquivalent(object unexpected, EquivalencyOptions options)
     {
         if (IsNull)

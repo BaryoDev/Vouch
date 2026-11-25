@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -231,6 +232,7 @@ public sealed class EquivalencyOptions<TExpectation>
     /// Like <c>Using</c>, this matches the exact runtime type only, not base types or interfaces.
     /// Throws <see cref="ArgumentException"/> when <typeparamref name="T"/> is a scalar (string, number, enum, Guid, date and so on) or a collection.
     /// </summary>
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public EquivalencyOptions<TExpectation> ComparingByMembers<T>()
     {
         var type = EquivalencyOptions.KeyOf(typeof(T));

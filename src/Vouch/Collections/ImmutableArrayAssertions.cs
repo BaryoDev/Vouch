@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 
@@ -85,12 +86,15 @@ public sealed class ImmutableArrayAssertions<T> : CollectionAssertionsBase<T, Im
     }
 
     // These two take any expectation, as ValueAssertions<ImmutableArray<T>> did, and compare the array itself.
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => CheckEquivalent(expectation, EquivalencyOptions.Default);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => CheckEquivalent(expectation, Equivalency.Options(configure));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private AndConstraint<ImmutableArrayAssertions<T>> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
     {
         Equivalency.Require(_array, expectation, typeof(TExpectation), options, Name);

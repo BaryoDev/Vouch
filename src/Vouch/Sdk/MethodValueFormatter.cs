@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Vouch.Sdk;
@@ -19,6 +20,7 @@ internal sealed class MethodValueFormatter(MethodInfo method, Type valueType) : 
         }
     }
 
+    [RequiresUnreferencedCode("Scanning an assembly uses reflection and can miss members in a trimmed app.")]
     internal static List<IValueFormatter> Scan(Assembly assembly)
     {
         var found = new List<IValueFormatter>();

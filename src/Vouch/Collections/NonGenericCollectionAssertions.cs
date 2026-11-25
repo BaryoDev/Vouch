@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace Vouch;
@@ -65,8 +66,10 @@ public sealed class NonGenericCollectionAssertions : CollectionAssertionsBase<ob
 
     public AndConstraint<ObjectAssertions> BeOneOf(params object?[] validValues) => AsObject.BeOneOf(validValues);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) => AsObject.BeEquivalentTo(expectation);
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure) =>
         AsObject.BeEquivalentTo(expectation, configure);
 }
