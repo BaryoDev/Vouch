@@ -206,11 +206,11 @@ internal static class Formatter
             {
                 WriteSequence(sb, enumerable, depth, state);
             }
-            else if (SafeMembers(type) is { } safe)
+            else if (PrintSafeMembers(type) is { } safe)
             {
                 WriteObject(sb, value, type, depth, state, safe);
             }
-            else if (!IsRecord(type) && !IsAnonymous(type) && OverridesToString(type))
+            else if (!PrintIsRecord(type) && !IsAnonymous(type) && OverridesToString(type))
             {
                 WriteToString(sb, value);
             }
@@ -495,8 +495,7 @@ internal static class Formatter
         sb.Append(" }");
     }
 
-    [UnconditionalSuppressMessage("Trimming", "IL2070",
-        Justification = "Looks up one property by a constant name (Status, IsCompleted or IsValueCreated) on Task, ValueTask or Lazy, which the runtime itself uses. A missing property gives null and the value prints as a plain object.")]
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     private static MemberGetter[]? SafeMembers(Type type)
     {
         string? name = null;
@@ -517,6 +516,14 @@ internal static class Formatter
         return property is null ? null : [new MemberGetter(property)];
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "Used only while writing a failure message, to pick how a value prints. A member removed by trimming makes the value print as a plain object. It is not used to decide whether an assertion passes.")]
+    private static MemberGetter[]? PrintSafeMembers(Type type) => SafeMembers(type);
+
+    [UnconditionalSuppressMessage("Trimming", "IL2026",
+        Justification = "Used only while writing a failure message, to pick how a value prints. A member removed by trimming makes the value print as a plain object. It is not used to decide whether an assertion passes.")]
+    private static bool PrintIsRecord(Type type) => IsRecord(type);
+
     [UnconditionalSuppressMessage("Trimming", "IL2070",
         Justification = "Looks up ToString(), which every type has, and only reads its declaring type.")]
     private static bool OverridesToString(Type type)
@@ -525,13 +532,13 @@ internal static class Formatter
         return declaring is not null && declaring != typeof(object) && declaring != typeof(ValueType);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     internal static bool IsSafeOnly(Type type) => SafeMembers(type) is not null;
 
     internal static bool IsAnonymous(Type type) =>
         type.IsDefined(typeof(CompilerGeneratedAttribute), false) && type.Name.Contains("AnonymousType", StringComparison.Ordinal);
 
-    [UnconditionalSuppressMessage("Trimming", "IL2070",
-        Justification = "Looks up compiler generated record members only to choose how a failure message prints a value. A member removed by trimming makes the value print as a plain object.")]
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     internal static bool IsRecord(Type type)
     {
         const BindingFlags all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
