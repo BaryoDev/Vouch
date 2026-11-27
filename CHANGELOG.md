@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
+
+This release adds the first opt-in package from #20. Vouch itself has no changes since 0.3.0.
 
 ### Added
 
