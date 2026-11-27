@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Vouch.Time`, a new package with the FluentAssertions 8 time helpers: `5.Minutes()`, `1.March(2026).At(10, 30)`, `Before`, `After`, `AsUtc`, `WithOffset` and the rest. It has no dependencies, the helpers are in namespace `Vouch`, and the differential tests check each one against AwesomeAssertions (#20).
+
 ## 0.3.0
 
 Breaking changes come first. All of them land before 1.0, as the roadmap in #20 planned.

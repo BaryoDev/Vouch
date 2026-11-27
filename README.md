@@ -6,6 +6,7 @@ Fluent assertions for .NET with no dependencies. The `.Should()` surface of Flue
 
 ```sh
 dotnet add package Vouch
+dotnet add package Vouch.Time   # optional: 5.Minutes(), 1.March(2026).At(10, 30)
 ```
 
 Targets `net8.0` and `net10.0`. No runtime dependencies. Vouch references no test framework, so it works under xUnit v2, xUnit v3, NUnit and MSTest. A failed assertion throws `VouchException`, and each framework shows it as a plain test failure.
@@ -151,6 +152,9 @@ Vouch reads expressions only from `[CallerArgumentExpression]` and never walks t
 
 1. Change the package reference from `FluentAssertions` to `Vouch`.
 2. Change `using FluentAssertions;` to `using Vouch;`.
+3. If you use the time helpers, add the `Vouch.Time` package. `using FluentAssertions.Extensions;` goes away, because the helpers are in namespace `Vouch`.
+
+`Vouch.Time` has no `AddMicroseconds`. On .NET 8 and later the built-in `AddMicroseconds(double)` is chosen over an extension method, so the FluentAssertions one was never reached either.
 
 Vouch shares method names and meanings with FluentAssertions 8. It does not copy any of its code, and its message text is its own.
 
@@ -159,7 +163,7 @@ Not supported:
 - `AssertionScope`.
 - `becauseArgs` format arguments. The reason is one plain string.
 - `BeEquivalentTo` options other than `WithStrictOrdering`.
-- Global `AssertionOptions`, custom assertion extension points, and the time helpers (`5.Minutes()`, `.March(2026)`).
+- Global `AssertionOptions`, and custom assertion extension points. The time helpers (`5.Minutes()`, `.March(2026)`) are in the `Vouch.Time` package.
 
 ### Reason strings
 
