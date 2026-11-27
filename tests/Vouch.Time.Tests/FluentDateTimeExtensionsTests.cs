@@ -118,6 +118,21 @@ public class FluentDateTimeExtensionsTests
     [Fact] public void At_hour_24_has_no_parameter_name() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(24, 0)).ParamName.Should().BeNull();
     [Fact] public void At_millisecond_1000_names_millisecond() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 1000)).ParamName.Should().Be("millisecond");
     [Fact] public void At_microsecond_1000_names_microseconds() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, 1000)).ParamName.Should().Be("microseconds");
+
+    [Fact]
+    public void At_rounding_up_past_the_utc_maximum_names_offset() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(9999, 12, 31, 12, 0, 0, TimeSpan.FromHours(-5)).At(23, 59, 59, 999, 999, 999))
+            .ParamName.Should().Be("offset");
+
+    // .NET 10 checks the UTC range before the millisecond, .NET 8 after.
+    [Fact]
+    public void At_a_bad_millisecond_before_utc_year_1_names_offset_on_net10() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(1, 1, 1, 12, 0, 0, TimeSpan.FromHours(2)).At(0, 0, 0, 1000))
+#if NET10_0_OR_GREATER
+            .ParamName.Should().Be("offset");
+#else
+            .ParamName.Should().Be("millisecond");
+#endif
     [Fact] public void AddNanoseconds_of_long_max_adds_the_rounded_ticks() => Noon.AddNanoseconds(long.MaxValue).Ticks.Should().Be(Noon.Ticks + 92233720368547760);
     [Fact]
     public void AddNanoseconds_on_an_offset_adds_whole_ticks()

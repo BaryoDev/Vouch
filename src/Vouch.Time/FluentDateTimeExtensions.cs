@@ -28,11 +28,33 @@ public static class FluentDateTimeExtensions
 
     public static DateTime At(this DateTime date, TimeSpan time) => date.Date + time;
 
-    public static DateTime At(this DateTime date, int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int nanoseconds = 0) =>
-        date.Date + TimeOfDay(hours, minutes, seconds, milliseconds, microseconds, nanoseconds);
+    // The BCL constructor checks hours, minutes, seconds, milliseconds and the offset range, in an
+    // order that changed in .NET 10, so it decides which part is reported. The rest is added after.
+    public static DateTime At(this DateTime date, int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int nanoseconds = 0)
+    {
+        var rest = BelowMillisecond(microseconds, nanoseconds);
+        try
+        {
+            return new DateTime(date.Year, date.Month, date.Day, hours, minutes, seconds, milliseconds, date.Kind) + rest;
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.ParamName is null or "millisecond")
+        {
+            throw OutOfRange(ex.ParamName, hours);
+        }
+    }
 
-    public static DateTimeOffset At(this DateTimeOffset date, int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int nanoseconds = 0) =>
-        new(date.Date + TimeOfDay(hours, minutes, seconds, milliseconds, microseconds, nanoseconds), date.Offset);
+    public static DateTimeOffset At(this DateTimeOffset date, int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int nanoseconds = 0)
+    {
+        var rest = BelowMillisecond(microseconds, nanoseconds);
+        try
+        {
+            return new DateTimeOffset(date.Year, date.Month, date.Day, hours, minutes, seconds, milliseconds, date.Offset) + rest;
+        }
+        catch (ArgumentOutOfRangeException ex) when (ex.ParamName is null or "millisecond")
+        {
+            throw OutOfRange(ex.ParamName, hours);
+        }
+    }
 
     public static DateTime AsUtc(this DateTime dateTime) => DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
 
@@ -56,25 +78,19 @@ public static class FluentDateTimeExtensions
 
     public static DateTimeOffset WithOffset(this DateTime self, TimeSpan offset) => new(self.Ticks, offset);
 
-    private static TimeSpan TimeOfDay(int hours, int minutes, int seconds, int milliseconds, int microseconds, int nanoseconds)
+    private static TimeSpan BelowMillisecond(int microseconds, int nanoseconds)
     {
-        Check(hours, 23, null);
-        Check(minutes, 59, null);
-        Check(seconds, 59, null);
-        Check(milliseconds, 999, "millisecond");
         Check(microseconds, 999, nameof(microseconds));
         Check(nanoseconds, 999, nameof(nanoseconds));
 
-        return TimeSpan.FromTicks(
-            (hours * TimeSpan.TicksPerHour)
-            + (minutes * TimeSpan.TicksPerMinute)
-            + (seconds * TimeSpan.TicksPerSecond)
-            + (milliseconds * TimeSpan.TicksPerMillisecond)
-            + (microseconds * TimeSpan.TicksPerMicrosecond)
-            + FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
+        return TimeSpan.FromTicks((microseconds * TimeSpan.TicksPerMicrosecond) + FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
     }
 
-    private static void Check(int value, int max, string? name)
+    // name is null for hours, minutes or seconds, the same as the BCL.
+    private static ArgumentOutOfRangeException OutOfRange(string? name, int hours) =>
+        new(name, $"Must be from 0 to {(name is not null ? 999 : hours is < 0 or > 23 ? 23 : 59)}.");
+
+    private static void Check(int value, int max, string name)
     {
         if (value < 0 || value > max)
         {

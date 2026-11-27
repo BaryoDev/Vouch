@@ -54,6 +54,9 @@ public class TimeHelperDifferentialTests
 
     private static readonly long[] OffsetsForAt = [0, 2 * TimeSpan.TicksPerHour, -5 * TimeSpan.TicksPerHour];
 
+    // One minute either way puts the UTC limit at a minute boundary of the local day.
+    private static readonly long[] OffsetsForAtParts = [.. OffsetsForAt, TimeSpan.TicksPerMinute, -TimeSpan.TicksPerMinute];
+
     private static readonly long[] OffsetsForWithOffset =
     [
         0,
@@ -96,6 +99,14 @@ public class TimeHelperDifferentialTests
         [23, 59, 59, 999, 999, 999],
         [23, 60, 0, 0, 0, 0],
         [25, 0, 0, 0, 0, 0],
+        [0, 0, 59, 999, 999, 999],
+        [23, 58, 59, 999, 999, 999],
+        [-1, -1, -1, -1, -1, -1],
+        [24, 0, 0, 1000, 0, 0],
+        [0, 60, 0, -1, 0, 0],
+        [24, 0, 0, 0, 0, 1000],
+        [0, 0, 0, 1000, 1000, 0],
+        [0, 0, 0, -1, 0, -1],
     ];
 
     private static readonly long[] AddNanosecondValues = [0, 49, 50, 51, 99, -99, 100, 149, 150, -150, 151, 250, -250, 350, -350, 450, 550, 1050, 1150, 4811602766166610294, -1095215029522092345, 186831210636689527, long.MaxValue, long.MinValue];
@@ -136,7 +147,7 @@ public class TimeHelperDifferentialTests
         select new object[] { kind, ticks, count, parts[0], parts[1], parts[2], parts[3], parts[4], parts[5] };
 
     public static IEnumerable<object[]> AtOffsetPartsRows() =>
-        from offset in OffsetsForAt
+        from offset in OffsetsForAtParts
         from ticks in OffsetBaseTicks
         from parts in AtParts
         from count in new[] { 2, 3, 4, 5, 6 }
