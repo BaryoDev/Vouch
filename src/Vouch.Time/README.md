@@ -4,7 +4,10 @@ The FluentAssertions 8 time helpers for [Vouch](https://github.com/BaryoDev/Vouc
 
 ```sh
 dotnet add package Vouch.Time
+dotnet add package Vouch
 ```
+
+Vouch.Time works without Vouch. The example below uses Vouch for `.Should()`.
 
 Targets `net8.0` and `net10.0`. The helpers live in namespace `Vouch`, so `using Vouch;` brings them in with `.Should()`.
 
@@ -30,7 +33,7 @@ start.Should().Be(new DateTime(2026, 3, 1, 10, 30, 0, DateTimeKind.Utc));
 `FluentDateTimeExtensions`:
 
 - Build a date: `January` to `December`, as in `5.March(2026)`.
-- Set the time: `At(TimeSpan)` and `At(hours, minutes, seconds, milliseconds, microseconds, nanoseconds)` on `DateTime` and `DateTimeOffset`. Only `hours` and `minutes` are required.
+- Set the time: `At(hours, minutes, seconds, milliseconds, microseconds, nanoseconds)` on `DateTime` and `DateTimeOffset`, where only `hours` and `minutes` are required, and `At(TimeSpan)` on `DateTime`.
 - Mark or move: `AsUtc`, `AsLocal`, `WithOffset`, `Before`, `After`, `AddNanoseconds`.
 - Read parts of a date: `Microsecond`, `Nanosecond`.
 
