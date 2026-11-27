@@ -14,8 +14,10 @@ public class TimeHelperDifferentialTests
 {
     private static readonly int[] Ints = [0, 1, -1, 5, int.MaxValue, int.MinValue];
     private static readonly long[] Longs = [0, 1, -1, 99, 150, -150, long.MaxValue, long.MinValue];
+
+    private static readonly long[] NanosecondLongs = [0, 1, -1, 49, 50, 51, 99, 149, 150, 151, 250, 350, 450, 550, -50, -150, -250, -350, 1050, 1150, 2500, 2147483647, -2147483648, 9007199254740993, 4611686018427387903, long.MaxValue, long.MinValue];
     private static readonly double[] Doubles = [0, 1.5, -1.5, 0.0001, 1e-9, double.NaN, double.PositiveInfinity, double.NegativeInfinity, double.MaxValue, double.MinValue, -0.0];
-    private static readonly long[] SpanTicks = [0, TimeSpan.TicksPerSecond * 30, long.MaxValue, long.MinValue, -1, 1, 15_000, -15_000, TimeSpan.TicksPerDay, 1234567];
+    private static readonly long[] SpanTicks = [0, TimeSpan.TicksPerSecond * 30, long.MaxValue, long.MinValue, -1, 1, 15_000, -15_000, TimeSpan.TicksPerDay, 1234567, -1234567, 3, 7, -7, 10, 11, 1000000001, 987654321];
     private static readonly int[] Days = [0, 1, 28, 29, 30, 31, 32];
     private static readonly int[] Years = [0, 1, 2024, 2025, 9999, 10000];
     private static readonly DateTimeKind[] Kinds = [DateTimeKind.Unspecified, DateTimeKind.Utc, DateTimeKind.Local];
@@ -37,6 +39,19 @@ public class TimeHelperDifferentialTests
         new DateTime(2026, 3, 1, 12, 0, 0).Ticks + 1234567,
     ];
 
+    private static readonly long[] WithOffsetTicks =
+    [
+        .. OffsetBaseTicks,
+        DateTime.MinValue.Ticks,
+        DateTime.MinValue.Ticks + 1,
+        DateTime.MaxValue.Ticks,
+        DateTime.MaxValue.Ticks - 1,
+        14 * TimeSpan.TicksPerHour,
+        14 * TimeSpan.TicksPerHour - 10_000,
+        new DateTime(9999, 12, 31, 10, 0, 0).Ticks,
+        new DateTime(9999, 12, 31, 9, 59, 59).Ticks,
+    ];
+
     private static readonly long[] OffsetsForAt = [0, 2 * TimeSpan.TicksPerHour, -5 * TimeSpan.TicksPerHour];
 
     private static readonly long[] OffsetsForWithOffset =
@@ -48,6 +63,8 @@ public class TimeHelperDifferentialTests
         -5 * TimeSpan.TicksPerHour,
         -14 * TimeSpan.TicksPerHour,
         TimeSpan.TicksPerSecond * 30,
+        14 * TimeSpan.TicksPerHour + TimeSpan.TicksPerMinute,
+        1,
     ];
 
     private static readonly int[][] AtParts =
@@ -62,13 +79,35 @@ public class TimeHelperDifferentialTests
         [0, 0, 1, 2, 3, 4],
         [0, 60, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, -150],
+        [0, 0, 60, 0, 0, 0],
+        [0, 0, -1, 0, 0, 0],
+        [0, 0, 0, 1000, 0, 0],
+        [0, 0, 0, -1, 0, 0],
+        [0, 0, 0, 0, 1000, 0],
+        [0, 0, 0, 0, -1, 0],
+        [0, 0, 0, 0, 999, 0],
+        [0, 0, 0, 0, 0, 999],
+        [0, 0, 0, 0, 0, -1],
+        [0, 0, 0, 0, 0, 50],
+        [0, 0, 0, 0, 0, 250],
+        [0, 0, 0, 0, 0, 350],
+        [0, 0, 0, 0, 0, 949],
+        [0, 0, 0, 0, 0, 950],
+        [23, 59, 59, 999, 999, 999],
+        [23, 60, 0, 0, 0, 0],
+        [25, 0, 0, 0, 0, 0],
     ];
 
-    private static readonly long[] AddNanosecondValues = [0, 100, 150, -150, 99, -99, long.MaxValue, long.MinValue];
+    private static readonly long[] AddNanosecondValues = [0, 49, 50, 51, 99, -99, 100, 149, 150, -150, 151, 250, -250, 350, -350, 450, 550, 1050, 1150, long.MaxValue, long.MinValue];
 
     public static IEnumerable<object[]> IntRows() => Ints.Select(i => new object[] { i });
 
     public static IEnumerable<object[]> LongRows() => Longs.Select(i => new object[] { i });
+
+    public static IEnumerable<object[]> NanosecondRows() => NanosecondLongs.Select(i => new object[] { i });
+
+    public static IEnumerable<object[]> NanosecondIntRows() =>
+        NanosecondLongs.Where(v => v >= int.MinValue && v <= int.MaxValue).Select(v => new object[] { (int)v });
 
     public static IEnumerable<object[]> DoubleRows() => Doubles.Select(d => new object[] { BitConverter.DoubleToInt64Bits(d) });
 
@@ -129,7 +168,7 @@ public class TimeHelperDifferentialTests
 
     public static IEnumerable<object[]> WithOffsetRows() =>
         from kind in Kinds
-        from ticks in OffsetBaseTicks
+        from ticks in WithOffsetTicks
         from offset in OffsetsForWithOffset
         select new object[] { kind, ticks, offset };
 
@@ -159,7 +198,10 @@ public class TimeHelperDifferentialTests
     [Theory, MemberData(nameof(IntRows))]
     public void Nanoseconds_of_an_int(int v) => Agree(() => AaSpan.Nanoseconds(v), () => VSpan.Nanoseconds(v));
 
-    [Theory, MemberData(nameof(LongRows))]
+    [Theory, MemberData(nameof(NanosecondIntRows))]
+    public void Nanoseconds_of_an_int_near_the_half_tick(int v) => Agree(() => AaSpan.Nanoseconds(v), () => VSpan.Nanoseconds(v));
+
+    [Theory, MemberData(nameof(NanosecondRows))]
     public void Nanoseconds_of_a_long(long v) => Agree(() => AaSpan.Nanoseconds(v), () => VSpan.Nanoseconds(v));
 
     [Theory, MemberData(nameof(SpanRows))]

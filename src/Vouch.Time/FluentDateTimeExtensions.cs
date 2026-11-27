@@ -50,14 +50,35 @@ public static class FluentDateTimeExtensions
 
     public static int Nanosecond(this DateTimeOffset self) => self.Nanosecond;
 
-    public static DateTime AddNanoseconds(this DateTime self, long nanoseconds) => self.AddTicks(nanoseconds / TimeSpan.NanosecondsPerTick);
+    public static DateTime AddNanoseconds(this DateTime self, long nanoseconds) => self.AddTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
 
-    public static DateTimeOffset AddNanoseconds(this DateTimeOffset self, long nanoseconds) => self.AddTicks(nanoseconds / TimeSpan.NanosecondsPerTick);
+    public static DateTimeOffset AddNanoseconds(this DateTimeOffset self, long nanoseconds) => self.AddTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
 
-    public static DateTimeOffset WithOffset(this DateTime self, TimeSpan offset) => new(self, offset);
+    public static DateTimeOffset WithOffset(this DateTime self, TimeSpan offset) => new(self.Ticks, offset);
 
-    private static TimeSpan TimeOfDay(int hours, int minutes, int seconds, int milliseconds, int microseconds, int nanoseconds) =>
-        new TimeSpan(0, hours, minutes, seconds, milliseconds)
-        + TimeSpan.FromTicks(microseconds * TimeSpan.TicksPerMicrosecond)
-        + TimeSpan.FromTicks(nanoseconds / TimeSpan.NanosecondsPerTick);
+    private static TimeSpan TimeOfDay(int hours, int minutes, int seconds, int milliseconds, int microseconds, int nanoseconds)
+    {
+        Check(hours, 23, nameof(hours));
+        Check(minutes, 59, nameof(minutes));
+        Check(seconds, 59, nameof(seconds));
+        Check(milliseconds, 999, nameof(milliseconds));
+        Check(microseconds, 999, nameof(microseconds));
+        Check(nanoseconds, 999, nameof(nanoseconds));
+
+        return TimeSpan.FromTicks(
+            (hours * TimeSpan.TicksPerHour)
+            + (minutes * TimeSpan.TicksPerMinute)
+            + (seconds * TimeSpan.TicksPerSecond)
+            + (milliseconds * TimeSpan.TicksPerMillisecond)
+            + (microseconds * TimeSpan.TicksPerMicrosecond)
+            + FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
+    }
+
+    private static void Check(int value, int max, string name)
+    {
+        if (value < 0 || value > max)
+        {
+            throw new ArgumentOutOfRangeException(name, value, $"Must be from 0 to {max}.");
+        }
+    }
 }

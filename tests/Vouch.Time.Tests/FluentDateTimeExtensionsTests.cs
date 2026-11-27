@@ -58,6 +58,21 @@ public class FluentDateTimeExtensionsTests
         value.Offset.Should().Be(TimeSpan.FromHours(-5));
     }
 
+    [Fact] public void At_rejects_hour_24() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(24, 0));
+    [Fact] public void At_rejects_a_negative_hour() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(-1, 0));
+    [Fact] public void At_rejects_minute_60() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 60));
+    [Fact] public void At_rejects_second_60() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 60));
+    [Fact] public void At_rejects_millisecond_1000() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 1000));
+    [Fact] public void At_rejects_microsecond_1000() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, 1000));
+    [Fact] public void At_rejects_a_negative_microsecond() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, -1));
+    [Fact] public void At_rejects_nanosecond_1000() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, 0, 1000));
+    [Fact] public void At_rejects_a_negative_nanosecond() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, 0, -1));
+    [Fact] public void At_rejects_hour_24_on_an_offset() => Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(2026, 3, 1, 0, 0, 0, TimeSpan.Zero).At(24, 0));
+    [Fact] public void At_rejects_nanosecond_1000_on_an_offset() => Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(2026, 3, 1, 0, 0, 0, TimeSpan.Zero).At(0, 0, 0, 0, 0, 1000));
+    [Fact] public void At_rounds_nanoseconds_halves_to_even() => 1.March(2026).At(0, 0, 0, 0, 0, 250).Ticks.Should().Be(new DateTime(2026, 3, 1).Ticks + 2);
+    [Fact] public void At_rounds_nanosecond_999_up_to_a_microsecond() => 1.March(2026).At(23, 59, 59, 999, 999, 999).Should().Be(2.March(2026));
+    [Fact] public void At_on_an_offset_that_puts_utc_before_year_1_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(1, 1, 1, 12, 0, 0, TimeSpan.FromHours(2)).At(0, 0, 0, 0, 0, 150));
+
     [Fact]
     public void AsUtc_marks_the_kind_without_moving_the_clock()
     {
@@ -90,10 +105,14 @@ public class FluentDateTimeExtensionsTests
     [Fact] public void Nanosecond_of_an_offset_reads_the_part() => new DateTimeOffset(new DateTime(2026, 3, 1).AddTicks(1234567), TimeSpan.Zero).Nanosecond().Should().Be(700);
 
     [Fact] public void AddNanoseconds_adds_whole_ticks() => Noon.AddNanoseconds(300).Ticks.Should().Be(Noon.Ticks + 3);
-    [Fact] public void AddNanoseconds_below_one_tick_changes_nothing() => Noon.AddNanoseconds(99).Ticks.Should().Be(Noon.Ticks);
+    [Fact] public void AddNanoseconds_below_half_a_tick_changes_nothing() => Noon.AddNanoseconds(49).Ticks.Should().Be(Noon.Ticks);
+    [Fact] public void AddNanoseconds_rounds_to_the_nearest_tick() => Noon.AddNanoseconds(99).Ticks.Should().Be(Noon.Ticks + 1);
+    [Fact] public void AddNanoseconds_rounds_halves_to_even() => Noon.AddNanoseconds(250).Ticks.Should().Be(Noon.Ticks + 2);
+    [Fact] public void AddNanoseconds_rounds_negative_halves_to_even() => Noon.AddNanoseconds(-250).Ticks.Should().Be(Noon.Ticks - 2);
+    [Fact] public void AddNanoseconds_rounding_up_past_the_last_tick_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => DateTime.MaxValue.AddNanoseconds(99));
     [Fact] public void AddNanoseconds_can_go_back() => Noon.AddNanoseconds(-300).Ticks.Should().Be(Noon.Ticks - 3);
     [Fact] public void AddNanoseconds_keeps_the_kind() => Noon.AsUtc().AddNanoseconds(300).Kind.Should().Be(DateTimeKind.Utc);
-    [Fact] public void AddNanoseconds_of_long_max_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => Noon.AddNanoseconds(long.MaxValue));
+    [Fact] public void AddNanoseconds_of_long_max_adds_the_rounded_ticks() => Noon.AddNanoseconds(long.MaxValue).Ticks.Should().Be(Noon.Ticks + 92233720368547760);
     [Fact]
     public void AddNanoseconds_on_an_offset_adds_whole_ticks()
     {
@@ -103,8 +122,8 @@ public class FluentDateTimeExtensionsTests
     }
 
     [Fact]
-    public void AddNanoseconds_of_long_max_on_an_offset_is_rejected() =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => new DateTimeOffset(2026, 3, 1, 12, 0, 0, TimeSpan.Zero).AddNanoseconds(long.MaxValue));
+    public void AddNanoseconds_of_long_max_on_an_offset_adds_the_rounded_ticks() =>
+        new DateTimeOffset(2026, 3, 1, 12, 0, 0, TimeSpan.Zero).AddNanoseconds(long.MaxValue).Ticks.Should().Be(Noon.Ticks + 92233720368547760);
 
     [Fact]
     public void WithOffset_on_an_unspecified_date_keeps_the_clock()
@@ -116,8 +135,16 @@ public class FluentDateTimeExtensionsTests
 
     [Fact] public void WithOffset_on_a_utc_date_with_a_zero_offset_works() => Noon.AsUtc().WithOffset(TimeSpan.Zero).Offset.Should().Be(TimeSpan.Zero);
     [Fact]
-    public void WithOffset_on_a_utc_date_with_another_offset_is_rejected() =>
-        Assert.Throws<ArgumentException>(() => Noon.AsUtc().WithOffset(TimeSpan.FromHours(2)));
+    public void WithOffset_ignores_the_kind()
+    {
+        var utc = Noon.AsUtc().WithOffset(TimeSpan.FromHours(2));
+        utc.DateTime.Ticks.Should().Be(Noon.Ticks);
+        utc.Offset.Should().Be(TimeSpan.FromHours(2));
+        Noon.AsLocal().WithOffset(TimeSpan.FromHours(-5)).Offset.Should().Be(TimeSpan.FromHours(-5));
+    }
+
+    [Fact] public void WithOffset_that_leaves_the_range_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => DateTime.MaxValue.AsUtc().WithOffset(TimeSpan.FromHours(-14)));
+    [Fact] public void WithOffset_of_part_of_a_minute_is_rejected() => Assert.Throws<ArgumentException>(() => Noon.WithOffset(TimeSpan.FromSeconds(30)));
     [Fact] public void WithOffset_of_fifteen_hours_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => Noon.WithOffset(TimeSpan.FromHours(15)));
     [Fact] public void WithOffset_of_fourteen_hours_works() => Noon.WithOffset(TimeSpan.FromHours(14)).Offset.Should().Be(TimeSpan.FromHours(14));
 }

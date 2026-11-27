@@ -36,7 +36,7 @@ start.Should().Be(new DateTime(2026, 3, 1, 10, 30, 0, DateTimeKind.Utc));
 
 ## Resolution
 
-`TimeSpan` and `DateTime` count in ticks of 100 ns. A nanosecond argument is cut to whole ticks, so `99.Nanoseconds()` is zero and `150.Nanoseconds()` is one tick.
+`TimeSpan` and `DateTime` count in ticks of 100 ns. A nanosecond argument is rounded to the nearest tick, halves to even, so `99.Nanoseconds()` is one tick, `150.Nanoseconds()` is two and `250.Nanoseconds()` is two.
 
 ## AddMicroseconds
 

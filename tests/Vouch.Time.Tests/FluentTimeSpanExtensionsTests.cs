@@ -17,11 +17,30 @@ public class FluentTimeSpanExtensionsTests
 
     [Fact] public void Nanoseconds_of_an_int_is_one_tick_per_hundred() => 300.Nanoseconds().Should().Be(TimeSpan.FromTicks(3));
     [Fact] public void Nanoseconds_of_a_long_is_one_tick_per_hundred() => 300L.Nanoseconds().Should().Be(TimeSpan.FromTicks(3));
-    [Fact] public void Nanoseconds_below_one_tick_is_zero() => 99.Nanoseconds().Should().Be(TimeSpan.Zero);
+    [Fact] public void Nanoseconds_below_half_a_tick_is_zero() => 49.Nanoseconds().Should().Be(TimeSpan.Zero);
+    [Fact] public void Nanoseconds_rounds_to_the_nearest_tick() => 99.Nanoseconds().Should().Be(TimeSpan.FromTicks(1));
+    [Theory]
+    [InlineData(50, 0)]
+    [InlineData(150, 2)]
+    [InlineData(250, 2)]
+    [InlineData(350, 4)]
+    [InlineData(-50, 0)]
+    [InlineData(-150, -2)]
+    [InlineData(-250, -2)]
+    [InlineData(-350, -4)]
+    public void Nanoseconds_rounds_halves_to_even(long nanoseconds, long ticks)
+    {
+        nanoseconds.Nanoseconds().Ticks.Should().Be(ticks);
+        ((int)nanoseconds).Nanoseconds().Ticks.Should().Be(ticks);
+    }
+
+    [Fact] public void Nanoseconds_of_long_max_goes_through_double() => long.MaxValue.Nanoseconds().Ticks.Should().Be(92233720368547760);
+    [Fact] public void Nanoseconds_of_long_min_goes_through_double() => long.MinValue.Nanoseconds().Ticks.Should().Be(-92233720368547760);
     [Fact] public void Nanoseconds_reads_the_nanosecond_part() => TimeSpan.FromTicks(1234567).Nanoseconds().Should().Be(700);
 
     [Fact] public void TotalMicroseconds_is_ticks_over_ten() => TimeSpan.FromTicks(15).TotalMicroseconds().Should().Be(1.5);
     [Fact] public void TotalNanoseconds_is_ticks_times_a_hundred() => TimeSpan.FromTicks(15).TotalNanoseconds().Should().Be(1500.0);
+    [Fact] public void TotalMicroseconds_is_ticks_times_a_tenth() => TimeSpan.FromTicks(1234567).TotalMicroseconds().Should().Be(123456.70000000001);
     [Fact] public void TotalMicroseconds_of_zero_is_zero() => TimeSpan.Zero.TotalMicroseconds().Should().Be(0.0);
 
     [Fact] public void Milliseconds_of_an_int_is_that_many_milliseconds() => 250.Milliseconds().Should().Be(TimeSpan.FromTicks(2_500_000));

@@ -14,13 +14,13 @@ public static class FluentTimeSpanExtensions
 
     public static int Microseconds(this TimeSpan self) => self.Microseconds;
 
-    public static TimeSpan Nanoseconds(this int nanoseconds) => TimeSpan.FromTicks(nanoseconds / TimeSpan.NanosecondsPerTick);
+    public static TimeSpan Nanoseconds(this int nanoseconds) => TimeSpan.FromTicks(NanosecondsToTicks(nanoseconds));
 
-    public static TimeSpan Nanoseconds(this long nanoseconds) => TimeSpan.FromTicks(nanoseconds / TimeSpan.NanosecondsPerTick);
+    public static TimeSpan Nanoseconds(this long nanoseconds) => TimeSpan.FromTicks(NanosecondsToTicks(nanoseconds));
 
     public static int Nanoseconds(this TimeSpan self) => self.Nanoseconds;
 
-    public static double TotalMicroseconds(this TimeSpan self) => self.TotalMicroseconds;
+    public static double TotalMicroseconds(this TimeSpan self) => self.Ticks * 0.1;
 
     public static double TotalNanoseconds(this TimeSpan self) => self.TotalNanoseconds;
 
@@ -55,4 +55,7 @@ public static class FluentTimeSpanExtensions
     public static TimeSpan Days(this int days, TimeSpan offset) => TimeSpan.FromDays((double)days) + offset;
 
     public static TimeSpan And(this TimeSpan sourceTime, TimeSpan offset) => sourceTime + offset;
+
+    // Rounds half to even through double, the same way FluentAssertions does, so long.MaxValue ends on ...760.
+    internal static long NanosecondsToTicks(long nanoseconds) => (long)Math.Round(nanoseconds / (double)TimeSpan.NanosecondsPerTick);
 }
