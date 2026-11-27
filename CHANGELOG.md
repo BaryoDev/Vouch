@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 Breaking changes come first. All of them land before 1.0, as the roadmap in #20 planned.
 
