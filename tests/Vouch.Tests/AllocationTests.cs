@@ -11,13 +11,46 @@ public class AllocationTests
 {
     private const int Calls = 1000;
 
+    // One round can count bytes the runtime allocates once on this thread, unrelated to the assertion.
+    // An allocation the assertion makes comes back in every round, so a check passes on any clean round.
+    private const int Rounds = 3;
+
+    private static object? sink;
+
+    // A round returns null when clean, or what it measured.
+    private static void AssertAnyRoundClean(Func<string?> round)
+    {
+        var failures = new List<string>(Rounds);
+        for (var i = 0; i < Rounds; i++)
+        {
+            var failure = round();
+            if (failure is null) return;
+            failures.Add(failure);
+        }
+        Assert.Fail($"No clean round in {Rounds}: {string.Join("; ", failures)}");
+    }
+
     private static void AssertNoAllocation(Action call)
     {
         // Warm up past tiered compilation, so the runtime's one-off work happens before the count.
         for (var i = 0; i < Calls; i++) call();
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < Calls; i++) call();
-        AssertNoExtra(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        AssertAnyRoundClean(() => Extra(0, Bytes(call)));
+    }
+
+    [Fact]
+    public void A_one_off_allocation_in_one_round_passes()
+    {
+        // Call 1500 falls in the first measured round only.
+        var n = 0;
+        AssertNoAllocation(() => { if (++n == 1500) sink = new byte[2000]; });
+    }
+
+    [Fact]
+    public void An_allocation_on_every_call_fails_every_round()
+    {
+        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => AssertNoAllocation(static () => sink = new object()));
+        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => AssertNoCopy(Ints, static _ => sink = new object()));
+        Assert.NotNull(sink);
     }
 
     private sealed class NoopFormatter : Vouch.Sdk.IValueFormatter
@@ -303,10 +336,7 @@ public class AllocationTests
     {
         var a = new Row("A", 1);
         var b = new Row("A", 1);
-        a.Should().BeEquivalentTo(b);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < Calls; i++) a.Should().BeEquivalentTo(b);
-        Assert.True((GC.GetAllocatedBytesForCurrentThread() - before) / Calls <= 512);
+        AssertPerCallAtMost(512, () => a.Should().BeEquivalentTo(b));
     }
 
     [Fact]
@@ -315,11 +345,15 @@ public class AllocationTests
         Assert.False(EquivalencyOptions.Default.HasPathRules);
         var a = new Row("A", 1);
         var b = new Row("A", 1);
-        a.Should().BeEquivalentTo(b);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < Calls; i++) a.Should().BeEquivalentTo(b);
-        Assert.True((GC.GetAllocatedBytesForCurrentThread() - before) / Calls <= 512);
+        AssertPerCallAtMost(512, () => a.Should().BeEquivalentTo(b));
     }
+
+    private static void AssertPerCallAtMost(long limit, Action call) =>
+        AssertAnyRoundClean(() =>
+        {
+            var perCall = Bytes(call) / Calls;
+            return perCall <= limit ? null : $"{perCall} bytes per call, over {limit}";
+        });
 
     private static long BytesForContainKey(int size)
     {
@@ -331,13 +365,13 @@ public class AllocationTests
     }
 
     [Fact]
-    public void Dictionary_ContainKey_allocation_does_not_grow_with_size()
-    {
-        var small = BytesForContainKey(10);
-        var large = BytesForContainKey(10_000);
-        Assert.Equal(small, large);
-        Assert.True(large / Calls <= 128);
-    }
+    public void Dictionary_ContainKey_allocation_does_not_grow_with_size() =>
+        AssertAnyRoundClean(static () =>
+        {
+            var small = BytesForContainKey(10);
+            var large = BytesForContainKey(10_000);
+            return small == large && large / Calls <= 128 ? null : $"{small} bytes at size 10, {large} at size 10000";
+        });
 
     [Fact]
     public void Passing_AllSatisfy_has_no_per_item_allocation()
@@ -347,9 +381,13 @@ public class AllocationTests
         var items = new int[100_000];
         Action<int> check = static _ => { };
         for (var i = 0; i < 10; i++) items.Should().AllSatisfy(check);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        items.Should().AllSatisfy(check);
-        Assert.True(GC.GetAllocatedBytesForCurrentThread() - before <= 1024);
+        AssertAnyRoundClean(() =>
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            items.Should().AllSatisfy(check);
+            var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
+            return bytes <= 1024 ? null : $"{bytes} bytes for one call over {items.Length} items";
+        });
     }
 
     private static long Bytes(Action call)
@@ -362,14 +400,14 @@ public class AllocationTests
 
     // Under one byte per call: the smallest object is 24 bytes, so this still catches any
     // per-call allocation, but not a few bytes the runtime adds once during the loop.
-    private static void AssertNoExtra(long baseline, long measured) =>
-        Assert.True(measured - baseline < Calls, $"{measured - baseline} extra bytes over {Calls} calls");
+    private static string? Extra(long baseline, long measured) =>
+        measured - baseline < Calls ? null : $"{measured - baseline} extra bytes over {Calls} calls";
 
-    private static void AssertNoCopy<T>(IEnumerable<T> subject, Action<GenericCollectionAssertions<T>> assertion)
-    {
-        var baseline = Bytes(() => subject.Should());
-        AssertNoExtra(baseline, Bytes(() => assertion(subject.Should())));
-    }
+    private static void AssertNoExtra(Action baseline, Action call) =>
+        AssertAnyRoundClean(() => Extra(Bytes(baseline), Bytes(call)));
+
+    private static void AssertNoCopy<T>(IEnumerable<T> subject, Action<GenericCollectionAssertions<T>> assertion) =>
+        AssertNoExtra(() => subject.Should(), () => assertion(subject.Should()));
 
     [Theory]
     [InlineData(10)]
@@ -390,9 +428,8 @@ public class AllocationTests
     public void Count_methods_do_not_copy_a_dictionary(int size)
     {
         var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);
-        var baseline = Bytes(() => d.Should());
-        AssertNoExtra(baseline, Bytes(() => d.Should().HaveCount(size)));
-        AssertNoExtra(baseline, Bytes(() => d.Should().NotBeEmpty()));
+        AssertNoExtra(() => d.Should(), () => d.Should().HaveCount(size));
+        AssertNoExtra(() => d.Should(), () => d.Should().NotBeEmpty());
     }
 
     // issue #15: the new collection assertions
@@ -436,8 +473,7 @@ public class AllocationTests
     private static void AssertAssertionAllocatesNothing(Dictionary<string, int> d, Action<DictionaryAssertions<string, int>> assertion)
     {
         Action<DictionaryAssertions<string, int>> none = static _ => { };
-        var baseline = Bytes(() => none(d.Should()));
-        AssertNoExtra(baseline, Bytes(() => assertion(d.Should())));
+        AssertNoExtra(() => none(d.Should()), () => assertion(d.Should()));
     }
 
     [Fact] public void Dictionary_ContainValue() => AssertAssertionAllocatesNothing(Dict(), a => a.ContainValue(3));
