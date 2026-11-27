@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Vouch\Vouch.csproj" />
+    <ProjectReference Include="..\..\src\Vouch.Time\Vouch.Time.csproj" />
   </ItemGroup>
 
 </Project>
