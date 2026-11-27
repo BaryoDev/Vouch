@@ -11,30 +11,29 @@ public class AllocationTests
 {
     private const int Calls = 1000;
 
-    // One round can count bytes the runtime allocates once on this thread, unrelated to the assertion.
-    // An allocation the assertion makes comes back in every round, so a check passes on any clean round.
-    private const int Rounds = 3;
-
     private static object? sink;
 
+    // One round can count bytes the runtime allocates once on this thread, unrelated to the assertion.
+    // That lands in one round, while an allocation the assertion makes, even one every 1500 calls or a list
+    // that doubles, lands in two or more, so a check passes when two of three rounds are clean.
     // A round returns null when clean, or what it measured.
-    private static void AssertAnyRoundClean(Func<string?> round)
+    private static void AssertTwoRoundsClean(Func<string?> round)
     {
-        var failures = new List<string>(Rounds);
-        for (var i = 0; i < Rounds; i++)
+        var clean = 0;
+        var failures = new List<string>(2);
+        while (clean < 2 && failures.Count < 2)
         {
-            var failure = round();
-            if (failure is null) return;
-            failures.Add(failure);
+            if (round() is { } failure) failures.Add(failure);
+            else clean++;
         }
-        Assert.Fail($"No clean round in {Rounds}: {string.Join("; ", failures)}");
+        if (failures.Count == 2) Assert.Fail($"Two rounds of three allocated: {string.Join("; ", failures)}");
     }
 
     private static void AssertNoAllocation(Action call)
     {
         // Warm up past tiered compilation, so the runtime's one-off work happens before the count.
         for (var i = 0; i < Calls; i++) call();
-        AssertAnyRoundClean(() => Extra(0, Bytes(call)));
+        AssertTwoRoundsClean(() => Extra(0, Bytes(call)));
     }
 
     [Fact]
@@ -46,12 +45,24 @@ public class AllocationTests
     }
 
     [Fact]
-    public void An_allocation_on_every_call_fails_every_round()
+    public void An_allocation_on_every_call_fails()
     {
-        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => AssertNoAllocation(static () => sink = new object()));
-        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => AssertNoCopy(Ints, static _ => sink = new object()));
+        sink = null;
+        AssertFailsTwoRounds(() => AssertNoAllocation(static () => sink = new object()));
+        AssertFailsTwoRounds(() => AssertNoCopy(Ints, static _ => sink = new object()));
         Assert.NotNull(sink);
     }
+
+    [Fact]
+    public void An_allocation_every_1500_calls_fails()
+    {
+        // Calls 1500 and 3000 fall in the first two measured rounds, 4500 after the third.
+        var n = 0;
+        AssertFailsTwoRounds(() => AssertNoAllocation(() => { if (++n % 1500 == 0) sink = new byte[2000]; }));
+    }
+
+    private static void AssertFailsTwoRounds(Action check) =>
+        Assert.StartsWith("Two rounds of three allocated", Assert.Throws<Xunit.Sdk.FailException>(check).Message);
 
     private sealed class NoopFormatter : Vouch.Sdk.IValueFormatter
     {
@@ -349,7 +360,7 @@ public class AllocationTests
     }
 
     private static void AssertPerCallAtMost(long limit, Action call) =>
-        AssertAnyRoundClean(() =>
+        AssertTwoRoundsClean(() =>
         {
             var perCall = Bytes(call) / Calls;
             return perCall <= limit ? null : $"{perCall} bytes per call, over {limit}";
@@ -366,7 +377,7 @@ public class AllocationTests
 
     [Fact]
     public void Dictionary_ContainKey_allocation_does_not_grow_with_size() =>
-        AssertAnyRoundClean(static () =>
+        AssertTwoRoundsClean(static () =>
         {
             var small = BytesForContainKey(10);
             var large = BytesForContainKey(10_000);
@@ -381,7 +392,7 @@ public class AllocationTests
         var items = new int[100_000];
         Action<int> check = static _ => { };
         for (var i = 0; i < 10; i++) items.Should().AllSatisfy(check);
-        AssertAnyRoundClean(() =>
+        AssertTwoRoundsClean(() =>
         {
             var before = GC.GetAllocatedBytesForCurrentThread();
             items.Should().AllSatisfy(check);
@@ -404,7 +415,7 @@ public class AllocationTests
         measured - baseline < Calls ? null : $"{measured - baseline} extra bytes over {Calls} calls";
 
     private static void AssertNoExtra(Action baseline, Action call) =>
-        AssertAnyRoundClean(() => Extra(Bytes(baseline), Bytes(call)));
+        AssertTwoRoundsClean(() => Extra(Bytes(baseline), Bytes(call)));
 
     private static void AssertNoCopy<T>(IEnumerable<T> subject, Action<GenericCollectionAssertions<T>> assertion) =>
         AssertNoExtra(() => subject.Should(), () => assertion(subject.Should()));
