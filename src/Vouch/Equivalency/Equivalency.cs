@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,7 @@ internal static class Equivalency
     internal const int MaxListed = 10;
     internal const int MaxItems = 1_000_000;
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static bool AreEquivalent(object? subject, object? expectation, EquivalencyOptions options)
     {
         var run = new Comparison(options, collect: false, 0, stopOnFirst: true);
@@ -18,6 +20,7 @@ internal static class Equivalency
         return run.Total == 0;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static void Require<TSubject, TExpectation>(TSubject subject, TExpectation expectation, Type expectedType, EquivalencyOptions options, string name)
     {
         if (typeof(TSubject) == typeof(TExpectation)
@@ -31,6 +34,7 @@ internal static class Equivalency
         Require((object?)subject, (object?)expectation, expectedType, options, name);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static void Require(object? subject, object? expectation, Type expectedType, EquivalencyOptions options, string name)
     {
         if (subject is not null
@@ -71,9 +75,11 @@ internal static class Equivalency
         public static readonly bool Is = MemberCache.IsScalarType(typeof(T));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static bool IsCollection(Type type) =>
         MemberCache.ShapeOf(type).Kind is TypeKind.Sequence or TypeKind.Dictionary;
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static bool ElementsAreCollections(Type sequence)
     {
         foreach (var contract in sequence.GetInterfaces())
@@ -87,6 +93,7 @@ internal static class Equivalency
         return false;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static bool IsDictionary(object value) =>
         MemberCache.ShapeOf(value.GetType()).Kind == TypeKind.Dictionary;
 
@@ -240,6 +247,7 @@ internal sealed class Comparison
         return items;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private DictionaryView View(object dictionary)
     {
         if (dictionary is IDictionary)
@@ -265,6 +273,7 @@ internal sealed class Comparison
 
     private bool Counting => !_stopOnFirst && (_quiet || (_differences is not null && _differences.Count >= _maxListed));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public void CompareValues(object? subject, object? expectation)
     {
         if (expectation is null)
@@ -326,6 +335,7 @@ internal sealed class Comparison
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public bool Probe(object? subject, object? expectation, int index)
     {
         var total = Total;
@@ -354,6 +364,7 @@ internal sealed class Comparison
     }
 
     // The one place that decides how a type is compared; options can override the classification.
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private TypeShape ShapeFor(Type type)
     {
         if (Options.HasTypeRules && Options.KindOverrides.TryGetValue(EquivalencyOptions.KeyOf(type), out var byValue))
@@ -379,6 +390,7 @@ internal sealed class Comparison
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private bool Compatible(object subject, TypeKind expected)
     {
         var actual = ShapeFor(subject.GetType()).Kind;
@@ -405,6 +417,7 @@ internal sealed class Comparison
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private void CompareStructure(object subject, object expectation, TypeShape shape)
     {
         var pathCount = _path.Count;
@@ -516,6 +529,7 @@ internal sealed class Comparison
         _settled[key] = new Settled(depth, failures);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private void CompareMembers(object subject, object expectation, TypeShape shape)
     {
         var subjectShape = MemberCache.ShapeOf(subject.GetType());
@@ -610,6 +624,7 @@ internal sealed class Comparison
         return sb.Append(name).ToString();
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private void CompareSequences(object subject, object expectation)
     {
         var actual = Elements(subject);
@@ -636,6 +651,7 @@ internal sealed class Comparison
         AnyOrderMatcher.Run(this, actual, expected);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private void CompareDictionaries(object subject, object expectation)
     {
         var actual = View(subject);

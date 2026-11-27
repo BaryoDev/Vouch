@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Collections;
 
 namespace Vouch;
@@ -13,6 +14,7 @@ internal sealed class DictionaryView
 
     public int Count => _dictionary?.Count ?? _snapshot!.Count;
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static DictionaryView Of(object dictionary)
     {
         if (dictionary is IDictionary typed)

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Vouch;
@@ -45,6 +46,7 @@ internal sealed class TypeShape
 
     private Dictionary<string, MemberGetter>? _byName;
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     public TypeShape(Type type, TypeKind? forced = null)
     {
         Kind = forced ?? MemberCache.Classify(type);
@@ -94,13 +96,19 @@ internal static class MemberCache
     private static readonly ConcurrentDictionary<(Type, TypeKind), TypeShape> Forced = new();
 
     // The shape of a type whose kind was chosen by an option instead of Classify.
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     public static TypeShape ShapeOf(Type type, TypeKind forced) =>
-        Forced.GetOrAdd((type, forced), static key => new TypeShape(key.Item1, key.Item2));
+        Forced.TryGetValue((type, forced), out var shape) ? shape : Forced.GetOrAdd((type, forced), Build(type, forced));
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     public static MemberGetter[] For(Type type) => ShapeOf(type).Members;
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     public static TypeShape ShapeOf(Type type) =>
-        Shapes.TryGetValue(type, out var shape) ? shape : Shapes.GetOrAdd(type, static t => new TypeShape(t));
+        Shapes.TryGetValue(type, out var shape) ? shape : Shapes.GetOrAdd(type, Build(type, null));
+
+    [RequiresUnreferencedCode(TrimMessages.Members)]
+    private static TypeShape Build(Type type, TypeKind? forced) => new(type, forced);
 
     public static bool IsScalarType(Type type)
     {
@@ -117,6 +125,7 @@ internal static class MemberCache
             || type == typeof(Guid);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     internal static TypeKind Classify(Type type)
     {
         if (IsScalarType(type))
@@ -147,6 +156,7 @@ internal static class MemberCache
         return OverridesEquals(type) ? TypeKind.Equatable : TypeKind.Members;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Members)]
     internal static MemberGetter[] Read(Type type)
     {
         var members = new List<MemberGetter>();
@@ -166,6 +176,7 @@ internal static class MemberCache
         return members.ToArray();
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private static bool ImplementsReadOnlyDictionary(Type type)
     {
         foreach (var contract in type.GetInterfaces())
@@ -192,6 +203,7 @@ internal static class MemberCache
             && (name.StartsWith("System.ValueTuple`", StringComparison.Ordinal) || name.StartsWith("System.Tuple`", StringComparison.Ordinal));
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private static bool OverridesEquals(Type type)
     {
         var declaring = type.GetMethod(nameof(object.Equals), [typeof(object)])?.DeclaringType;

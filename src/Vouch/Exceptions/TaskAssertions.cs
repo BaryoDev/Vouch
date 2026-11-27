@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 namespace Vouch;
 
 public readonly struct TaskAssertions
@@ -96,9 +97,11 @@ public readonly struct TaskAssertions
     public AndConstraint<TaskAssertions> BeOneOf(params object?[] validValues)
         => Self(AsObject.BeOneOf(validValues));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => Self(AsObject.BeEquivalentTo(expectation));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => Self(AsObject.BeEquivalentTo(expectation, configure));
 
@@ -257,9 +260,11 @@ public readonly struct TaskAssertions<T>
     public AndConstraint<TaskAssertions<T>> BeOneOf(params object?[] validValues)
         => Self(AsObject.BeOneOf(validValues));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
         => Self(AsObject.BeEquivalentTo(expectation));
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public AndConstraint<TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions<TExpectation>, EquivalencyOptions<TExpectation>> configure)
         => Self(AsObject.BeEquivalentTo(expectation, configure));
 

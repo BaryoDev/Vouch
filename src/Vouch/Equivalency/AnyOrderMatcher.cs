@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
 namespace Vouch;
@@ -24,6 +25,7 @@ internal sealed class AnyOrderMatcher
         _used = new bool[subject.Length];
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     public static void Run(Comparison run, object?[] subject, object?[] expected)
     {
         var matcher = new AnyOrderMatcher(run, subject) { _exactNumbers = SingleNumericType(subject, expected) };
@@ -90,6 +92,7 @@ internal sealed class AnyOrderMatcher
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private static bool TrySequenceHash(Comparison run, object? item, out int hash)
     {
         hash = 0;
@@ -124,6 +127,7 @@ internal sealed class AnyOrderMatcher
         }
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private static bool TryHash(object? item, MemberGetter[] keys, out int hash)
     {
         hash = 0;
@@ -169,6 +173,7 @@ internal sealed class AnyOrderMatcher
         return true;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private static bool TryHashEquatable(object? item, out int hash)
     {
         hash = 0;
@@ -204,6 +209,7 @@ internal sealed class AnyOrderMatcher
         return Numbers.IsNumber(value) ? Numbers.Hash(value) : value.GetHashCode();
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private int Find(object? item, int index)
     {
         HashIndex? hashIndex = null;
@@ -277,6 +283,7 @@ internal sealed class AnyOrderMatcher
         return wild >= 0 || !equatable ? wild : Scan(item, index);
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private int Walk(ref int head, int[] next, object? item, int index)
     {
         var previous = -1;
@@ -311,6 +318,7 @@ internal sealed class AnyOrderMatcher
         return -1;
     }
 
+    [RequiresUnreferencedCode(TrimMessages.Equivalency)]
     private int Scan(object? item, int index)
     {
         while (_firstUnused < _subject.Length && _used[_firstUnused])
@@ -336,6 +344,7 @@ internal sealed class AnyOrderMatcher
         public int[] Next = [];
         public int WildcardHead = -1;
 
+        [RequiresUnreferencedCode(TrimMessages.Equivalency)]
         public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences, bool exactNumbers, bool equatables = false)
         {
             var index = new HashIndex { Next = new int[subject.Length], Heads = new int[subject.Length] };

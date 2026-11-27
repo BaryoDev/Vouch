@@ -115,19 +115,37 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> AllBe(T expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>() { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeAssignableTo<TExpected>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> AllBeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>() { }
         public Vouch.AndWhichConstraint<TSelf, System.Collections.Generic.IReadOnlyList<TExpected>> AllBeOfType<TExpected>(string because) { }
         public Vouch.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
         public Vouch.AndConstraint<TSelf> BeEmpty() { }
         public Vouch.AndConstraint<TSelf> BeEmpty(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> BeEquivalentTo(params T[] expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> BeEquivalentTo(T[] expectation, System.Func<Vouch.EquivalencyOptions<T>, Vouch.EquivalencyOptions<T>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, string because) { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder() { }
         public Vouch.AndConstraint<TSelf> BeInAscendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
@@ -148,9 +166,17 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndWhichConstraint<TSelf, T> Contain(T expected, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndWhichConstraint<TSelf, T> ContainEquivalentOf<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure, string because) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(System.Collections.Generic.IEnumerable<T> expected) { }
         public Vouch.AndConstraint<TSelf> ContainInConsecutiveOrder(params T[] expected) { }
@@ -188,10 +214,20 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> IntersectWith(System.Collections.Generic.IEnumerable<T> other, string because) { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty() { }
         public Vouch.AndConstraint<TSelf> NotBeEmpty(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotBeEquivalentTo(params T[] unexpected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotBeEquivalentTo(T[] unexpected, System.Func<Vouch.EquivalencyOptions<T>, Vouch.EquivalencyOptions<T>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotBeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> unexpected, string because) { }
         public Vouch.AndConstraint<TSelf> NotBeNull() { }
         public Vouch.AndConstraint<TSelf> NotBeNull(string because) { }
@@ -201,6 +237,8 @@ namespace Vouch
         public Vouch.AndConstraint<TSelf> NotContain(System.Collections.Generic.IEnumerable<T> unexpected, string because) { }
         public Vouch.AndConstraint<TSelf> NotContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Vouch.AndConstraint<TSelf> NotContain(T unexpected, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<TSelf> NotContainEquivalentOf<TExpectation>(TExpectation unexpected) { }
         public Vouch.AndConstraint<TSelf> NotContainNulls() { }
         public Vouch.AndConstraint<TSelf> NotContainNulls(string because) { }
@@ -238,7 +276,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> Be(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeBefore(System.DateOnly expected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.DateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
@@ -258,7 +300,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeBefore(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
@@ -287,7 +333,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.DateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
@@ -376,6 +426,8 @@ namespace Vouch
     }
     public sealed class EquivalencyOptions<TExpectation>
     {
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.EquivalencyOptions<TExpectation> ComparingByMembers<T>() { }
         public Vouch.EquivalencyOptions<TExpectation> ComparingByValue<T>() { }
         public Vouch.EquivalencyOptions<TExpectation> Excluding(System.Linq.Expressions.Expression<System.Func<TExpectation, object?>> member) { }
@@ -476,7 +528,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.GuidAssertions> Be(System.Guid expected, string because) { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeEmpty() { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeEmpty(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeGreaterThan(System.Guid expected) { }
         public Vouch.AndConstraint<Vouch.GuidAssertions> BeGreaterThanOrEqualTo(System.Guid expected) { }
@@ -493,7 +549,11 @@ namespace Vouch
         public new System.Collections.Immutable.ImmutableArray<T> Subject { get; }
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> Be(System.Collections.Immutable.ImmutableArray<T> expected) { }
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> Be(System.Collections.Immutable.ImmutableArray<T> expected, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> BeOneOf(params System.Collections.Immutable.ImmutableArray<T>[] validValues) { }
         public Vouch.AndConstraint<Vouch.ImmutableArrayAssertions<T>> NotBe(System.Collections.Immutable.ImmutableArray<T> unexpected) { }
@@ -523,7 +583,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeAssignableTo<TExpected>() { }
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, TExpected> BeAssignableTo<TExpected>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public new Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull() { }
         public new Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull(string because) { }
@@ -569,7 +633,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> Be(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeAfter(System.DateOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeBefore(System.DateOnly expected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
@@ -593,7 +661,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeAfter(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeBefore(System.DateTime expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
@@ -626,7 +698,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableDateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
@@ -670,7 +746,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> Be(System.Guid? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEmpty() { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableGuidAssertions> BeOneOf(params System.Guid[] validValues) { }
@@ -695,7 +775,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> Be(T? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeCloseTo(T expected, T delta) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected) { }
         public Vouch.AndConstraint<Vouch.NullableNumericAssertions<T>> BeGreaterThan(T expected, string because) { }
@@ -733,7 +817,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> Be(System.TimeOnly? expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableTimeOnlyAssertions> BeOnOrAfter(System.TimeOnly expected) { }
@@ -754,7 +842,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T? expected) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> Be(T? expected, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeNull() { }
         public Vouch.AndConstraint<Vouch.NullableValueAssertions<T>> BeOneOf(params T[] validValues) { }
@@ -779,7 +871,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> Be(T expected, string because) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeCloseTo(T expected, T delta) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeCloseTo(T expected, T delta, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThan(T expected) { }
         public Vouch.AndConstraint<Vouch.NumericAssertions<T>> BeGreaterThan(T expected, string because) { }
@@ -824,7 +920,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ObjectAssertions> Be(object? expected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, T> BeAssignableTo<T>() { }
         public Vouch.AndWhichConstraint<Vouch.ObjectAssertions, T> BeAssignableTo<T>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.ObjectAssertions> BeNull(string because) { }
@@ -925,7 +1025,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.StreamAssertions> Be(object? expected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeAssignableTo<T>() { }
         public Vouch.AndWhichConstraint<Vouch.StreamAssertions, T> BeAssignableTo<T>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.StreamAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.StreamAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.StreamAssertions> BeNull(string because) { }
@@ -1078,7 +1182,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.TaskAssertions> Be(object? expected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeAssignableTo<TType>() { }
         public Vouch.AndWhichConstraint<Vouch.TaskAssertions, TType> BeAssignableTo<TType>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TaskAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.TaskAssertions> BeNull() { }
         public Vouch.AndConstraint<Vouch.TaskAssertions> BeNull(string because) { }
@@ -1110,7 +1218,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.TaskAssertions<T>> Be(object? expected, string because) { }
         public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeAssignableTo<TType>() { }
         public Vouch.AndWhichConstraint<Vouch.TaskAssertions<T>, TType> BeAssignableTo<TType>(string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeNull() { }
         public Vouch.AndConstraint<Vouch.TaskAssertions<T>> BeNull(string because) { }
@@ -1142,7 +1254,11 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> Be(System.TimeOnly expected, string because) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeAfter(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeBefore(System.TimeOnly expected) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeGreaterThan(System.TimeOnly expected) { }
         public Vouch.AndConstraint<Vouch.TimeOnlyAssertions> BeGreaterThanOrEqualTo(System.TimeOnly expected) { }
@@ -1167,7 +1283,11 @@ namespace Vouch
         public T Subject { get; }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> Be(T expected, string because) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode("Trimming leaves only members the app uses, so equal objects can fail and unequal " +
+            "ones pass. Not supported under Native AOT.")]
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Vouch.EquivalencyOptions<TExpectation>, Vouch.EquivalencyOptions<TExpectation>> configure) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected) { }
