@@ -56,6 +56,6 @@ public static class FluentTimeSpanExtensions
 
     public static TimeSpan And(this TimeSpan sourceTime, TimeSpan offset) => sourceTime + offset;
 
-    // Rounds half to even through double, the same way FluentAssertions does, so long.MaxValue ends on ...760.
-    internal static long NanosecondsToTicks(long nanoseconds) => (long)Math.Round(nanoseconds / (double)TimeSpan.NanosecondsPerTick);
+    // Multiplies by 0.01 in double and rounds half to even, the same way FluentAssertions does, so long.MaxValue ends on ...760.
+    internal static long NanosecondsToTicks(long nanoseconds) => (long)Math.Round(nanoseconds * 0.01);
 }

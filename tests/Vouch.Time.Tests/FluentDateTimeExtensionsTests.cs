@@ -112,6 +112,12 @@ public class FluentDateTimeExtensionsTests
     [Fact] public void AddNanoseconds_rounding_up_past_the_last_tick_is_rejected() => Assert.Throws<ArgumentOutOfRangeException>(() => DateTime.MaxValue.AddNanoseconds(99));
     [Fact] public void AddNanoseconds_can_go_back() => Noon.AddNanoseconds(-300).Ticks.Should().Be(Noon.Ticks - 3);
     [Fact] public void AddNanoseconds_keeps_the_kind() => Noon.AsUtc().AddNanoseconds(300).Kind.Should().Be(DateTimeKind.Utc);
+    [Fact] public void AddNanoseconds_multiplies_by_a_hundredth_in_double() => new DateTime(42).AddNanoseconds(4811602766166610294L).Ticks.Should().Be(48116027661666146);
+    [Fact] public void AddNanoseconds_past_the_end_names_the_parameter_t() => Assert.Throws<ArgumentOutOfRangeException>(() => DateTime.MaxValue.AddNanoseconds(99)).ParamName.Should().Be("t");
+    [Fact] public void AddNanoseconds_on_an_offset_past_the_end_names_the_parameter_t() => Assert.Throws<ArgumentOutOfRangeException>(() => DateTimeOffset.MaxValue.AddNanoseconds(99)).ParamName.Should().Be("t");
+    [Fact] public void At_hour_24_has_no_parameter_name() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(24, 0)).ParamName.Should().BeNull();
+    [Fact] public void At_millisecond_1000_names_millisecond() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 1000)).ParamName.Should().Be("millisecond");
+    [Fact] public void At_microsecond_1000_names_microseconds() => Assert.Throws<ArgumentOutOfRangeException>(() => 1.March(2026).At(0, 0, 0, 0, 1000)).ParamName.Should().Be("microseconds");
     [Fact] public void AddNanoseconds_of_long_max_adds_the_rounded_ticks() => Noon.AddNanoseconds(long.MaxValue).Ticks.Should().Be(Noon.Ticks + 92233720368547760);
     [Fact]
     public void AddNanoseconds_on_an_offset_adds_whole_ticks()

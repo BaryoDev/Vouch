@@ -50,18 +50,18 @@ public static class FluentDateTimeExtensions
 
     public static int Nanosecond(this DateTimeOffset self) => self.Nanosecond;
 
-    public static DateTime AddNanoseconds(this DateTime self, long nanoseconds) => self.AddTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
+    public static DateTime AddNanoseconds(this DateTime self, long nanoseconds) => self + TimeSpan.FromTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
 
-    public static DateTimeOffset AddNanoseconds(this DateTimeOffset self, long nanoseconds) => self.AddTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
+    public static DateTimeOffset AddNanoseconds(this DateTimeOffset self, long nanoseconds) => self + TimeSpan.FromTicks(FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
 
     public static DateTimeOffset WithOffset(this DateTime self, TimeSpan offset) => new(self.Ticks, offset);
 
     private static TimeSpan TimeOfDay(int hours, int minutes, int seconds, int milliseconds, int microseconds, int nanoseconds)
     {
-        Check(hours, 23, nameof(hours));
-        Check(minutes, 59, nameof(minutes));
-        Check(seconds, 59, nameof(seconds));
-        Check(milliseconds, 999, nameof(milliseconds));
+        Check(hours, 23, null);
+        Check(minutes, 59, null);
+        Check(seconds, 59, null);
+        Check(milliseconds, 999, "millisecond");
         Check(microseconds, 999, nameof(microseconds));
         Check(nanoseconds, 999, nameof(nanoseconds));
 
@@ -74,11 +74,11 @@ public static class FluentDateTimeExtensions
             + FluentTimeSpanExtensions.NanosecondsToTicks(nanoseconds));
     }
 
-    private static void Check(int value, int max, string name)
+    private static void Check(int value, int max, string? name)
     {
         if (value < 0 || value > max)
         {
-            throw new ArgumentOutOfRangeException(name, value, $"Must be from 0 to {max}.");
+            throw new ArgumentOutOfRangeException(name, $"Must be from 0 to {max}.");
         }
     }
 }

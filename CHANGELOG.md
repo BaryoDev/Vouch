@@ -4,7 +4,7 @@
 
 ### Added
 
-- `Vouch.Time`, a new package with the FluentAssertions 8 time helpers: `5.Minutes()`, `1.March(2026).At(10, 30)`, `Before`, `After`, `AsUtc`, `WithOffset` and the rest. It has no dependencies, the helpers are in namespace `Vouch`, and the differential tests check each one against AwesomeAssertions (#20).
+- `Vouch.Time`, a new package with the FluentAssertions 8 time helpers: `5.Minutes()`, `1.March(2026).At(10, 30)`, `Before`, `After`, `AsUtc`, `WithOffset` and the rest. It has no dependencies, the helpers are in namespace `Vouch`, and the differential tests check each one against AwesomeAssertions (#20). Nanoseconds are rounded to a tick through double, halves to even, so values above about 9e17 ns can be a few ticks off the exact nearest tick, as in FluentAssertions.
 
 ## 0.3.0
 

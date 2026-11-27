@@ -36,7 +36,7 @@ start.Should().Be(new DateTime(2026, 3, 1, 10, 30, 0, DateTimeKind.Utc));
 
 ## Resolution
 
-`TimeSpan` and `DateTime` count in ticks of 100 ns. A nanosecond argument is rounded to the nearest tick, halves to even, so `99.Nanoseconds()` is one tick, `150.Nanoseconds()` is two and `250.Nanoseconds()` is two.
+`TimeSpan` and `DateTime` count in ticks of 100 ns. A nanosecond argument is rounded to a tick through double, halves to even, so `99.Nanoseconds()` is one tick, `150.Nanoseconds()` is two and `250.Nanoseconds()` is two. Above about 9e17 ns the result can be a few ticks off the exact nearest tick, the same as FluentAssertions.
 
 ## AddMicroseconds
 

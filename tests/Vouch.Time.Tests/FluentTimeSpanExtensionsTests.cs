@@ -34,6 +34,7 @@ public class FluentTimeSpanExtensionsTests
         ((int)nanoseconds).Nanoseconds().Ticks.Should().Be(ticks);
     }
 
+    [Fact] public void Nanoseconds_multiplies_by_a_hundredth_in_double() => 4811602766166610294L.Nanoseconds().Ticks.Should().Be(48116027661666104);
     [Fact] public void Nanoseconds_of_long_max_goes_through_double() => long.MaxValue.Nanoseconds().Ticks.Should().Be(92233720368547760);
     [Fact] public void Nanoseconds_of_long_min_goes_through_double() => long.MinValue.Nanoseconds().Ticks.Should().Be(-92233720368547760);
     [Fact] public void Nanoseconds_reads_the_nanosecond_part() => TimeSpan.FromTicks(1234567).Nanoseconds().Should().Be(700);

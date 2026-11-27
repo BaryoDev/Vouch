@@ -15,7 +15,7 @@ public class TimeHelperDifferentialTests
     private static readonly int[] Ints = [0, 1, -1, 5, int.MaxValue, int.MinValue];
     private static readonly long[] Longs = [0, 1, -1, 99, 150, -150, long.MaxValue, long.MinValue];
 
-    private static readonly long[] NanosecondLongs = [0, 1, -1, 49, 50, 51, 99, 149, 150, 151, 250, 350, 450, 550, -50, -150, -250, -350, 1050, 1150, 2500, 2147483647, -2147483648, 9007199254740993, 4611686018427387903, long.MaxValue, long.MinValue];
+    private static readonly long[] NanosecondLongs = [0, 1, -1, 49, 50, 51, 99, 149, 150, 151, 250, 350, 450, 550, -50, -150, -250, -350, 1050, 1150, 2500, 2147483647, -2147483648, 9007199254740993, 4611686018427387903, 4811602766166610294, -1095215029522092345, 186831210636689527, long.MaxValue, long.MinValue];
     private static readonly double[] Doubles = [0, 1.5, -1.5, 0.0001, 1e-9, double.NaN, double.PositiveInfinity, double.NegativeInfinity, double.MaxValue, double.MinValue, -0.0];
     private static readonly long[] SpanTicks = [0, TimeSpan.TicksPerSecond * 30, long.MaxValue, long.MinValue, -1, 1, 15_000, -15_000, TimeSpan.TicksPerDay, 1234567, -1234567, 3, 7, -7, 10, 11, 1000000001, 987654321];
     private static readonly int[] Days = [0, 1, 28, 29, 30, 31, 32];
@@ -98,7 +98,7 @@ public class TimeHelperDifferentialTests
         [25, 0, 0, 0, 0, 0],
     ];
 
-    private static readonly long[] AddNanosecondValues = [0, 49, 50, 51, 99, -99, 100, 149, 150, -150, 151, 250, -250, 350, -350, 450, 550, 1050, 1150, long.MaxValue, long.MinValue];
+    private static readonly long[] AddNanosecondValues = [0, 49, 50, 51, 99, -99, 100, 149, 150, -150, 151, 250, -250, 350, -350, 450, 550, 1050, 1150, 4811602766166610294, -1095215029522092345, 186831210636689527, long.MaxValue, long.MinValue];
 
     public static IEnumerable<object[]> IntRows() => Ints.Select(i => new object[] { i });
 
@@ -336,14 +336,14 @@ public class TimeHelperDifferentialTests
     public void At_on_a_date_time_with_parts(DateTimeKind kind, long ticks, int count, int h, int m, int s, int ms, int us, int ns)
     {
         var d = new DateTime(ticks, kind);
-        Agree(() => AtAa(d, count, h, m, s, ms, us, ns), () => AtV(d, count, h, m, s, ms, us, ns));
+        AgreeWithParamName(() => AtAa(d, count, h, m, s, ms, us, ns), () => AtV(d, count, h, m, s, ms, us, ns));
     }
 
     [Theory, MemberData(nameof(AtOffsetPartsRows))]
     public void At_on_an_offset_with_parts(long offset, long ticks, int count, int h, int m, int s, int ms, int us, int ns)
     {
         var d = new DateTimeOffset(new DateTime(ticks), new TimeSpan(offset));
-        Agree(() => AtAa(d, count, h, m, s, ms, us, ns), () => AtV(d, count, h, m, s, ms, us, ns));
+        AgreeWithParamName(() => AtAa(d, count, h, m, s, ms, us, ns), () => AtV(d, count, h, m, s, ms, us, ns));
     }
 
     [Theory, MemberData(nameof(KindRows))]
@@ -425,16 +425,16 @@ public class TimeHelperDifferentialTests
     public void AddNanoseconds_on_a_date_time(DateTimeKind kind, long ticks, long ns)
     {
         var d = new DateTime(ticks, kind);
-        Agree(() => AaDate.AddNanoseconds(d, ns), () => VDate.AddNanoseconds(d, ns));
-        Agree(() => AaDate.AddNanoseconds(self: d, nanoseconds: ns), () => VDate.AddNanoseconds(self: d, nanoseconds: ns));
+        AgreeWithParamName(() => AaDate.AddNanoseconds(d, ns), () => VDate.AddNanoseconds(d, ns));
+        AgreeWithParamName(() => AaDate.AddNanoseconds(self: d, nanoseconds: ns), () => VDate.AddNanoseconds(self: d, nanoseconds: ns));
     }
 
     [Theory, MemberData(nameof(AddNanosecondOffsetRows))]
     public void AddNanoseconds_on_an_offset(long offset, long ticks, long ns)
     {
         var d = new DateTimeOffset(new DateTime(ticks), new TimeSpan(offset));
-        Agree(() => AaDate.AddNanoseconds(d, ns), () => VDate.AddNanoseconds(d, ns));
-        Agree(() => AaDate.AddNanoseconds(self: d, nanoseconds: ns), () => VDate.AddNanoseconds(self: d, nanoseconds: ns));
+        AgreeWithParamName(() => AaDate.AddNanoseconds(d, ns), () => VDate.AddNanoseconds(d, ns));
+        AgreeWithParamName(() => AaDate.AddNanoseconds(self: d, nanoseconds: ns), () => VDate.AddNanoseconds(self: d, nanoseconds: ns));
     }
 
     [Theory, MemberData(nameof(WithOffsetRows))]
@@ -448,7 +448,10 @@ public class TimeHelperDifferentialTests
 
     private static void Agree(Func<object?> aa, Func<object?> vouch) => Assert.Equal(Run(aa), Run(vouch));
 
-    private static string Run(Func<object?> call)
+    // Same as Agree, and an ArgumentException must also carry the same ParamName.
+    private static void AgreeWithParamName(Func<object?> aa, Func<object?> vouch) => Assert.Equal(Run(aa, true), Run(vouch, true));
+
+    private static string Run(Func<object?> call, bool withParamName = false)
     {
         try
         {
@@ -456,7 +459,8 @@ public class TimeHelperDifferentialTests
         }
         catch (Exception ex)
         {
-            return "throws " + ex.GetType().FullName;
+            var name = withParamName && ex is ArgumentException arg ? " param=" + (arg.ParamName ?? "(null)") : "";
+            return "throws " + ex.GetType().FullName + name;
         }
     }
 
