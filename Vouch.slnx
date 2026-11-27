@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Vouch/Vouch.csproj" />
+    <Project Path="src/Vouch.Time/Vouch.Time.csproj" />
   </Folder>
   <Folder Name="/benchmarks/">
     <Project Path="benchmarks/Vouch.Benchmarks/Vouch.Benchmarks.csproj" />
@@ -9,5 +10,6 @@
     <Project Path="tests/Vouch.ApiApproval.Tests/Vouch.ApiApproval.Tests.csproj" />
     <Project Path="tests/Vouch.Tests/Vouch.Tests.csproj" />
     <Project Path="tests/Vouch.Differential.Tests/Vouch.Differential.Tests.csproj" />
+    <Project Path="tests/Vouch.Time.Tests/Vouch.Time.Tests.csproj" />
   </Folder>
 </Solution>

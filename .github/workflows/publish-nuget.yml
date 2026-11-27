@@ -91,7 +91,9 @@ jobs:
         run: dotnet test --configuration Release --no-build
 
       - name: Pack
-        run: dotnet pack src/Vouch/Vouch.csproj --configuration Release --no-build --output ./nupkgs
+        run: |
+          dotnet pack src/Vouch/Vouch.csproj --configuration Release --no-build --output ./nupkgs
+          dotnet pack src/Vouch.Time/Vouch.Time.csproj --configuration Release --no-build --output ./nupkgs
 
       - name: List artifacts
         run: ls -la ./nupkgs

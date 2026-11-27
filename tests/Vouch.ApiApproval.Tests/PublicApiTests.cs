@@ -10,14 +10,24 @@ public class PublicApiTests
     public void Public_api_has_not_changed()
     {
         var actual = GenerateVouchApi();
-        var approvedPath = ApprovedPath();
+        var approvedPath = ApprovedFile("Vouch.approved.txt");
 
         ApiApproval.Check(actual, approvedPath);
     }
 
-    internal static string GenerateVouchApi()
+    [Fact]
+    public void Vouch_Time_public_api_has_not_changed()
     {
-        var assembly = typeof(Vouch.VouchException).Assembly;
+        var actual = GeneratePublicApi(typeof(Vouch.FluentTimeSpanExtensions).Assembly);
+        var approvedPath = ApprovedFile("Vouch.Time.approved.txt");
+
+        ApiApproval.Check(actual, approvedPath);
+    }
+
+    internal static string GenerateVouchApi() => GeneratePublicApi(typeof(Vouch.VouchException).Assembly);
+
+    private static string GeneratePublicApi(System.Reflection.Assembly assembly)
+    {
         return assembly.GeneratePublicApi(new ApiGeneratorOptions
         {
             ExcludeAttributes = new[]
@@ -39,10 +49,10 @@ public class PublicApiTests
         });
     }
 
-    private static string ApprovedPath([CallerFilePath] string sourceFile = "")
+    private static string ApprovedFile(string fileName, [CallerFilePath] string sourceFile = "")
     {
         var directory = Path.GetDirectoryName(sourceFile)!;
-        return Path.Combine(directory, "Vouch.approved.txt");
+        return Path.Combine(directory, fileName);
     }
 }
 
