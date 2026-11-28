@@ -1345,9 +1345,9 @@ public class EquivalencyTests
         public CountedNode? E { get { _reads.Reads++; return _e; } init => _e = value; }
     }
 
-    // Without the pair memo every path is walked, about 5 to the power levels-1 pairs.
+    // At 8 levels the pair memo reads 80 and 180; without it every path is walked, 976,560 reads.
     private const int SharedGraphReadBudget = 160;
-    private const int SharedGraphMismatchReadBudget = 10_000;
+    private const int SharedGraphMismatchReadBudget = 360;
 
     private static CountedNode CountedGraph(int levels, int leaf, ReadCount reads)
     {
@@ -1420,7 +1420,7 @@ public class EquivalencyTests
         var a = Enumerable.Range(0, n).Select(i => new CountedKey(i, count)).ToArray();
         var b = Enumerable.Range(0, n).Select(i => new CountedKey(n - 1 - i, count)).ToArray();
         Bounded(() => { a.Should().BeEquivalentTo(b); return 0; });
-        // With the hash match each item costs one failed in-place probe and one bucket hit (2n); a linear scan costs about n squared over 2.
+        // The hash match costs 1.5n (a bucket hit per item, plus a failed in-place probe while that slot is unused); a linear scan costs n squared over 2.
         Assert.InRange(count.Calls, n, 4 * n);
     }
 
