@@ -1270,15 +1270,15 @@ public class EquivalencyTests
         Assert.EndsWith("\n  ... and 1 more difference", msg);
     }
 
-    private static readonly TimeSpan Bound = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan HangGuard = TimeSpan.FromSeconds(30);
 
-    // Runs the call on the thread pool and fails the test if it takes longer than the bound.
+    // Only stops a regression from stalling the run; the counted tests check the work done.
     private static T Bounded<T>(Func<T> call)
     {
         var task = Task.Run(call);
-        if (!task.Wait(Bound))
+        if (!task.Wait(HangGuard))
         {
-            Assert.Fail($"Did not finish within {Bound.TotalSeconds} s.");
+            Assert.Fail($"Did not finish within {HangGuard.TotalSeconds} s.");
         }
 
         return task.Result;
@@ -1294,24 +1294,72 @@ public class EquivalencyTests
         public SharedNode? E { get; set; }
     }
 
-    private static SharedNode SharedGraph(int levels, int leaf)
+    public sealed class EqualsCount
     {
-        var node = new SharedNode { Value = leaf };
+        public int Calls;
+    }
+
+    public sealed class CountedKey : IEquatable<CountedKey>
+    {
+        private readonly EqualsCount _count;
+
+        public CountedKey(int id, EqualsCount count)
+        {
+            Id = id;
+            _count = count;
+        }
+
+        public int Id { get; }
+        public bool Equals(CountedKey? other) => other is not null && other.Id == Id;
+
+        public override bool Equals(object? obj)
+        {
+            _count.Calls++;
+            return Equals(obj as CountedKey);
+        }
+
+        public override int GetHashCode() => Id;
+    }
+
+    public sealed class ReadCount
+    {
+        public int Reads;
+    }
+
+    public sealed class CountedNode
+    {
+        private readonly ReadCount _reads;
+        private CountedNode? _a;
+        private CountedNode? _b;
+        private CountedNode? _c;
+        private CountedNode? _d;
+        private CountedNode? _e;
+
+        public CountedNode(ReadCount reads) => _reads = reads;
+
+        public int Value { get; init; }
+        public CountedNode? A { get { _reads.Reads++; return _a; } init => _a = value; }
+        public CountedNode? B { get { _reads.Reads++; return _b; } init => _b = value; }
+        public CountedNode? C { get { _reads.Reads++; return _c; } init => _c = value; }
+        public CountedNode? D { get { _reads.Reads++; return _d; } init => _d = value; }
+        public CountedNode? E { get { _reads.Reads++; return _e; } init => _e = value; }
+    }
+
+    // At 8 levels the pair memo reads 80 and 180; without it every path is walked, 976,560 reads.
+    // Both budgets sit below twice the measured count, so reading each pair twice fails.
+    // The mismatch count moves with Equivalency.MaxListed (10) and the five members, since the memo only skips known failures after MaxListed are listed.
+    private const int SharedGraphReadBudget = 100;
+    private const int SharedGraphMismatchReadBudget = 220;
+
+    private static CountedNode CountedGraph(int levels, int leaf, ReadCount reads)
+    {
+        var node = new CountedNode(reads) { Value = leaf };
         for (var i = 1; i < levels; i++)
         {
-            node = new SharedNode { A = node, B = node, C = node, D = node, E = node };
+            node = new CountedNode(reads) { A = node, B = node, C = node, D = node, E = node };
         }
 
         return node;
-    }
-
-    public sealed class EqKey : IEquatable<EqKey>
-    {
-        public EqKey(int id) => Id = id;
-        public int Id { get; }
-        public bool Equals(EqKey? other) => other is not null && other.Id == Id;
-        public override bool Equals(object? obj) => Equals(obj as EqKey);
-        public override int GetHashCode() => Id;
     }
 
     public sealed class DriftingKey : IEquatable<DriftingKey>
@@ -1325,20 +1373,26 @@ public class EquivalencyTests
     }
 
     [Fact]
-    public void Shared_graph_of_11_levels_is_equivalent_within_2_seconds()
+    public void Shared_graph_compare_reads_each_shared_pair_once()
     {
-        var left = SharedGraph(11, 1);
-        var right = SharedGraph(11, 1);
+        const int levels = 8;
+        var reads = new ReadCount();
+        var left = CountedGraph(levels, 1, reads);
+        var right = CountedGraph(levels, 1, reads);
         Bounded(() => { left.Should().BeEquivalentTo(right); return 0; });
+        Assert.InRange(reads.Reads, levels, SharedGraphReadBudget);
     }
 
     [Fact]
     public void Shared_graph_mismatch_names_the_first_differing_path()
     {
-        var left = SharedGraph(11, 1);
-        var right = SharedGraph(11, 2);
+        const int levels = 8;
+        var reads = new ReadCount();
+        var left = CountedGraph(levels, 1, reads);
+        var right = CountedGraph(levels, 2, reads);
         var msg = Bounded(() => Message(() => left.Should().BeEquivalentTo(right)));
-        Assert.Contains("\n  A.A.A.A.A.A.A.A.A.A.Value was 1, expected 2.", msg);
+        Assert.Contains("\n  A.A.A.A.A.A.A.Value was 1, expected 2.", msg);
+        Assert.InRange(reads.Reads, levels, SharedGraphMismatchReadBudget);
     }
 
     [Fact]
@@ -1353,7 +1407,7 @@ public class EquivalencyTests
     }
 
     [Fact]
-    public void Any_order_200000_reversed_uris_match_within_2_seconds()
+    public void Any_order_200000_reversed_uris_match_within_30_seconds()
     {
         var a = Enumerable.Range(0, 200_000).Select(i => new Uri($"http://example.com/{i}")).ToArray();
         var b = a.Reverse().ToArray();
@@ -1361,11 +1415,15 @@ public class EquivalencyTests
     }
 
     [Fact]
-    public void Any_order_200000_reversed_equatable_objects_match_within_2_seconds()
+    public void Any_order_matching_of_reversed_equatable_objects_calls_equals_at_most_4_times_per_item()
     {
-        var a = Enumerable.Range(0, 200_000).Select(i => new EqKey(i)).ToArray();
-        var b = a.Reverse().Select(k => new EqKey(k.Id)).ToArray();
+        const int n = 5_000;
+        var count = new EqualsCount();
+        var a = Enumerable.Range(0, n).Select(i => new CountedKey(i, count)).ToArray();
+        var b = Enumerable.Range(0, n).Select(i => new CountedKey(n - 1 - i, count)).ToArray();
         Bounded(() => { a.Should().BeEquivalentTo(b); return 0; });
+        // The hash match costs 1.5n (a bucket hit per item, plus a failed in-place probe while that slot is unused); a linear scan costs n squared over 2.
+        Assert.InRange(count.Calls, n, 4 * n);
     }
 
     [Fact]
