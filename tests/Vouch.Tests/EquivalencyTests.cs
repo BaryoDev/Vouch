@@ -1346,8 +1346,10 @@ public class EquivalencyTests
     }
 
     // At 8 levels the pair memo reads 80 and 180; without it every path is walked, 976,560 reads.
-    private const int SharedGraphReadBudget = 160;
-    private const int SharedGraphMismatchReadBudget = 360;
+    // Both budgets sit below twice the measured count, so reading each pair twice fails.
+    // The mismatch count moves with Equivalency.MaxListed (10) and the five members, since the memo only skips known failures after MaxListed are listed.
+    private const int SharedGraphReadBudget = 100;
+    private const int SharedGraphMismatchReadBudget = 220;
 
     private static CountedNode CountedGraph(int levels, int leaf, ReadCount reads)
     {
